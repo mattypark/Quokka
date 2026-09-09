@@ -13,21 +13,33 @@ if (!dir) {
 }
 mkdirSync(dir, { recursive: true });
 
-// One per platform, including the three that serve no thumbnail, so the fallback tile and
-// the probe readout both have something to render.
+// A mix chosen to exercise every path the grid has.
 //
-// Only the YouTube id is a real post. The rest are fabricated, which means they enrich to
-// `failed` -- and that is deliberate: it exercises the failure path alongside the success
-// one. A row reading FAILED here is the pipeline working, not breaking. Instagram, Pinterest
-// and X should read UNAVAILABLE instead, because those never enter the queue at all.
+// The YouTube ids are real posts, and their thumbnails derive from the id alone, so they
+// resolve without depending on any post lookup -- which makes them the only reliable way to
+// see real images in a seeded run. Instagram, Pinterest and X are here to render the
+// typographic fallback tile, which is their designed state rather than a failure. The
+// fabricated TikTok and Reddit links exercise the failure path: a row reading FAILED there is
+// the pipeline working.
+const youtube = [
+  "dQw4w9WgXcQ", "jNQXAC9IVRw", "9bZkp7q19f0", "kJQP7kW5RZs",
+  "fJ9rUzIMcZQ", "OPf0YbXqDm0", "ZbZSe6N_BXs", "60ItHLz5WEA",
+];
+
+// Fallbacks first so they land oldest; the real YouTube thumbnails then sort to the top,
+// where a screenshot of the first screen actually shows the grid doing its job.
 const samples = [
-  { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", types: ["public.url", "public.plain-text"] },
-  { url: "https://www.tiktok.com/@nasa/video/7234567890123456789", types: ["public.url"] },
-  { url: null, text: "Check this out https://vm.tiktok.com/ZMhqKvXYZ/ come watch", types: ["public.plain-text"] },
-  { url: "https://www.instagram.com/reel/C8xYzAbCdEf/?igshid=abc", types: ["public.url", "public.image"] },
+  { url: "https://www.instagram.com/nasa/reel/C8xYzAbCdEf/?igshid=abc", types: ["public.url", "public.image"] },
+  { url: "https://www.instagram.com/reel/D1aBcDeFgHi/", types: ["public.url"] },
   { url: "https://www.pinterest.com/pin/1234567890/", types: ["public.url"] },
   { url: "https://x.com/nasa/status/1234567890", types: ["public.url"] },
+  { url: "https://www.tiktok.com/@nasa/video/7234567890123456789", types: ["public.url"] },
+  { url: null, text: "Check this out https://vm.tiktok.com/ZMhqKvXYZ/ come watch", types: ["public.plain-text"] },
   { url: "https://www.reddit.com/r/design/comments/1abc234/some_slug/", types: ["public.url"] },
+  ...youtube.map((id) => ({
+    url: `https://www.youtube.com/watch?v=${id}`,
+    types: ["public.url", "public.plain-text"],
+  })),
 ];
 
 const base = Date.now();

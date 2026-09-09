@@ -5,11 +5,18 @@ paired with what would go wrong under the obvious alternative.
 
 ## Storage lives on the device, and there is no server
 
-**500,000 items is 15.9 GB.** Per item: a ~30 KB thumbnail, ~1 KB of metadata, and 4 bytes
-of average colour. The realistic library is 10k–50k items, or 0.3–1.6 GB.
+**500,000 items is 12.4 GB, measured.** Per item: a ~25 KB thumbnail, ~1 KB of metadata, and
+4 bytes of average colour. The realistic library is 10k–50k items, or 0.25–1.3 GB.
 
-Measured on the first real fetch: a 800x450 YouTube thumbnail encoded to HEIC at q0.8 came
-out at **29,840 bytes**, which lands on the 30 KB estimate almost exactly.
+That number is measured rather than estimated, and the first measurement corrected the plan.
+At 800px on the long edge and q0.8, real YouTube thumbnails averaged **41,385 bytes**, not the
+30,000 the projection assumed -- which put 500k items at 20.7 GB, right at the threshold where
+a remote tier starts to be worth building. Dropping to 600px and q0.75 brought the average to
+**25,604 bytes** and the projection to 12.4 GB.
+
+600px is not a compromise: a two-column grid on a 393pt phone gives each tile ~195pt, which is
+585px at 3x, and the tile is never a viewer because tapping opens the original post. The 800px
+version was storing pixels nothing would ever render.
 
 Allim never hosts video. It stores a link and one small image, so a remote media layer would
 be a monthly bill and a second system to maintain in exchange for nothing. Cloudflare R2 is

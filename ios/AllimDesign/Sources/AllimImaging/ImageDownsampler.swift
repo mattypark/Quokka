@@ -30,9 +30,16 @@ public struct Thumbnail: Sendable {
 /// at all, so the ceiling is never approached.
 public enum ImageDownsampler {
 
-    /// 800px on the long edge: a 400pt tile at 2x, the largest the grid ever shows. Storing
-    /// more multiplies the library's footprint for pixels nothing renders.
-    public static let maxPixelSize = 800
+    /// 600px on the long edge.
+    ///
+    /// A two-column grid on a 393pt-wide phone gives each tile ~195pt, which is 585px at 3x --
+    /// so 600 is already generous, and the tile is never a viewer, since tapping opens the
+    /// original post. This was 800, and measuring a real run showed why that was wrong:
+    /// thumbnails averaged 41,385 bytes rather than the 30,000 the storage projection assumed,
+    /// putting a 500k library at 20.7 GB instead of 15.9 -- right at the threshold where a
+    /// remote tier starts to be worth it. Storing pixels nothing renders is the expensive kind
+    /// of harmless.
+    public static let maxPixelSize = 600
 
     public static func thumbnail(from data: Data) -> Thumbnail? {
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
@@ -71,7 +78,7 @@ public enum ImageDownsampler {
     /// nil on hardware with no HEVC encoder.
     private static func encode(_ image: CGImage?) -> Thumbnail? {
         guard let image else { return nil }
-        let quality: CGFloat = 0.8
+        let quality: CGFloat = 0.75
         let colour = AverageColor.extract(from: image)
 
         let supportsHEIC = (CGImageDestinationCopyTypeIdentifiers() as? [String])?
