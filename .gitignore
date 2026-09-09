@@ -1,0 +1,30 @@
+# The Xcode project is generated from ios/project.yml by xcodegen. Never edit it by hand,
+# never commit it -- the spec is the source of truth.
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+.swiftpm/
+.build/
+Package.resolved
+*.xcarchive
+*.ipa
+
+# Secrets. Base.xcconfig and Secrets.xcconfig.example ARE committed; this is not.
+ios/Allim/Secrets.xcconfig
+.env
+.env.*
+!.env.example
+
+# Node (mcp/ and tools/)
+node_modules/
+*.tsbuildinfo
+
+# A real Instagram export is the user's own data and never belongs in the repo.
+# Redacted fixtures live in ios/AllimDesign/Tests/Fixtures/ and are committed.
+tools/export/
+*.zip
+
+# macOS
+.DS_Store
