@@ -1,0 +1,12 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/app/_not-found/page": [
+      "static/media/BagelFatOne_wordmark-s.p.0m2oszjhugd4q.woff2",
+      "static/media/5f402bd2d8eef81a-s.p.40bho2kviej2o.woff2",
+      "static/media/70bc3e132a0a741e-s.p.3t6q91iet4nsy.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}

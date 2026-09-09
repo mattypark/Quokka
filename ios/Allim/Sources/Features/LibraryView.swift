@@ -67,23 +67,63 @@ struct LibraryView: View {
     }
 }
 
+/// The empty library.
+///
+/// The only screen in the app that gets the statement face, and it gets it because this is the
+/// one moment with nothing else on it -- no thumbnails, no colour, nothing competing. A
+/// ransom-note face here reads as a poster; anywhere with content on it, it would read as
+/// noise. The rest of the app stays quiet on purpose so that this lands.
 private struct EmptyLibrary: View {
     var onImport: () -> Void = {}
+
     var body: some View {
         VStack(spacing: Space.roomy) {
-            Wordmark(size: 34, animated: false, showsNative: false)
-                .opacity(0.45)
-            Text("Share a post to Allim and it lands here.")
+            Spacer()
+
+            // Two words, not three, and specifically not "YOUR".
+            //
+            // Every glyph in this face is a separate found object, and its R is a cutout that
+            // carries an apostrophe-e along with it -- so "YOUR" renders as "YOU'RE" and the
+            // first screen of the app ships with a grammatical error in 52pt type. The face is
+            // worth the constraint, but the constraint is real: check any word set in it, and
+            // prefer short ones.
+            VStack(spacing: -2) {
+                Text("BUILD")
+                Text("TASTE")
+            }
+            .font(Type.statement(58))
+            .foregroundStyle(Label.primary)
+            .multilineTextAlignment(.center)
+                        // One mark, not three words, to anything reading the screen aloud.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Build taste")
+
+            Text("Everything that stopped your thumb, in one place.")
                 .font(Type.body)
                 .foregroundStyle(Label.secondary)
                 .multilineTextAlignment(.center)
-            Text("instagram · tiktok · youtube · pinterest · reddit · x")
-                .font(Type.meta(11))
-                .foregroundStyle(Label.tertiary)
-            Button("Import from Instagram") { onImport() }
-                .font(Type.control)
-                .foregroundStyle(Label.primary)
-                .padding(.top, Space.base)
+                .padding(.top, Space.snug)
+
+            Spacer()
+
+            VStack(spacing: Space.base) {
+                Button(action: onImport) {
+                    Text("Import from Instagram")
+                        .font(Type.control)
+                        .foregroundStyle(Label.onInverse)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Space.base)
+                        .background(Surface.inverse, in: Capsule())
+                }
+
+                Text("or share a post to Allim from any app")
+                    .font(Type.caption)
+                    .foregroundStyle(Label.tertiary)
+
+                Text("instagram · tiktok · youtube · pinterest · reddit · x")
+                    .font(Type.meta(10))
+                    .foregroundStyle(Label.dim)
+            }
         }
         .padding(Space.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

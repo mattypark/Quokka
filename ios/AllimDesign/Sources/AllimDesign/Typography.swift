@@ -19,6 +19,12 @@ public enum Face {
     public static let wordmark = "BagelFatOne-Regular"
     /// Collection and section titles only.
     public static let feature = "KeeponTruckinFW"
+    /// One statement per screen, at size, and nowhere else.
+    ///
+    /// A ransom-note face is all texture and no reading comfort -- every glyph is a different
+    /// found object, which is exactly why it works for four words and falls apart for a
+    /// sentence. Scoped this tightly it is a voice; used any wider it is noise.
+    public static let punk = "Veryverypunkfont"
     /// Editorial serif -- tile titles, long text.
     public static let editorial = "Newsreader16pt-Regular"
     /// Metadata: counts, timestamps, hosts.
@@ -77,6 +83,11 @@ public enum Type {
         custom(Face.feature, size, weight: .regular, fallback: .rounded)
     }
 
+    /// The statement face. One line, large, never a paragraph.
+    public static func statement(_ size: CGFloat = 40) -> Font {
+        custom(Face.punk, size, weight: .regular, fallback: .rounded)
+    }
+
     public static func title(_ size: CGFloat = 22) -> Font {
         custom(Face.editorial, size, fallback: .serif)
     }
@@ -101,7 +112,7 @@ public enum Type {
 }
 
 public enum FontRegistration {
-    static let required = [Face.wordmark, Face.feature, Face.editorial, Face.mono]
+    static let required = [Face.wordmark, Face.feature, Face.editorial, Face.mono, Face.punk]
 
     /// Reports rather than crashes. Every style above has a real system fallback, so a missing
     /// file degrades the design instead of blocking the build.

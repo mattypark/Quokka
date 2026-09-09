@@ -66,6 +66,7 @@ targets:
           - UIInterfaceOrientationPortrait
         UIAppFonts:
           - BagelFatOne-Regular.ttf
+          - VeryVeryPunk.ttf
           - KeeponTruckin.ttf
           - Newsreader.ttf
           - JetBrainsMono.ttf

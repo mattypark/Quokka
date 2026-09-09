@@ -27,6 +27,7 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>BagelFatOne-Regular.ttf</string>
+		<string>VeryVeryPunk.ttf</string>
 		<string>KeeponTruckin.ttf</string>
 		<string>Newsreader.ttf</string>
 		<string>JetBrainsMono.ttf</string>

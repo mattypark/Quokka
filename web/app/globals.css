@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/* The website shares the app's palette exactly: nine steps of even OKLab lightness, white
+   ground, black text, and no accent colour anywhere. The only colour on either surface
+   belongs to the saved work itself. */
+@theme {
+  --color-ink-0: #000000;
+  --color-ink-1: #060606;
+  --color-ink-2: #222222;
+  --color-ink-3: #414141;
+  --color-ink-4: #636363;
+  --color-ink-5: #878787;
+  --color-ink-6: #aeaeae;
+  --color-ink-7: #e8e8e8;
+  --color-ink-8: #ffffff;
+
+  --color-canvas: #ffffff;
+  --color-raised: #fafafa;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-display: var(--font-display), ui-rounded, system-ui, sans-serif;
+  --font-editorial: var(--font-editorial), ui-serif, Georgia, serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  /* Lenis drives scrolling; the native smooth-scroll would fight it. */
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink-0);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Motion is opt-in, not opt-out. Everything animated is wrapped so that a person who has
+   asked their system for less motion gets a page that simply arrives. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::selection {
+  background: var(--color-ink-0);
+  color: var(--color-ink-8);
+}
+
+/* Above-the-fold entrances are CSS, not JavaScript.
+   ---------------------------------------------------------------------------
+   The hero headline is the page's LCP element. Driving it with GSAP or Framer
+   Motion means it starts at opacity 0 in the DOM and only becomes visible once a
+   library has loaded, parsed and run -- so a slow connection, a blocked bundle or
+   a crawler that does not execute JS all get a blank hero. A keyframe animation
+   paints on the very first frame and needs nothing.
+
+   JS is still used for what genuinely needs it: scroll-linked and in-view work. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
+
+/* Scroll reveals, in CSS.
+   ---------------------------------------------------------------------------
+   Content is visible by default and the animation is added only where the browser
+   can actually drive it. That ordering is the whole point: a JavaScript-driven
+   reveal starts hidden and stays hidden if the bundle is slow, blocked, or never
+   runs, which quietly costs a marketing page most of its content. Here the worst
+   case is that the reveal simply does not happen.
+
+   animation-timeline: view() is Chrome 115+ and Safari 26+; everywhere else the
+   @supports block never applies and the page reads normally. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      /* Finishes by the time the element is a third of the way up the viewport,
+         so it is fully readable well before it reaches the centre of the screen. */
+      animation-range: entry 0% cover 34%;
+    }
+  }
+}
