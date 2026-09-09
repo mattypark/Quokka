@@ -1,0 +1,8 @@
+{
+  "name": "allim-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "allim-mcp": "./index.mjs" },
+  "description": "Reads an Allim library and lets Claude Code search and tag it. No dependencies, no API key."
+}
