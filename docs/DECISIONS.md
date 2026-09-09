@@ -141,10 +141,42 @@ So the extension writes a deliberately dumb record and gets out. The app does th
 | Face | Role | Note |
 |---|---|---|
 | Bagel Fat One | Wordmark only | Carries full Hangul, so 알림 renders in its own face |
-| Keep on Truckin | Collection titles only | **Personal-use licence.** A blocker for TestFlight or App Store |
-| Newsreader | Editorial, tile titles | Stands in for Copernicus, which is a licensed foundry face and not distributable |
+| Very very punk font | The empty-state statement, and nothing else | **Personal-use licence.** Submission blocker |
+| Keep on Truckin | Collection titles only | **Personal-use licence.** Submission blocker |
+| Newsreader | Editorial, tile titles | Stands in for Copernicus, a licensed foundry face that is not distributable |
 | SF Pro | All functional text | System |
 | JetBrains Mono | Metadata | Counts, timestamps, hosts |
 
-Two heavy display faces is more than a minimal interface normally carries. They work because
-their scope is narrow -- everything a person actually reads is SF Pro or mono.
+Three display faces is far more than a minimal interface normally carries. They work only
+because each is scoped to one place -- everything a person actually *reads* is SF Pro or mono,
+and the display faces appear at sizes where they are read as images rather than as text.
+
+**The ransom-note face constrains its own copy.** Every glyph is a separate found object, and
+its `R` is a cutout carrying an apostrophe-e, so "BUILD YOUR TASTE" renders as
+"BUILD YOU'RE TASTE". That is invisible in source and only appears when rendered. Any word set
+in this face has to be looked at, not assumed — prefer short ones.
+
+**Two of these block submission.** Keep on Truckin and Very very punk font are personal-use
+only, which is defensible on a private build and is not defensible on the App Store. Swapping
+each is a one-line change in `Face`. Neither is used on the website, where a public commercial
+page makes the licence a clearer problem than a private build does.
+
+## The mirror, and Claude with no API key
+
+The library is written to `library.jsonl` in the app's iCloud container, which on a Mac is an
+ordinary folder — so `mcp/allim-mcp` reads it directly with no server and no key, running on
+the Claude Code subscription already on the machine. Tags come back through `tags.jsonl`,
+which the app applies and then clears.
+
+JSONL rather than a JSON document: a half-million-line file appends in constant time and
+streams line by line, where a single array must be parsed whole at both ends. The row shape is
+its own type rather than `Item`, because the mirror is a published interface read by a separate
+program and has to stay stable while the stored model moves.
+
+**Off by default.** Writing someone's entire saved library into iCloud is their decision, and
+the toggle says plainly what it does at the point the decision is made.
+
+It falls back to the app's own Documents when the iCloud entitlement is absent — that
+capability is a portal change and is not always in place, and `UIFileSharingEnabled` keeps the
+fallback reachable through Files. The feature degrades from "syncs by itself" to "move one
+file" rather than disappearing.
