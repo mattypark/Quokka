@@ -8,6 +8,9 @@ import os
 final class AppState {
     private(set) var items: [Item] = []
     private(set) var total = 0
+    private(set) var authors: [AuthorGroup] = []
+    /// nil means the whole library. Set to filter to one author.
+    private(set) var selectedAuthor: String?
     /// Set when the store cannot be opened. Surfaced rather than swallowed: a library that
     /// silently stops persisting looks exactly like a library with nothing in it.
     private(set) var storeFailure: String?
@@ -139,17 +142,24 @@ final class AppState {
     /// skip whatever was just inserted.
     func reload() throws {
         guard let store else { return }
-        let page = try store.page()
+        let page = try selectedAuthor.map { try store.page(author: $0) } ?? store.page()
         items = page.items
         cursor = page.cursor
         total = try store.count()
+        authors = (try? store.authors()) ?? []
+    }
+
+    func select(author: String?) {
+        selectedAuthor = author
+        try? reload()
     }
 
     /// Appends the next page. Does nothing at the end of the library, where `cursor` is nil.
     func loadMore() {
         guard let store, let cursor else { return }
         do {
-            let page = try store.page(after: cursor)
+            let page = try selectedAuthor.map { try store.page(author: $0, after: cursor) }
+                ?? store.page(after: cursor)
             items.append(contentsOf: page.items)
             self.cursor = page.cursor
         } catch {

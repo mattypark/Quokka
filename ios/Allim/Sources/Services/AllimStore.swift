@@ -204,9 +204,69 @@ final class AllimStore: Sendable {
         }
     }
 
+    /// Authors, most-saved first.
+    ///
+    /// This is the highest-value grouping available and it needs no AI at all: an Instagram
+    /// import lands thousands of items each carrying an `original_content_owner`, and twelve
+    /// reels from one account already is a category. Grouping by something the data actually
+    /// contains beats inferring a topic from a URL.
+    func authors(limit: Int = 40) throws -> [AuthorGroup] {
+        try dbPool.read { db in
+            try AuthorGroup.fetchAll(
+                db,
+                sql: """
+                    SELECT author AS name, COUNT(*) AS count
+                    FROM item
+                    WHERE author IS NOT NULL AND author <> ''
+                    GROUP BY author
+                    ORDER BY count DESC, name ASC
+                    LIMIT ?
+                    """,
+                arguments: [limit]
+            )
+        }
+    }
+
+    /// One page filtered to a single author. Keyset, same as the unfiltered path -- an author
+    /// with 2,000 saves needs paging just as much as the whole library does.
+    func page(author: String, after cursor: ItemCursor? = nil, limit: Int = 60) throws -> ItemPage {
+        try dbPool.read { db in
+            let items: [Item]
+            if let cursor {
+                items = try Item.fetchAll(
+                    db,
+                    sql: """
+                        SELECT * FROM item
+                        WHERE author = ? AND (savedAt < ? OR (savedAt = ? AND id < ?))
+                        ORDER BY savedAt DESC, id DESC
+                        LIMIT ?
+                        """,
+                    arguments: [author, cursor.savedAt, cursor.savedAt, cursor.id, limit]
+                )
+            } else {
+                items = try Item.fetchAll(
+                    db,
+                    sql: "SELECT * FROM item WHERE author = ? ORDER BY savedAt DESC, id DESC LIMIT ?",
+                    arguments: [author, limit]
+                )
+            }
+            let next = items.count == limit
+                ? items.last.flatMap { last in last.id.map { ItemCursor(savedAt: last.savedAt, id: $0) } }
+                : nil
+            return ItemPage(items: items, cursor: next)
+        }
+    }
+
     func count() throws -> Int {
         try dbPool.read { db in try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM item") ?? 0 }
     }
+}
+
+/// An author and how much of the library is theirs.
+struct AuthorGroup: FetchableRecord, Decodable, Identifiable, Hashable, Sendable {
+    var id: String { name }
+    let name: String
+    let count: Int
 }
 
 // GRDB conformance lives here rather than on the model, so AllimEngine stays dependency-free

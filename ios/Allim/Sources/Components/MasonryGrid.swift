@@ -19,10 +19,22 @@ struct MasonryGrid<Content: View>: View {
     let width: CGFloat
     @ViewBuilder let content: (Item, CGFloat) -> Content
 
-    /// Items whose thumbnail has not arrived yet have no measured ratio. 3:4 is the closest
-    /// thing to a neutral guess across a mixed feed, and using a per-platform default instead
-    /// would make tiles visibly jump when the real ratio lands.
-    private static var fallbackRatio: Double { 3.0 / 4.0 }
+    /// A tile still waiting on its thumbnail has no measured ratio. 3:4 is the neutral guess
+    /// across a mixed feed, and a per-platform default would make tiles visibly jump when the
+    /// real ratio lands.
+    private static var pendingRatio: Double { 3.0 / 4.0 }
+
+    /// A tile that will never have an image is a text card, not a photo, and giving it a
+    /// portrait photo's shape leaves most of it empty. Slightly wide reads as a note.
+    private static var textCardRatio: Double { 1.15 }
+
+    private static func ratio(for item: Item) -> Double {
+        if let measured = item.aspectRatio { return measured }
+        switch item.thumbnailState {
+        case .unavailable, .failed: return textCardRatio
+        case .pending, .stored: return pendingRatio
+        }
+    }
 
     private var columnWidth: CGFloat {
         (width - spacing * CGFloat(columns - 1)) / CGFloat(columns)
@@ -34,7 +46,7 @@ struct MasonryGrid<Content: View>: View {
         var heights = Array(repeating: CGFloat.zero, count: columns)
 
         for item in items {
-            let ratio = item.aspectRatio ?? Self.fallbackRatio
+            let ratio = Self.ratio(for: item)
             // Clamped: a panorama or an extremely tall image would otherwise produce one tile
             // that is most of a screen and wreck the rhythm of everything around it.
             let clamped = min(max(ratio, 0.5), 2.0)

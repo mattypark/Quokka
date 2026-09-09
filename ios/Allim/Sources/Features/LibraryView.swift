@@ -15,11 +15,19 @@ struct LibraryView: View {
                 } else if state.items.isEmpty {
                     EmptyLibrary { importing = true }
                 } else {
-                    grid
+                    VStack(spacing: 0) {
+                        CollectionBar(
+                            authors: state.authors,
+                            total: state.total,
+                            selected: state.selectedAuthor,
+                            onSelect: { state.select(author: $0) }
+                        )
+                        grid
+                    }
                 }
             }
             .background(Surface.canvas)
-            .navigationTitle(state.total > 0 ? "\(state.total) saved" : "Allim")
+            .navigationTitle("Allim")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Surface.canvas, for: .navigationBar)
             .toolbar {

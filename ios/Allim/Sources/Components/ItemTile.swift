@@ -80,7 +80,6 @@ private struct FallbackTile: View {
             Text(item.platform.displayName.lowercased())
                 .font(Type.meta(9))
                 .foregroundStyle(Label.tertiary)
-            Spacer(minLength: 0)
             if let author = item.author {
                 Text(author)
                     .font(Type.tileTitle(16))
@@ -92,6 +91,15 @@ private struct FallbackTile: View {
                     .foregroundStyle(Label.primary)
                     .lineLimit(4)
             }
+            if let caption = item.caption, !caption.isEmpty {
+                // What Matthew typed when he sent it to himself. On a platform that publishes
+                // no metadata at all, his own note is the best description that will ever exist.
+                Text(caption)
+                    .font(Type.caption)
+                    .foregroundStyle(Label.tertiary)
+                    .lineLimit(3)
+            }
+            Spacer(minLength: 0)
             HStack(spacing: Space.tight) {
                 Text(item.contentID ?? "")
                     .font(Type.meta(8))
