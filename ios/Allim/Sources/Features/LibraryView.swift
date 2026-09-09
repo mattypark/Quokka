@@ -1,6 +1,7 @@
 import SwiftUI
 import AllimDesign
 import AllimEngine
+import AllimImaging
 
 /// The library, at the stage where the storage layer does not exist yet.
 ///
@@ -21,7 +22,7 @@ struct LibraryView: View {
                 } else {
                     List {
                         ForEach(state.items) { item in
-                            ItemRow(item: item)
+                            ItemRow(item: item, loader: state.loader)
                                 .listRowBackground(Surface.raised)
                                 .listRowSeparatorTint(Surface.hairline)
                                 .onAppear {
@@ -69,8 +70,17 @@ private struct EmptyLibrary: View {
 
 private struct ItemRow: View {
     let item: Item
+    let loader: ThumbnailLoader?
 
     var body: some View {
+        HStack(alignment: .top, spacing: Space.base) {
+            ThumbnailTile(item: item, loader: loader)
+            details
+        }
+        .padding(.vertical, Space.tight)
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: Space.snug) {
             HStack(spacing: Space.snug) {
                 Text(item.platform.displayName)
@@ -103,7 +113,53 @@ private struct ItemRow: View {
                 .font(Type.meta(9))
                 .foregroundStyle(Label.tertiary)
         }
-        .padding(.vertical, Space.tight)
+    }
+}
+
+/// A tile, in the three states a tile can actually be in.
+///
+/// The unavailable case is a designed state rather than an error: Instagram, Pinterest and X
+/// will never yield an image, so a typographic mark set in the display face IS the artwork for
+/// those. Committing to black and white is what makes that read as intent instead of failure.
+private struct ThumbnailTile: View {
+    let item: Item
+    let loader: ThumbnailLoader?
+
+    @State private var image: UIImage?
+
+    private var placeholder: Color {
+        // The four bytes stored inline on the row. No decode, no hash -- see AverageColor.
+        guard let packed = item.averageColor else { return Surface.elevated }
+        let (r, g, b) = AverageColor.components(packed)
+        return Color(.sRGB, red: r, green: g, blue: b)
+    }
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else if item.thumbnailState == .unavailable {
+                placeholder.overlay(
+                    Text(String(item.platform.displayName.prefix(2)).uppercased())
+                        .font(Type.feature(15))
+                        .foregroundStyle(Label.tertiary)
+                )
+            } else {
+                placeholder
+            }
+        }
+        .frame(width: 72, height: 96)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .stroke(Surface.hairline, lineWidth: Stroke.thin)
+        )
+        .task(id: item.id) {
+            guard let loader, let id = item.id, item.thumbnailState == .stored else { return }
+            image = await loader.image(for: id)
+        }
     }
 }
 

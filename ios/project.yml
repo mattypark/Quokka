@@ -37,6 +37,8 @@ targets:
       - package: AllimDesign
       - package: AllimDesign
         product: AllimEngine
+      - package: AllimDesign
+        product: AllimImaging
       - package: GRDB
         product: GRDB
       - target: AllimShare
@@ -97,6 +99,8 @@ targets:
     dependencies:
       - package: AllimDesign
         product: AllimEngine
+      - package: AllimDesign
+        product: AllimImaging
     entitlements:
       path: AllimShare/AllimShare.entitlements
       properties:

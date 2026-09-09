@@ -2,6 +2,7 @@ import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 import AllimEngine
+import AllimImaging
 import os
 
 /// The daily capture path, and the only part of Allim most saves ever touch.
@@ -131,7 +132,7 @@ final class ShareViewController: UIViewController {
 
     /// Downsamples straight from the provider's file, never through a `UIImage`.
     private func storeImage(from provider: NSItemProvider, in directory: URL) async -> String? {
-        let loaded: (data: Data, filename: String)? = await withCheckedContinuation { continuation in
+        let loaded: Thumbnail? = await withCheckedContinuation { continuation in
             _ = provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, error in
                 if let error { self.logger.error("image load failed: \(error.localizedDescription)") }
                 guard let url else { continuation.resume(returning: nil); return }
@@ -142,9 +143,10 @@ final class ShareViewController: UIViewController {
         }
 
         guard let loaded else { return nil }
+        let filename = "\(UUID().uuidString).\(loaded.format)"
         do {
-            try loaded.data.write(to: directory.appendingPathComponent(loaded.filename), options: .atomic)
-            return loaded.filename
+            try loaded.data.write(to: directory.appendingPathComponent(filename), options: .atomic)
+            return filename
         } catch {
             logger.error("Could not write the thumbnail: \(error.localizedDescription)")
             return nil

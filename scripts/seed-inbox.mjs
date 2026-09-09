@@ -15,6 +15,11 @@ mkdirSync(dir, { recursive: true });
 
 // One per platform, including the three that serve no thumbnail, so the fallback tile and
 // the probe readout both have something to render.
+//
+// Only the YouTube id is a real post. The rest are fabricated, which means they enrich to
+// `failed` -- and that is deliberate: it exercises the failure path alongside the success
+// one. A row reading FAILED here is the pipeline working, not breaking. Instagram, Pinterest
+// and X should read UNAVAILABLE instead, because those never enter the queue at all.
 const samples = [
   { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", types: ["public.url", "public.plain-text"] },
   { url: "https://www.tiktok.com/@nasa/video/7234567890123456789", types: ["public.url"] },

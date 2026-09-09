@@ -20,11 +20,17 @@ final class AppState {
     private let inbox = InboxDrain()
     private let logger = Logger(subsystem: "com.matthewpark.allim", category: "state")
     private var store: AllimStore?
+    private var fetcher: ThumbnailFetcher?
+    private(set) var loader: ThumbnailLoader?
     private var cursor: ItemCursor?
+    private var enrichment: Task<Void, Never>?
 
     init() {
         do {
-            store = try AllimStore.standard()
+            let store = try AllimStore.standard()
+            self.store = store
+            fetcher = ThumbnailFetcher(store: store)
+            loader = ThumbnailLoader(store: store)
         } catch {
             storeFailure = error.localizedDescription
             logger.error("Could not open the store: \(error.localizedDescription)")
@@ -49,9 +55,28 @@ final class AppState {
                 logger.info("Drained \(drained.count), inserted \(inserted)")
             }
             try reload()
+            enrich()
         } catch {
             storeFailure = error.localizedDescription
             logger.error("Write failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Fetches thumbnails for anything still pending.
+    ///
+    /// Speculative background work, so it is cancellable and never blocks a save. iOS gives no
+    /// guarantee that a BGProcessingTask ever runs, which is why this is driven from the
+    /// foreground: the background task is a bonus, not the mechanism.
+    func enrich() {
+        guard let fetcher else { return }
+        enrichment?.cancel()
+        enrichment = Task { [weak self] in
+            let stored = await fetcher.enrichPending()
+            guard !Task.isCancelled, stored > 0 else { return }
+            await MainActor.run {
+                // Reloads so the newly-stored thumbnails and aspect ratios are picked up.
+                try? self?.reload()
+            }
         }
     }
 

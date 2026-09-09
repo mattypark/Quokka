@@ -15,10 +15,12 @@ let package = Package(
     products: [
         .library(name: "AllimDesign", targets: ["AllimDesign"]),
         .library(name: "AllimEngine", targets: ["AllimEngine"]),
+        .library(name: "AllimImaging", targets: ["AllimImaging"]),
     ],
     targets: [
         .target(name: "AllimDesign", dependencies: ["AllimEngine"]),
         .target(name: "AllimEngine"),
+        .target(name: "AllimImaging"),
         .testTarget(name: "AllimEngineTests", dependencies: ["AllimEngine"]),
     ]
 )
