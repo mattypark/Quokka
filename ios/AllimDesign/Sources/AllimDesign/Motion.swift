@@ -27,6 +27,7 @@ public enum Motion {
     /// Reduce Motion is read synchronously here rather than through the SwiftUI environment
     /// so the very first frame is already correct. Reading it in a view means the launch
     /// animation has usually started before the preference is known.
+    @MainActor
     public static var reduced: Bool {
         #if canImport(UIKit)
         UIAccessibility.isReduceMotionEnabled
@@ -37,6 +38,7 @@ public enum Motion {
 
     /// Every animated call site goes through this, so honouring the preference is the default
     /// rather than something each view has to remember.
+    @MainActor
     public static func respecting(_ animation: Animation) -> Animation? {
         reduced ? nil : animation
     }

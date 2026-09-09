@@ -1,0 +1,134 @@
+name: Allim
+options:
+  bundleIdPrefix: com.matthewpark
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+packages:
+  AllimDesign:
+    path: AllimDesign
+
+targets:
+
+  Allim:
+    type: application
+    platform: iOS
+    sources:
+      - path: Allim
+        excludes:
+          # The real one is gitignored; the example is documentation. Both are reached
+          # through Base.xcconfig rather than copied into the bundle.
+          - Secrets.xcconfig
+          - Secrets.xcconfig.example
+          - Base.xcconfig
+    configFiles:
+      Debug: Allim/Base.xcconfig
+      Release: Allim/Base.xcconfig
+    dependencies:
+      - package: AllimDesign
+      - package: AllimDesign
+        product: AllimEngine
+      - target: AllimShare
+        embed: true
+    entitlements:
+      path: Allim/Allim.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.matthewpark.allim
+    info:
+      path: Allim/Info.plist
+      properties:
+        CFBundleDisplayName: Allim
+        # Wired to the build settings deliberately. XcodeGen otherwise writes a literal
+        # 1.0 / 1, and MARKETING_VERSION then does nothing -- you bump the version, upload,
+        # and App Store Connect rejects the build as a duplicate.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # A flat black field with no logo on it. Apple requires the launch screen to be
+        # nearly identical to the first frame, and the wordmark animates in from code --
+        # which is what makes the handoff invisible.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # The library is monochrome chrome around colour work; a light appearance would
+        # invert the entire premise.
+        UIUserInterfaceStyle: Dark
+        # Declared so a future release can add background enrichment without a plist change
+        # shipping separately from the code that needs it.
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.matthewpark.allim.enrich
+        UIBackgroundModes:
+          - processing
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matthewpark.allim
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: R43H5332KH
+        GENERATE_INFOPLIST_FILE: NO
+
+  AllimShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: AllimShare
+    dependencies:
+      - package: AllimDesign
+        product: AllimEngine
+    entitlements:
+      path: AllimShare/AllimShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.matthewpark.allim
+    info:
+      path: AllimShare/Info.plist
+      properties:
+        CFBundleDisplayName: Allim
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            # Broad on purpose. Allim's whole premise is that it accepts a save from any
+            # app with a share sheet, so narrowing this by host would defeat the point.
+            # Images are accepted alongside URLs because several apps hand over a preview
+            # image that is otherwise unobtainable.
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsWebPageWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+              NSExtensionActivationSupportsMovieWithMaxCount: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.matthewpark.allim.share
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: R43H5332KH
+        GENERATE_INFOPLIST_FILE: NO
+
+# XcodeGen does not emit a shared scheme unless one is declared, and xcodebuild refuses to
+# build without one ("Found no destinations for the scheme").
+schemes:
+  Allim:
+    build:
+      targets:
+        Allim: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    archive:
+      config: Release
