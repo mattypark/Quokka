@@ -14,14 +14,26 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if state.saves.isEmpty {
+                if let failure = state.storeFailure {
+                    StoreFailure(message: failure)
+                } else if state.items.isEmpty {
                     EmptyLibrary()
                 } else {
                     List {
-                        ForEach(state.saves) { save in
-                            SaveRow(save: save)
+                        ForEach(state.items) { item in
+                            ItemRow(item: item)
                                 .listRowBackground(Surface.raised)
                                 .listRowSeparatorTint(Surface.hairline)
+                                .onAppear {
+                                    // The last row asking for the next page is the whole
+                                    // paging trigger; the keyset cursor makes it safe even
+                                    // when saves land at the head mid-scroll.
+                                    if item.id == state.items.last?.id { state.loadMore() }
+                                }
+                        }
+                        if !state.lastProbe.isEmpty {
+                            ProbeSection(probes: state.lastProbe)
+                                .listRowBackground(Surface.canvas)
                         }
                     }
                     .listStyle(.plain)
@@ -29,7 +41,7 @@ struct LibraryView: View {
                 }
             }
             .background(Surface.canvas)
-            .navigationTitle("Allim")
+            .navigationTitle(state.total > 0 ? "\(state.total) saved" : "Allim")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Surface.canvas, for: .navigationBar)
         }
@@ -55,13 +67,13 @@ private struct EmptyLibrary: View {
     }
 }
 
-private struct SaveRow: View {
-    let save: InboxDrain.Drained
+private struct ItemRow: View {
+    let item: Item
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.snug) {
             HStack(spacing: Space.snug) {
-                Text(save.link?.platform.displayName ?? "Unrecognised")
+                Text(item.platform.displayName)
                     .font(Type.meta(10))
                     .foregroundStyle(Label.tertiary)
                     .padding(.horizontal, Space.snug)
@@ -71,57 +83,74 @@ private struct SaveRow: View {
                             .stroke(Surface.border, lineWidth: Stroke.thin)
                     )
                 Spacer()
-                Text(save.receivedAt, format: .dateTime.hour().minute())
+                Text(item.savedAt, format: .dateTime.hour().minute())
                     .font(Type.meta(10))
                     .foregroundStyle(Label.tertiary)
             }
 
-            Text(save.link?.url.absoluteString ?? save.rawText ?? "no link")
+            Text(item.url)
                 .font(Type.tileTitle(15))
                 .foregroundStyle(Label.primary)
                 .lineLimit(3)
 
-            if let author = save.link?.author {
+            if let author = item.author {
                 Text(author)
                     .font(Type.meta(11))
                     .foregroundStyle(Label.secondary)
             }
 
-            ProbeReadout(save: save)
+            Text(item.thumbnailState.rawValue.uppercased())
+                .font(Type.meta(9))
+                .foregroundStyle(Label.tertiary)
         }
         .padding(.vertical, Space.tight)
     }
 }
 
-/// The stage-0 answer, rendered. Whether an image came through with the link decides whether
-/// Instagram, Pinterest and X can ever show a thumbnail, so it is surfaced rather than logged.
-private struct ProbeReadout: View {
-    let save: InboxDrain.Drained
-
-    private var carriedImage: Bool {
-        save.imageData != nil
-            || save.probe.contains { $0.typeIdentifiers.contains { $0.hasPrefix("public.image") } }
-    }
+/// A store that will not open is shown, not swallowed. A library that silently stops
+/// persisting is indistinguishable from an empty one.
+private struct StoreFailure: View {
+    let message: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.hair) {
-            HStack(spacing: Space.tight) {
-                Text(carriedImage ? "IMAGE IN PAYLOAD" : "NO IMAGE")
-                    .font(Type.meta(9))
-                    .foregroundStyle(carriedImage ? Label.primary : Label.tertiary)
-                if let bytes = save.imageData?.count {
-                    Text("\(bytes / 1024) KB")
-                        .font(Type.meta(9))
-                        .foregroundStyle(Label.tertiary)
-                }
-            }
-            ForEach(save.probe, id: \.index) { probe in
-                Text(probe.typeIdentifiers.joined(separator: "  "))
-                    .font(Type.meta(9))
-                    .foregroundStyle(Label.tertiary)
-                    .lineLimit(2)
-            }
+        VStack(spacing: Space.base) {
+            Text("The library could not be opened")
+                .font(Type.title(20))
+                .foregroundStyle(Label.primary)
+            Text(message)
+                .font(Type.meta(11))
+                .foregroundStyle(Label.secondary)
+                .multilineTextAlignment(.center)
         }
-        .padding(.top, Space.tight)
+        .padding(Space.section)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+/// The stage-0 answer, from the most recent drain. Temporary scaffolding: it exists to record
+/// what each app hands the share sheet, and comes out once that question is settled.
+private struct ProbeSection: View {
+    let probes: [InboxDrain.Drained]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.snug) {
+            Text("LAST SHARE PAYLOAD")
+                .font(Type.meta(9))
+                .foregroundStyle(Label.tertiary)
+            ForEach(probes) { probe in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(probe.link?.platform.displayName ?? "unknown")
+                        .font(Type.meta(10))
+                        .foregroundStyle(probe.imageData != nil ? Label.primary : Label.secondary)
+                    ForEach(probe.probe, id: \.index) { entry in
+                        Text(entry.typeIdentifiers.joined(separator: "  "))
+                            .font(Type.meta(9))
+                            .foregroundStyle(Label.tertiary)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, Space.base)
+    }
+}
+

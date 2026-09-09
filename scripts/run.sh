@@ -7,7 +7,8 @@
 #
 #   scripts/run.sh                # launch empty, screenshot, shut down
 #   scripts/run.sh --seed         # inject sample inbox records first, to see the drain path
-#   scripts/run.sh --keep         # leave the simulator up to poke at by hand
+#   scripts/run.sh --relaunch     # relaunch after the first pass, to prove data persisted
+#   scripts/run.sh --keep         # leave the simulator up (it will run hot -- see below)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -18,11 +19,13 @@ APP_GROUP="group.com.matthewpark.allim"
 SHOTS="build/screenshots"
 KEEP=0
 SEED=0
+RELAUNCH=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --keep) KEEP=1; shift ;;
     --seed) SEED=1; shift ;;
+    --relaunch) RELAUNCH=1; shift ;;
     *) echo "unknown flag: $1" >&2; exit 1 ;;
   esac
 done
@@ -96,6 +99,18 @@ sleep 1
 xcrun simctl io "$DEVICE" screenshot "$SHOTS/01-splash.png" >/dev/null 2>&1 || true
 sleep 3
 xcrun simctl io "$DEVICE" screenshot "$SHOTS/02-library.png" >/dev/null 2>&1 || true
+
+if [[ "$RELAUNCH" -eq 1 ]]; then
+  # The inbox is drained and deleted by the first launch, so anything still on screen after
+  # this came out of the database rather than out of the App Group. That is the whole point:
+  # it distinguishes "rendered what it was handed" from "actually persisted".
+  echo "==> relaunching to check persistence"
+  xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" 2>/dev/null || true
+  sleep 1
+  xcrun simctl launch "$DEVICE" "$BUNDLE_ID" >/dev/null
+  sleep 4
+  xcrun simctl io "$DEVICE" screenshot "$SHOTS/03-after-relaunch.png" >/dev/null 2>&1 || true
+fi
 
 echo "==> screenshots in $SHOTS"
 ls -la "$SHOTS"
