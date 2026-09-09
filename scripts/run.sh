@@ -109,7 +109,8 @@ fi
 
 mkdir -p "$SHOTS"
 echo "==> launching"
-xcrun simctl launch "$DEVICE" "$BUNDLE_ID" "${LAUNCH_ARGS[@]}" >/dev/null
+# The +"..." form is required: under `set -u`, expanding an empty array is an error.
+xcrun simctl launch "$DEVICE" "$BUNDLE_ID" ${LAUNCH_ARGS[@]+"${LAUNCH_ARGS[@]}"} >/dev/null
 
 # The wordmark spells itself out over roughly half a second, so the splash is caught early
 # and the library after it has settled.

@@ -86,7 +86,7 @@ struct ImportView: View {
             } label: {
                 Text(scanning ? "Reading…" : "Choose the folder")
                     .font(Type.control)
-                    .foregroundStyle(Surface.canvas)
+                    .foregroundStyle(Label.onInverse)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Space.base)
                     .background(Label.primary, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
@@ -132,7 +132,7 @@ struct ImportView: View {
             } label: {
                 Text(importing ? "Importing…" : "Import")
                     .font(Type.control)
-                    .foregroundStyle(Surface.canvas)
+                    .foregroundStyle(Label.onInverse)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Space.base)
                     .background(Label.primary, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))

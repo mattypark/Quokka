@@ -19,7 +19,7 @@ struct AllimApp: App {
         WindowGroup {
             RootView()
                 .environment(state)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(.light)
         }
         .onChange(of: scenePhase) { _, phase in
             // Saves made through the share sheet land while the app is suspended, so the

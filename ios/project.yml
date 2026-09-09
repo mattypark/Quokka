@@ -69,9 +69,9 @@ targets:
           - KeeponTruckin.ttf
           - Newsreader.ttf
           - JetBrainsMono.ttf
-        # The library is monochrome chrome around colour work; a light appearance would
-        # invert the entire premise.
-        UIUserInterfaceStyle: Dark
+        # Locked light. The interface is paper, and the saved work is the only colour on
+        # it; a dark appearance would invert that relationship rather than adapt it.
+        UIUserInterfaceStyle: Light
         # Declared so a future release can add background enrichment without a plist change
         # shipping separately from the code that needs it.
         BGTaskSchedulerPermittedIdentifiers:
