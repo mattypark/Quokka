@@ -21,6 +21,7 @@ final class AppState {
     private(set) var lastProbe: [InboxDrain.Drained] = []
 
     private let inbox = InboxDrain()
+    private let mirror = LibraryMirror()
     private let logger = Logger(subsystem: "com.matthewpark.allim", category: "state")
     private var store: AllimStore?
     private var fetcher: ThumbnailFetcher?
@@ -147,6 +148,44 @@ final class AppState {
         cursor = page.cursor
         total = try store.count()
         authors = (try? store.authors()) ?? []
+    }
+
+    /// Whether the library is mirrored to a file Claude Code can read.
+    ///
+    /// Off by default, and deliberately so. Writing a person's whole saved library into iCloud
+    /// is a privacy decision that belongs to them, not a convenience to switch on quietly
+    /// because it makes a feature work.
+    var mirrorsToClaude: Bool {
+        get { UserDefaults.standard.bool(forKey: "allimMirrorEnabled") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "allimMirrorEnabled")
+            if newValue { syncMirror() }
+        }
+    }
+
+    /// Rewrites the mirror and applies anything Claude tagged since last time.
+    func syncMirror() {
+        guard mirrorsToClaude, let store else { return }
+        do {
+            // The whole library, not the current page: the mirror is for a program that will
+            // ask its own questions, and a page is an artefact of this app's scrolling.
+            var all: [Item] = []
+            var cursor: ItemCursor?
+            repeat {
+                let page = try store.page(after: cursor, limit: 500)
+                all.append(contentsOf: page.items)
+                cursor = page.cursor
+            } while cursor != nil && all.count < 200_000
+
+            mirror.write(all)
+
+            let applied = mirror.ingestTags { id, tags in
+                try? store.setTags(itemID: id, tags)
+            }
+            if applied > 0 { try reload() }
+        } catch {
+            logger.error("Mirror sync failed: \(error.localizedDescription)")
+        }
     }
 
     func select(author: String?) {

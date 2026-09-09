@@ -6,6 +6,7 @@ import AllimEngine
 struct LibraryView: View {
     @Environment(AppState.self) private var state
     @State private var importing = false
+    @State private var settingsOpen = false
 
     var body: some View {
         NavigationStack {
@@ -31,6 +32,13 @@ struct LibraryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Surface.canvas, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { settingsOpen = true } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .foregroundStyle(Label.secondary)
+                    }
+                    .accessibilityLabel("Settings")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { importing = true } label: {
                         Image(systemName: "tray.and.arrow.down")
@@ -40,6 +48,7 @@ struct LibraryView: View {
                 }
             }
             .sheet(isPresented: $importing) { ImportView() }
+            .sheet(isPresented: $settingsOpen) { SettingsView() }
         }
         .tint(Label.primary)
     }

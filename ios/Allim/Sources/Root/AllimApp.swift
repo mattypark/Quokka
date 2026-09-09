@@ -24,7 +24,10 @@ struct AllimApp: App {
         .onChange(of: scenePhase) { _, phase in
             // Saves made through the share sheet land while the app is suspended, so the
             // foreground transition is when they actually arrive.
-            if phase == .active { state.drainInbox() }
+            if phase == .active {
+                state.drainInbox()
+                state.syncMirror()
+            }
         }
     }
 }

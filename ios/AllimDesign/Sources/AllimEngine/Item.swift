@@ -29,6 +29,8 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
     public var averageColor: Int?
     public var origin: Origin
     public var thumbnailState: ThumbnailState
+    /// A JSON array, written by the on-device tagger or by Claude through the mirror.
+    public var tags: String?
 
     public enum Origin: String, Codable, Sendable {
         case shareSheet
@@ -62,7 +64,8 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
         aspectRatio: Double? = nil,
         averageColor: Int? = nil,
         origin: Origin = .shareSheet,
-        thumbnailState: ThumbnailState = .pending
+        thumbnailState: ThumbnailState = .pending,
+        tags: String? = nil
     ) {
         self.id = id
         self.url = url
@@ -76,6 +79,7 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
         self.averageColor = averageColor
         self.origin = origin
         self.thumbnailState = thumbnailState
+        self.tags = tags
     }
 
     /// Builds an item from a canonicalised link.

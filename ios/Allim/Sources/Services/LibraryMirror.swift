@@ -1,0 +1,136 @@
+import Foundation
+import AllimEngine
+import os
+
+/// Writes the library to a file Claude Code can read, and reads back what it writes.
+///
+/// This is how Allim connects to Claude with **no API key and no per-save cost**: it runs on
+/// the Claude Code subscription already on the machine rather than billing an Anthropic key
+/// embedded in an app bundle.
+///
+/// The transport is a file, not a server, because an iOS app cannot hand a Mac process a
+/// SQLite handle and neither end should have to run a service. iCloud Drive does the syncing;
+/// on the Mac the container is an ordinary folder.
+///
+/// JSONL rather than one JSON document: a half-million-line file appends in constant time and
+/// streams line by line, where a single array has to be parsed whole on both ends.
+struct LibraryMirror {
+    private let logger = Logger(subsystem: "com.matthewpark.allim", category: "mirror")
+
+    static let libraryFile = "library.jsonl"
+    static let tagsFile = "tags.jsonl"
+
+    /// The iCloud container when it is available, the app's own Documents when it is not.
+    ///
+    /// Falling back rather than failing is deliberate. The iCloud entitlement needs the
+    /// capability enabled on the App ID, which is a portal change and not always in place; a
+    /// mirror in Documents is still reachable over AirDrop and through Files, so the feature
+    /// degrades from "syncs by itself" to "you move one file" instead of vanishing.
+    static func directory(fileManager: FileManager = .default) -> (url: URL, synced: Bool)? {
+        if let ubiquity = fileManager.url(forUbiquityContainerIdentifier: nil) {
+            let documents = ubiquity.appendingPathComponent("Documents", isDirectory: true)
+            try? fileManager.createDirectory(at: documents, withIntermediateDirectories: true)
+            return (documents, true)
+        }
+        guard let local = try? fileManager.url(
+            for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true
+        ) else { return nil }
+        return (local, false)
+    }
+
+    // MARK: - Writing
+
+    /// Rewrites the whole mirror.
+    ///
+    /// A full rewrite rather than an append: the library is small in text terms -- roughly
+    /// 200 bytes a row, so 500,000 items is about 100 MB and a realistic library is a few
+    /// megabytes -- and a rewrite cannot drift out of sync with the database the way an
+    /// incremental append eventually does.
+    func write(_ items: [Item]) {
+        guard let (directory, synced) = Self.directory() else {
+            logger.error("No writable mirror directory")
+            return
+        }
+        let url = directory.appendingPathComponent(Self.libraryFile)
+
+        var text = ""
+        text.reserveCapacity(items.count * 220)
+        let encoder = ShareInbox.encoder
+        // One object per line, so the file streams. Pretty-printing would defeat that.
+        encoder.outputFormatting = [.sortedKeys]
+
+        for item in items {
+            guard let data = try? encoder.encode(MirrorRow(item)),
+                  let line = String(data: data, encoding: .utf8)
+            else { continue }
+            text += line + "\n"
+        }
+
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            logger.info("Mirrored \(items.count) items (\(synced ? "iCloud" : "local"))")
+        } catch {
+            logger.error("Mirror write failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Reading tags back
+
+    /// Applies tags Claude wrote, then clears the file.
+    ///
+    /// Clearing is what makes this safe to run on every launch: the file is a queue of work
+    /// that has been done, not a second source of truth competing with the database.
+    func ingestTags(applying: (Int64, [String]) -> Void) -> Int {
+        guard let (directory, _) = Self.directory() else { return 0 }
+        let url = directory.appendingPathComponent(Self.tagsFile)
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else { return 0 }
+
+        var applied = 0
+        for line in text.split(separator: "\n") {
+            guard let data = line.data(using: .utf8),
+                  let row = try? JSONDecoder().decode(TagRow.self, from: data)
+            else { continue }
+            applying(row.id, row.tags)
+            applied += 1
+        }
+
+        if applied > 0 {
+            try? FileManager.default.removeItem(at: url)
+            logger.info("Applied \(applied) tag rows and cleared the queue")
+        }
+        return applied
+    }
+
+    // MARK: - Wire format
+
+    /// Deliberately not `Item` itself. The mirror is a published interface read by a separate
+    /// program, so it gets its own shape that can stay stable while the stored model changes.
+    private struct MirrorRow: Codable {
+        let id: Int64?
+        let url: String
+        let platform: String
+        let author: String?
+        let title: String?
+        let caption: String?
+        let savedAt: Date
+        let origin: String
+        let hasImage: Bool
+
+        init(_ item: Item) {
+            id = item.id
+            url = item.url
+            platform = item.platform.rawValue
+            author = item.author
+            title = item.title
+            caption = item.caption
+            savedAt = item.savedAt
+            origin = item.origin.rawValue
+            hasImage = item.thumbnailState == .stored
+        }
+    }
+
+    private struct TagRow: Decodable {
+        let id: Int64
+        let tags: [String]
+    }
+}

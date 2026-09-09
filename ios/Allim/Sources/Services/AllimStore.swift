@@ -96,6 +96,14 @@ final class AllimStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v2-tags") { db in
+            // A JSON array in a text column. Additive, so an existing library migrates without
+            // touching a row.
+            try db.alter(table: "item") { t in
+                t.add(column: "tags", .text)
+            }
+        }
+
         return migrator
     }
 
@@ -138,6 +146,18 @@ final class AllimStore: Sendable {
                 sql: "UPDATE item SET thumbnailState = ?, aspectRatio = ?, averageColor = ? WHERE id = ?",
                 arguments: [Item.ThumbnailState.stored.rawValue, Double(width) / Double(height), averageColor, itemID]
             )
+        }
+    }
+
+    /// Tags for one item, replacing whatever was there.
+    ///
+    /// Stored as a JSON array in a text column rather than a join table. Tags are only ever
+    /// read alongside their item and written as a complete set, so a second table would add a
+    /// join to every read to support a normalisation nothing here benefits from.
+    func setTags(itemID: Int64, _ tags: [String]) throws {
+        let encoded = String(decoding: (try? JSONEncoder().encode(tags)) ?? Data("[]".utf8), as: UTF8.self)
+        try dbPool.write { db in
+            try db.execute(sql: "UPDATE item SET tags = ? WHERE id = ?", arguments: [encoded, itemID])
         }
     }
 

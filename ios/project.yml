@@ -64,6 +64,11 @@ targets:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # The mirror lives in Documents when iCloud is unavailable, and these two make that
+        # folder visible in Files -- so the file can be moved by hand rather than the feature
+        # being unusable until an App ID capability is enabled in the portal.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
         UIAppFonts:
           - BagelFatOne-Regular.ttf
           - VeryVeryPunk.ttf
