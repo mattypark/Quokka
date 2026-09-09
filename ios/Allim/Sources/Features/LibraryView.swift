@@ -5,6 +5,7 @@ import AllimEngine
 /// The library: everything saved, newest first, as a masonry contact sheet.
 struct LibraryView: View {
     @Environment(AppState.self) private var state
+    @State private var importing = false
 
     var body: some View {
         NavigationStack {
@@ -12,7 +13,7 @@ struct LibraryView: View {
                 if let failure = state.storeFailure {
                     StoreFailure(message: failure)
                 } else if state.items.isEmpty {
-                    EmptyLibrary()
+                    EmptyLibrary { importing = true }
                 } else {
                     grid
                 }
@@ -21,6 +22,16 @@ struct LibraryView: View {
             .navigationTitle(state.total > 0 ? "\(state.total) saved" : "Allim")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Surface.canvas, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { importing = true } label: {
+                        Image(systemName: "tray.and.arrow.down")
+                            .foregroundStyle(Label.secondary)
+                    }
+                    .accessibilityLabel("Import from Instagram")
+                }
+            }
+            .sheet(isPresented: $importing) { ImportView() }
         }
         .tint(Label.primary)
     }
@@ -49,6 +60,7 @@ struct LibraryView: View {
 }
 
 private struct EmptyLibrary: View {
+    var onImport: () -> Void = {}
     var body: some View {
         VStack(spacing: Space.roomy) {
             Wordmark(size: 34, animated: false, showsNative: false)
@@ -60,6 +72,10 @@ private struct EmptyLibrary: View {
             Text("instagram · tiktok · youtube · pinterest · reddit · x")
                 .font(Type.meta(11))
                 .foregroundStyle(Label.tertiary)
+            Button("Import from Instagram") { onImport() }
+                .font(Type.control)
+                .foregroundStyle(Label.primary)
+                .padding(.top, Space.base)
         }
         .padding(Space.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

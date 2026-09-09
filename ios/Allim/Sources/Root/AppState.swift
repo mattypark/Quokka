@@ -80,6 +80,61 @@ final class AppState {
         }
     }
 
+    /// A debug hook for verifying the importer without driving a document picker.
+    ///
+    /// Reads a folder planted in Documents and runs the real scan, parse, dedupe and insert
+    /// path -- only the file picker is bypassed. DEBUG-only so it cannot ship.
+    func importFixtureIfRequested() {
+        #if DEBUG
+        guard let name = UserDefaults.standard.string(forKey: "allimImportFixture") else { return }
+        guard let documents = try? FileManager.default.url(
+            for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false
+        ) else { return }
+
+        let root = documents.appendingPathComponent(name, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: root.path) else {
+            logger.error("No fixture at \(root.path)")
+            return
+        }
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let scanner = ExportScanner()
+            let contents = scanner.scan(root: root)
+            // Mirrors what the UI does by default: the largest thread, plus saved and liked.
+            let account = contents.threads.first?.title
+            let shares = scanner.shares(
+                from: contents, root: root, account: account, includeSaved: true, includeLiked: true
+            )
+            let items = InstagramExport.items(from: shares)
+            let added = await self?.importItems(items) ?? 0
+            await MainActor.run {
+                self?.logger.info(
+                    "Fixture import: thread '\(account ?? "-")', \(shares.count) shares, \(items.count) unique, \(added) added"
+                )
+            }
+        }
+        #endif
+    }
+
+    /// Bulk-inserts imported items and returns how many were new.
+    ///
+    /// Enrichment is deliberately NOT kicked off here. An Instagram import is thousands of
+    /// rows, all of them .unavailable by construction, so there is nothing to fetch -- and
+    /// starting a queue drain after every import would just walk the whole table for nothing.
+    func importItems(_ items: [Item]) async -> Int {
+        guard let store else { return 0 }
+        do {
+            let added = try store.insert(items)
+            try reload()
+            logger.info("Imported \(items.count), added \(added)")
+            return added
+        } catch {
+            storeFailure = error.localizedDescription
+            logger.error("Import failed: \(error.localizedDescription)")
+            return 0
+        }
+    }
+
     /// Reloads from the top. Used after a write, where a cursor from before the write would
     /// skip whatever was just inserted.
     func reload() throws {

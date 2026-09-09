@@ -17,6 +17,9 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
-        .task { state.drainInbox() }
+        .task {
+            state.drainInbox()
+            state.importFixtureIfRequested()
+        }
     }
 }

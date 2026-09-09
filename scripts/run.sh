@@ -7,6 +7,7 @@
 #
 #   scripts/run.sh                # launch empty, screenshot, shut down
 #   scripts/run.sh --seed         # inject sample inbox records first, to see the drain path
+#   scripts/run.sh --export       # plant a synthetic Instagram export and import it
 #   scripts/run.sh --relaunch     # relaunch after the first pass, to prove data persisted
 #   scripts/run.sh --keep         # leave the simulator up (it will run hot -- see below)
 set -euo pipefail
@@ -20,12 +21,14 @@ SHOTS="build/screenshots"
 KEEP=0
 SEED=0
 RELAUNCH=0
+EXPORT=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --keep) KEEP=1; shift ;;
     --seed) SEED=1; shift ;;
     --relaunch) RELAUNCH=1; shift ;;
+    --export) EXPORT=1; shift ;;
     *) echo "unknown flag: $1" >&2; exit 1 ;;
   esac
 done
@@ -89,9 +92,24 @@ if [[ "$SEED" -eq 1 ]]; then
   fi
 fi
 
+LAUNCH_ARGS=()
+if [[ "$EXPORT" -eq 1 ]]; then
+  # The document picker cannot be driven from a script, so the fixture is planted in the app's
+  # own Documents and a debug-only launch argument points the importer straight at it.
+  # Everything after that -- the walk, the parse, the dedupe, the insert -- is the real path.
+  DATA_DIR=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data 2>/dev/null || true)
+  if [[ -n "$DATA_DIR" ]]; then
+    rm -rf "$DATA_DIR/Documents/TestExport"
+    node scripts/seed-export.mjs "$DATA_DIR/Documents/TestExport"
+    LAUNCH_ARGS=(-allimImportFixture TestExport)
+  else
+    echo "!! no data container yet -- launch once, then re-run with --export" >&2
+  fi
+fi
+
 mkdir -p "$SHOTS"
 echo "==> launching"
-xcrun simctl launch "$DEVICE" "$BUNDLE_ID" >/dev/null
+xcrun simctl launch "$DEVICE" "$BUNDLE_ID" "${LAUNCH_ARGS[@]}" >/dev/null
 
 # The wordmark spells itself out over roughly half a second, so the splash is caught early
 # and the library after it has settled.
