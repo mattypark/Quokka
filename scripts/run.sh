@@ -41,10 +41,19 @@ cleanup() {
     echo "shutting down $DEVICE_NAME"
     xcrun simctl shutdown "$DEVICE" 2>/dev/null || true
   else
-    echo "leaving $DEVICE_NAME booted (--keep)"
+    # A booted runtime spawns mediaanalysisd, which has been measured at 691% CPU and 201F
+    # on this machine. --keep is a real option, but it is never the quiet one.
+    echo ""
+    echo "  !!  $DEVICE_NAME LEFT BOOTED (--keep)"
+    echo "  !!  mediaanalysisd will peg a core until you run:"
+    echo "  !!    xcrun simctl shutdown $DEVICE"
+    echo ""
   fi
 }
-trap cleanup EXIT
+
+# EXIT alone is not enough. An interrupted run (Ctrl-C, a killed parent) can skip it and
+# leave the simulator booted and hot with nothing having said so.
+trap cleanup EXIT INT TERM HUP
 
 echo "==> generating project"
 (cd ios && xcodegen generate >/dev/null)

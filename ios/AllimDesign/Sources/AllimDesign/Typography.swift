@@ -3,18 +3,27 @@ import SwiftUI
 import UIKit
 #endif
 
-/// Three faces, each with one job.
+/// Five faces, each with exactly one job.
 ///
-/// Newsreader is display-only -- the wordmark and collection titles. SF Pro carries every
-/// functional string. JetBrains Mono carries metadata: counts, dates, hosts. The mono against
-/// the serif is what makes a wall of monochrome read as an archive rather than a dev tool,
-/// and it is the whole reason three faces earn their place instead of one.
+/// Two of these are heavy display faces, which is more than a minimal interface would
+/// normally carry. They work here because their scope is narrow: Bagel Fat One appears only
+/// as the wordmark, Keep on Truckin only on collection titles. Everything a person actually
+/// reads is SF Pro or mono. The display faces are the moments, not the material -- and set
+/// large in white on true black, a fat face reads as a poster rather than as decoration.
+///
+/// Newsreader stands in for Copernicus, Anthropic's brand serif, which is a licensed foundry
+/// face and not distributable. It carries the fallback tile, where a title set in a serif at
+/// size IS the artwork for the three platforms that never yield a thumbnail.
 public enum Face {
-    public static let display = "Newsreader-Regular"
+    /// Wordmark only.
+    public static let wordmark = "BagelFatOne-Regular"
+    /// Collection and section titles only.
+    public static let feature = "KeeponTruckinFW"
+    /// Editorial serif -- tile titles, long text.
+    public static let editorial = "Newsreader16pt-Regular"
+    /// Metadata: counts, timestamps, hosts.
     public static let mono = "JetBrainsMono-Regular"
 
-    /// Whether a face is actually registered. Resolved once: `UIFont(name:)` is not free, and
-    /// this is consulted on every text style.
     static func isBundled(_ name: String) -> Bool {
         #if canImport(UIKit)
         bundledCache.value(for: name)
@@ -43,32 +52,39 @@ public enum Face {
 
 public enum Type {
 
-    /// Falls back to the system serif rather than to SF Pro when Newsreader is absent.
-    ///
-    /// `Font.custom` on a missing face silently substitutes the *default* system font, which
-    /// turns a missing serif into an invisible bug -- the wordmark would just quietly stop
-    /// being a serif and nobody would notice for weeks. Choosing `.serif` explicitly keeps
-    /// the design intent legible even before the licensed files are in the bundle.
-    private static func display(_ size: CGFloat, _ weight: Font.Weight) -> Font {
-        Face.isBundled(Face.display)
-            ? .custom(Face.display, size: size).weight(weight)
-            : .system(size: size, weight: weight, design: .serif)
+    /// Falls back to an explicit system *design* rather than letting `Font.custom` silently
+    /// substitute the default face. A missing font would otherwise turn a serif into SF Pro
+    /// with no error anywhere, and nobody notices for weeks.
+    private static func custom(
+        _ name: String,
+        _ size: CGFloat,
+        weight: Font.Weight = .regular,
+        fallback: Font.Design = .default
+    ) -> Font {
+        Face.isBundled(name)
+            ? .custom(name, size: size).weight(weight)
+            : .system(size: size, weight: weight, design: fallback)
     }
 
-    private static func monospaced(_ size: CGFloat) -> Font {
-        Face.isBundled(Face.mono)
-            ? .custom(Face.mono, size: size)
-            : .system(size: size, weight: .regular, design: .monospaced)
+    // MARK: Display
+
+    public static func wordmark(_ size: CGFloat = 46) -> Font {
+        custom(Face.wordmark, size, weight: .regular, fallback: .rounded)
     }
 
-    // MARK: Display -- Newsreader
+    /// Collection names. The one place the groovy face is allowed.
+    public static func feature(_ size: CGFloat = 26) -> Font {
+        custom(Face.feature, size, weight: .regular, fallback: .rounded)
+    }
 
-    public static func wordmark(_ size: CGFloat = 44) -> Font { display(size, .medium) }
-    public static func title(_ size: CGFloat = 22) -> Font { display(size, .regular) }
+    public static func title(_ size: CGFloat = 22) -> Font {
+        custom(Face.editorial, size, fallback: .serif)
+    }
 
-    /// The fallback tile leans on this: when no thumbnail exists, the title at size IS the
-    /// artwork, so this is a load-bearing style rather than a decorative one.
-    public static func tileTitle(_ size: CGFloat = 17) -> Font { display(size, .regular) }
+    /// The fallback tile leans on this: with no thumbnail, the title at size is the artwork.
+    public static func tileTitle(_ size: CGFloat = 17) -> Font {
+        custom(Face.editorial, size, fallback: .serif)
+    }
 
     // MARK: Functional -- SF Pro
 
@@ -77,17 +93,18 @@ public enum Type {
     public static let control = Font.system(size: 15, weight: .medium)
     public static let caption = Font.system(size: 13, weight: .regular)
 
-    // MARK: Metadata -- JetBrains Mono
+    // MARK: Metadata
 
-    public static func meta(_ size: CGFloat = 11) -> Font { monospaced(size) }
+    public static func meta(_ size: CGFloat = 11) -> Font {
+        custom(Face.mono, size, fallback: .monospaced)
+    }
 }
 
 public enum FontRegistration {
-    static let required = [Face.display, Face.mono]
+    static let required = [Face.wordmark, Face.feature, Face.editorial, Face.mono]
 
-    /// Reports which faces are missing. Deliberately not an assertion: the app is designed to
-    /// run correctly on system fallbacks, so a missing font is a note for the console, not a
-    /// crash that blocks work until someone downloads a file.
+    /// Reports rather than crashes. Every style above has a real system fallback, so a missing
+    /// file degrades the design instead of blocking the build.
     @discardableResult
     public static func missingFaces() -> [String] {
         required.filter { !Face.isBundled($0) }

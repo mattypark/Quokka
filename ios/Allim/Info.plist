@@ -24,6 +24,13 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>BagelFatOne-Regular.ttf</string>
+		<string>KeeponTruckin.ttf</string>
+		<string>Newsreader.ttf</string>
+		<string>JetBrainsMono.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>

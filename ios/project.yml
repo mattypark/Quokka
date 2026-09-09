@@ -8,6 +8,14 @@ options:
 packages:
   AllimDesign:
     path: AllimDesign
+  # Chosen over SwiftData deliberately. SwiftData models are @MainActor-isolated, so a
+  # 3,000-row Instagram import marshals onto the main thread, and @Attribute(.externalStorage)
+  # spills blobs to loose files -- which is the exact 500k-small-files problem that storing
+  # thumbnails as BLOBs exists to avoid. GRDB gives WAL, non-blocking concurrent reads through
+  # DatabasePool, and direct control over page_size and blob layout.
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "7.0.0"
 
 targets:
 
@@ -29,6 +37,8 @@ targets:
       - package: AllimDesign
       - package: AllimDesign
         product: AllimEngine
+      - package: GRDB
+        product: GRDB
       - target: AllimShare
         embed: true
     entitlements:
@@ -52,6 +62,11 @@ targets:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        UIAppFonts:
+          - BagelFatOne-Regular.ttf
+          - KeeponTruckin.ttf
+          - Newsreader.ttf
+          - JetBrainsMono.ttf
         # The library is monochrome chrome around colour work; a light appearance would
         # invert the entire premise.
         UIUserInterfaceStyle: Dark

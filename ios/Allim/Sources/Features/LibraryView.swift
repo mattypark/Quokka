@@ -40,8 +40,8 @@ struct LibraryView: View {
 private struct EmptyLibrary: View {
     var body: some View {
         VStack(spacing: Space.roomy) {
-            Wordmark(size: 34, animated: false)
-                .opacity(0.5)
+            Wordmark(size: 34, animated: false, showsNative: false)
+                .opacity(0.45)
             Text("Share a post to Allim and it lands here.")
                 .font(Type.body)
                 .foregroundStyle(Label.secondary)
