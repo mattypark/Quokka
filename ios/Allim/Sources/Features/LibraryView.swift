@@ -2,86 +2,71 @@ import SwiftUI
 import AllimDesign
 import AllimEngine
 
-/// The library: everything saved, newest first, as a masonry contact sheet.
+/// Everything saved, newest first, as one uninterrupted field of tiles.
 struct LibraryView: View {
     @Environment(AppState.self) private var state
-    @State private var importing = false
-    @State private var settingsOpen = false
+    var onImport: () -> Void = {}
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let failure = state.storeFailure {
-                    StoreFailure(message: failure)
-                } else if state.items.isEmpty {
-                    EmptyLibrary { importing = true }
-                } else {
-                    VStack(spacing: 0) {
-                        CollectionBar(
-                            authors: state.authors,
-                            total: state.total,
-                            selected: state.selectedAuthor,
-                            onSelect: { state.select(author: $0) }
-                        )
-                        grid
-                    }
-                }
+        Group {
+            if let failure = state.storeFailure {
+                StoreFailure(message: failure)
+            } else if state.items.isEmpty {
+                EmptyLibrary(onImport: onImport)
+            } else {
+                grid
             }
-            .background(Surface.canvas)
-            .navigationTitle("Allim")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Surface.canvas, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { settingsOpen = true } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundStyle(Label.secondary)
-                    }
-                    .accessibilityLabel("Settings")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { importing = true } label: {
-                        Image(systemName: "tray.and.arrow.down")
-                            .foregroundStyle(Label.secondary)
-                    }
-                    .accessibilityLabel("Import from Instagram")
-                }
-            }
-            .sheet(isPresented: $importing) { ImportView() }
-            .sheet(isPresented: $settingsOpen) { SettingsView() }
         }
-        .tint(Label.primary)
+        .background(Surface.canvas)
     }
 
     private var grid: some View {
         GeometryReader { proxy in
-            ScrollView {
-                MasonryGrid(
-                    items: state.items,
-                    columns: Grid.columns,
-                    spacing: Grid.gutter,
-                    width: proxy.size.width - Grid.gutter * 2
-                ) { item, _ in
-                    ItemTile(item: item, loader: state.loader)
-                        .onAppear {
-                            // The keyset cursor makes this safe even when saves land at the
-                            // head mid-scroll, which OFFSET paging would not be.
-                            if item.id == state.items.last?.id { state.loadMore() }
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    FloatingHeader(
+                        title: state.selectedAuthor ?? "Everything",
+                        subtitle: "\(state.total) saved",
+                        trailing: {
+                            AnyView(
+                                Button(action: onImport) {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Label.onInverse)
+                                        .frame(width: 34, height: 34)
+                                        .background(Surface.inverse, in: Circle())
+                                }
+                                .accessibilityLabel("Import from Instagram")
+                            )
                         }
+                    )
+
+                    MasonryGrid(
+                        items: state.items,
+                        columns: Grid.columns,
+                        spacing: Grid.gutter,
+                        width: proxy.size.width - Grid.margin * 2
+                    ) { item, _ in
+                        ItemTile(item: item, loader: state.loader)
+                            .onAppear {
+                                // The keyset cursor makes this safe even when saves land at the
+                                // head mid-scroll, which OFFSET paging would not be.
+                                if item.id == state.items.last?.id { state.loadMore() }
+                            }
+                    }
+                    .padding(.horizontal, Grid.margin)
                 }
-                .padding(.horizontal, Grid.gutter)
-                .padding(.bottom, Space.section)
+                .padding(.bottom, Grid.bottomInset)
             }
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 }
 
 /// The empty library.
 ///
-/// The only screen in the app that gets the statement face, and it gets it because this is the
-/// one moment with nothing else on it -- no thumbnails, no colour, nothing competing. A
-/// ransom-note face here reads as a poster; anywhere with content on it, it would read as
-/// noise. The rest of the app stays quiet on purpose so that this lands.
+/// The only screen with nothing else on it -- no thumbnails, no colour, nothing competing --
+/// which is why it is the one place the statement face reads as a poster rather than as noise.
 private struct EmptyLibrary: View {
     var onImport: () -> Void = {}
 
@@ -89,13 +74,6 @@ private struct EmptyLibrary: View {
         VStack(spacing: Space.roomy) {
             Spacer()
 
-            // Two words, not three, and specifically not "YOUR".
-            //
-            // Every glyph in this face is a separate found object, and its R is a cutout that
-            // carries an apostrophe-e along with it -- so "YOUR" renders as "YOU'RE" and the
-            // first screen of the app ships with a grammatical error in 52pt type. The face is
-            // worth the constraint, but the constraint is real: check any word set in it, and
-            // prefer short ones.
             VStack(spacing: -2) {
                 Text("BUILD")
                 Text("TASTE")
@@ -103,7 +81,6 @@ private struct EmptyLibrary: View {
             .font(Type.statement(58))
             .foregroundStyle(Label.primary)
             .multilineTextAlignment(.center)
-                        // One mark, not three words, to anything reading the screen aloud.
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Build taste")
 
@@ -124,15 +101,11 @@ private struct EmptyLibrary: View {
                         .padding(.vertical, Space.base)
                         .background(Surface.inverse, in: Capsule())
                 }
-
                 Text("or share a post to Allim from any app")
                     .font(Type.caption)
                     .foregroundStyle(Label.tertiary)
-
-                Text("instagram · tiktok · youtube · pinterest · reddit · x")
-                    .font(Type.meta(10))
-                    .foregroundStyle(Label.dim)
             }
+            .padding(.bottom, Grid.bottomInset)
         }
         .padding(Space.section)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

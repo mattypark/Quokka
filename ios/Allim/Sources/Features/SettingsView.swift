@@ -2,6 +2,10 @@ import SwiftUI
 import AllimDesign
 
 struct SettingsView: View {
+    /// Settings is a tab now, not a sheet, so it must not draw its own dismiss button when it
+    /// is embedded -- a Done button that closes nothing is worse than no button.
+    var embedded = false
+
     @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
 
@@ -58,14 +62,17 @@ struct SettingsView: View {
                     }
                 }
                 .padding(Space.roomy)
+                .padding(.bottom, Grid.bottomInset)
             }
             .background(Surface.canvas)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Surface.canvas, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }.font(Type.control)
+                if !embedded {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { dismiss() }.font(Type.control)
+                    }
                 }
             }
         }

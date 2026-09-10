@@ -277,6 +277,25 @@ final class AllimStore: Sendable {
         }
     }
 
+    /// A handful of items per author, for building a mosaic cover.
+    ///
+    /// Prefers items that actually have a thumbnail: a cover made of four blank text cards
+    /// tells you nothing about what is inside, which defeats the point of a cover.
+    func coverItems(author: String, limit: Int = 4) throws -> [Item] {
+        try dbPool.read { db in
+            try Item.fetchAll(
+                db,
+                sql: """
+                    SELECT * FROM item
+                    WHERE author = ?
+                    ORDER BY (thumbnailState = 'stored') DESC, savedAt DESC
+                    LIMIT ?
+                    """,
+                arguments: [author, limit]
+            )
+        }
+    }
+
     func count() throws -> Int {
         try dbPool.read { db in try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM item") ?? 0 }
     }

@@ -15,19 +15,29 @@ public enum Space {
 }
 
 public enum Radius {
-    /// Cards. Deliberately small: a heavy corner radius reads as friendly-app, and the grid
-    /// is meant to read as a contact sheet.
-    public static let card: CGFloat = 6
-    public static let control: CGFloat = 8
+    /// Tiles.
+    ///
+    /// Generous on purpose. A small radius reads as a contact sheet -- documents pinned to a
+    /// board -- and a large one reads as objects you can pick up. Pinterest and Cosmos both
+    /// sit here, and it is most of why their grids feel handled rather than filed.
+    public static let card: CGFloat = 16
+    public static let control: CGFloat = 12
+    public static let sheet: CGFloat = 24
     public static let pill: CGFloat = 999
 }
 
 public enum Grid {
-    /// The gutter between masonry tiles. Narrow on purpose -- tiles are the only colour on a
-    /// black field, so they need to sit close enough to read as one surface.
-    public static let gutter: CGFloat = 3
+    /// The gap between tiles, and the inset from the screen edge.
+    ///
+    /// Equal on both, which is what makes a masonry grid read as one field of objects rather
+    /// than as a boxed-in table. The grid runs to the edges of the screen and scrolls under
+    /// the floating chrome.
+    public static let gutter: CGFloat = 8
+    public static let margin: CGFloat = 8
     public static let columns = 2
     public static let columnsWide = 3
+    /// Room left at the bottom of a scroll so the last row clears the tab bar.
+    public static let bottomInset: CGFloat = 96
 }
 
 public enum Stroke {

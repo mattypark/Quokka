@@ -188,6 +188,11 @@ final class AppState {
         }
     }
 
+    /// Cover items for one author, for the collections grid.
+    func coverItems(for author: String) -> [Item] {
+        (try? store?.coverItems(author: author)) ?? []
+    }
+
     func select(author: String?) {
         selectedAuthor = author
         try? reload()
