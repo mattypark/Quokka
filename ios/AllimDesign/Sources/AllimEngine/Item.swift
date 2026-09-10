@@ -31,6 +31,13 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
     public var thumbnailState: ThumbnailState
     /// A JSON array, written by the on-device tagger or by Claude through the mirror.
     public var tags: String?
+    /// How many times a thumbnail fetch has been tried and failed.
+    ///
+    /// Bounded retry, not unlimited: a network blip should not cost a tile its picture
+    /// forever, and a genuinely dead URL should not be retried on every launch until the end
+    /// of time. Three attempts distinguishes the two without anyone having to decide which
+    /// kind of failure it was.
+    public var enrichAttempts: Int
 
     public enum Origin: String, Codable, Sendable {
         case shareSheet
@@ -65,7 +72,8 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
         averageColor: Int? = nil,
         origin: Origin = .shareSheet,
         thumbnailState: ThumbnailState = .pending,
-        tags: String? = nil
+        tags: String? = nil,
+        enrichAttempts: Int = 0
     ) {
         self.id = id
         self.url = url
@@ -80,6 +88,7 @@ public struct Item: Codable, Sendable, Equatable, Identifiable {
         self.origin = origin
         self.thumbnailState = thumbnailState
         self.tags = tags
+        self.enrichAttempts = enrichAttempts
     }
 
     /// Builds an item from a canonicalised link.

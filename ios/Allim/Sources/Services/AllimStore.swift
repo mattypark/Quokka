@@ -104,6 +104,12 @@ final class AllimStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v3-retries") { db in
+            try db.alter(table: "item") { t in
+                t.add(column: "enrichAttempts", .integer).notNull().defaults(to: 0)
+            }
+        }
+
         return migrator
     }
 
@@ -143,7 +149,9 @@ final class AllimStore: Sendable {
                 arguments: [itemID, bytes, width, height, format]
             )
             try db.execute(
-                sql: "UPDATE item SET thumbnailState = ?, aspectRatio = ?, averageColor = ? WHERE id = ?",
+                // Resets the attempt counter: a success means whatever was wrong is no longer
+                // wrong, and a later failure deserves its own full budget of retries.
+                sql: "UPDATE item SET thumbnailState = ?, aspectRatio = ?, averageColor = ?, enrichAttempts = 0 WHERE id = ?",
                 arguments: [Item.ThumbnailState.stored.rawValue, Double(width) / Double(height), averageColor, itemID]
             )
         }
@@ -212,14 +220,42 @@ final class AllimStore: Sendable {
         }
     }
 
-    /// Items still wanting a thumbnail. `.unavailable` is excluded by construction, so the
-    /// three platforms that serve nothing are never retried.
+    /// How many times a thumbnail fetch is retried before the item is left alone.
+    static let maxEnrichAttempts = 3
+
+    /// Items still wanting a thumbnail.
+    ///
+    /// Includes `.failed` while it is under the retry ceiling: a transient network failure
+    /// should not cost a tile its picture permanently, which is what happened when only
+    /// `.pending` was ever re-queued. `.unavailable` is excluded by construction, so the three
+    /// platforms that serve nothing are never retried at all.
     func pendingEnrichment(limit: Int = 25) throws -> [Item] {
         try dbPool.read { db in
             try Item.fetchAll(
                 db,
-                sql: "SELECT * FROM item WHERE thumbnailState = ? ORDER BY savedAt DESC LIMIT ?",
-                arguments: [Item.ThumbnailState.pending.rawValue, limit]
+                sql: """
+                    SELECT * FROM item
+                    WHERE thumbnailState = ?
+                       OR (thumbnailState = ? AND enrichAttempts < ?)
+                    ORDER BY savedAt DESC
+                    LIMIT ?
+                    """,
+                arguments: [
+                    Item.ThumbnailState.pending.rawValue,
+                    Item.ThumbnailState.failed.rawValue,
+                    Self.maxEnrichAttempts,
+                    limit,
+                ]
+            )
+        }
+    }
+
+    /// Marks a failed attempt, counting it so the retry is bounded.
+    func recordEnrichFailure(itemID: Int64) throws {
+        try dbPool.write { db in
+            try db.execute(
+                sql: "UPDATE item SET thumbnailState = ?, enrichAttempts = enrichAttempts + 1 WHERE id = ?",
+                arguments: [Item.ThumbnailState.failed.rawValue, itemID]
             )
         }
     }

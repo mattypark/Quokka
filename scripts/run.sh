@@ -22,6 +22,7 @@ KEEP=0
 SEED=0
 RELAUNCH=0
 EXPORT=0
+TAB=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -29,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --seed) SEED=1; shift ;;
     --relaunch) RELAUNCH=1; shift ;;
     --export) EXPORT=1; shift ;;
+    --tab) TAB="$2"; shift 2 ;;
     *) echo "unknown flag: $1" >&2; exit 1 ;;
   esac
 done
@@ -93,6 +95,7 @@ if [[ "$SEED" -eq 1 ]]; then
 fi
 
 LAUNCH_ARGS=()
+if [[ -n "$TAB" ]]; then LAUNCH_ARGS+=(-allimTab "$TAB"); fi
 if [[ "$EXPORT" -eq 1 ]]; then
   # The document picker cannot be driven from a script, so the fixture is planted in the app's
   # own Documents and a debug-only launch argument points the importer straight at it.
@@ -101,7 +104,8 @@ if [[ "$EXPORT" -eq 1 ]]; then
   if [[ -n "$DATA_DIR" ]]; then
     rm -rf "$DATA_DIR/Documents/TestExport"
     node scripts/seed-export.mjs "$DATA_DIR/Documents/TestExport"
-    LAUNCH_ARGS=(-allimImportFixture TestExport)
+    # Append, never assign -- assigning here silently discarded --tab.
+    LAUNCH_ARGS+=(-allimImportFixture TestExport)
   else
     echo "!! no data container yet -- launch once, then re-run with --export" >&2
   fi
@@ -126,7 +130,8 @@ if [[ "$RELAUNCH" -eq 1 ]]; then
   echo "==> relaunching to check persistence"
   xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" 2>/dev/null || true
   sleep 1
-  xcrun simctl launch "$DEVICE" "$BUNDLE_ID" >/dev/null
+  # Same arguments as the first launch, or --tab is silently lost on the relaunch capture.
+  xcrun simctl launch "$DEVICE" "$BUNDLE_ID" ${LAUNCH_ARGS[@]+"${LAUNCH_ARGS[@]}"} >/dev/null
   sleep 4
   xcrun simctl io "$DEVICE" screenshot "$SHOTS/03-after-relaunch.png" >/dev/null 2>&1 || true
 fi

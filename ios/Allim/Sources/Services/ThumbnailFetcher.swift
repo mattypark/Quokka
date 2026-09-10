@@ -49,7 +49,7 @@ actor ThumbnailFetcher {
         guard let url = URL(string: item.url),
               let link = LinkCanonicaliser.canonicalise(item.url)
         else {
-            try? store.setThumbnailState(itemID: id, .failed)
+            try? store.recordEnrichFailure(itemID: id)
             return false
         }
 
@@ -60,12 +60,12 @@ actor ThumbnailFetcher {
             // .failed, not .unavailable: a network blip should be retryable, whereas
             // .unavailable means the platform structurally serves nothing. Conflating them
             // would either retry forever or give up permanently on a transient failure.
-            try? store.setThumbnailState(itemID: id, .failed)
+            try? store.recordEnrichFailure(itemID: id)
             return false
         }
 
         guard let thumbnail = ImageDownsampler.thumbnail(from: imageData) else {
-            try? store.setThumbnailState(itemID: id, .failed)
+            try? store.recordEnrichFailure(itemID: id)
             return false
         }
 

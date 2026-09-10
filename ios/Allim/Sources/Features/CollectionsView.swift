@@ -87,26 +87,53 @@ private struct CollectionCover: View {
     let items: [Item]
     let loader: ThumbnailLoader?
 
+    /// Only items that actually have a picture. A mosaic of blank cards says nothing about
+    /// what is inside, which is the one job a cover has.
+    private var usableItems: [Item] {
+        items.filter { $0.thumbnailState == .stored }
+    }
+
+    /// Two letters, from a handle like "kitchen.studio", "r/design" or "nasa".
+    ///
+    /// A multi-part handle takes one letter from each of the first two parts; a single word
+    /// takes its first two. Without that second case "nasa" renders as a lone "N" next to
+    /// "BA" and the grid looks inconsistent rather than considered.
+    private var monogram: String {
+        let parts = author.name
+            .split(whereSeparator: { ".-_/ ".contains($0) })
+            .filter { !$0.isEmpty }
+
+        if parts.count >= 2 {
+            return String(parts.prefix(2).compactMap(\.first)).uppercased()
+        }
+        return String((parts.first ?? "").prefix(2)).uppercased()
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Space.snug) {
             ZStack {
                 Surface.raised
                 // Four quadrants, filled with whatever exists. One item fills the whole cover,
                 // which reads better than one tile floating in three empty ones.
-                switch items.count {
+                switch usableItems.count {
                 case 0:
-                    EmptyView()
+                    // Every save here is from a platform that publishes no image -- Instagram
+                    // collections are usually entirely this. A monogram is a deliberate cover
+                    // rather than a grey square that reads as a loading failure.
+                    Text(monogram)
+                        .font(Type.title(46))
+                        .foregroundStyle(Label.dim)
                 case 1:
-                    tile(items[0])
+                    tile(usableItems[0])
                 default:
                     Grid(horizontalSpacing: 1, verticalSpacing: 1) {
                         GridRow {
-                            tile(items[0])
-                            tile(items.count > 1 ? items[1] : items[0])
+                            tile(usableItems[0])
+                            tile(usableItems[1 % usableItems.count])
                         }
                         GridRow {
-                            tile(items.count > 2 ? items[2] : items[0])
-                            tile(items.count > 3 ? items[3] : items[min(1, items.count - 1)])
+                            tile(usableItems[2 % usableItems.count])
+                            tile(usableItems[3 % usableItems.count])
                         }
                     }
                 }

@@ -3,9 +3,20 @@ import AllimDesign
 
 struct RootView: View {
     @Environment(AppState.self) private var state
-    @State private var showingSplash = true
-    @State private var tab: TabBar.Tab = .library
+    @State private var showingSplash = Self.launchTab == .library
+    @State private var tab: TabBar.Tab = Self.launchTab
     @State private var importing = false
+
+    /// Lets a screenshot run open on a specific tab. Debug-only, so it cannot ship.
+    private static var launchTab: TabBar.Tab {
+        #if DEBUG
+        if let name = UserDefaults.standard.string(forKey: "allimTab"),
+           let tab = TabBar.Tab(rawValue: name) {
+            return tab
+        }
+        #endif
+        return .library
+    }
 
     var body: some View {
         ZStack {
