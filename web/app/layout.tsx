@@ -8,12 +8,11 @@ import "./globals.css";
 // Keep on Truckin is deliberately absent. It is licensed for personal use only, which is
 // defensible on a private build running on one phone and is not defensible on a public
 // marketing site. See docs/DECISIONS.md.
-// Bagel Fat One, subsetted to exactly the glyphs the wordmark uses: A L I M and 알림.
+// Bagel Fat One, subsetted to exactly the glyphs the wordmark uses: A, L, I and M.
 //
-// Self-hosted rather than pulled from next/font/google, because the Google loader only offers
-// this face's latin subsets -- the Hangul would silently fall back to a system font and quietly
-// destroy the one idea the mark is built on, that both lines are the same typeface. Google's
-// own CSS API will subset by glyph via ?text=, which turns a 1.5 MB file into 2.6 kB.
+// Self-hosted rather than pulled from next/font/google so the file carries four glyphs instead
+// of a full character set -- 2.6 kB against 1.5 MB. Google's own CSS API does the subsetting
+// via ?text=.
 const display = localFont({
   src: "./fonts/BagelFatOne-wordmark.woff2",
   variable: "--font-display",
