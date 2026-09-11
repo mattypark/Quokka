@@ -19,7 +19,36 @@ final class InboxDrain {
         let link: CanonicalLink?
         let rawText: String?
         let imageData: Data?
+        /// Where the shared video now lives in the app's own storage.
+        ///
+        /// A path, not bytes. Videos are too large to carry in memory, and transcription reads
+        /// from a file anyway.
+        let movieURL: URL?
         let probe: [ProviderProbe]
+    }
+
+    /// Moves a shared video into the app's own Application Support directory.
+    ///
+    /// A move, not a copy: the file is often hundreds of megabytes and duplicating it to delete
+    /// the original a moment later is a pointless round trip through the disk.
+    private static func adoptMovie(named filename: String, from inbox: URL) -> URL? {
+        let manager = FileManager.default
+        guard let support = try? manager.url(
+            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true
+        ) else { return nil }
+
+        let videos = support.appendingPathComponent("Allim/Videos", isDirectory: true)
+        try? manager.createDirectory(at: videos, withIntermediateDirectories: true)
+
+        let source = inbox.appendingPathComponent(filename)
+        let destination = videos.appendingPathComponent(filename)
+        do {
+            if manager.fileExists(atPath: destination.path) { try manager.removeItem(at: destination) }
+            try manager.moveItem(at: source, to: destination)
+            return destination
+        } catch {
+            return nil
+        }
     }
 
     func drain(deleting: Bool = true) -> [Drained] {
@@ -58,6 +87,14 @@ final class InboxDrain {
                 if deleting { try? FileManager.default.removeItem(at: imageURL) }
             }
 
+            // Moved out of the shared container rather than read. The App Group is an inbox,
+            // not storage -- leaving a 200 MB video there means the extension's container grows
+            // without anything owning the cleanup.
+            var movieURL: URL?
+            if let filename = record.movieFilename {
+                movieURL = Self.adoptMovie(named: filename, from: directory)
+            }
+
             results.append(
                 Drained(
                     id: record.id,
@@ -65,6 +102,7 @@ final class InboxDrain {
                     link: record.linkCandidate.flatMap(LinkCanonicaliser.canonicalise),
                     rawText: record.rawText,
                     imageData: imageData,
+                    movieURL: movieURL,
                     probe: record.probe
                 )
             )

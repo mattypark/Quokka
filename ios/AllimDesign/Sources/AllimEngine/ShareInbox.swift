@@ -29,6 +29,14 @@ public struct ShareInboxRecord: Codable, Sendable, Equatable {
     public let rawText: String?
     /// Filename, relative to the inbox directory, of an image the share payload carried.
     public let imageFilename: String?
+    /// Filename of a **video file** the share payload carried.
+    ///
+    /// This is the only lawful door to a transcript. No platform's share sheet hands over a
+    /// video for a link -- it is always a URL, and every sanctioned API refuses the media for
+    /// a video the user does not own. What does work is the user saving the video to Photos
+    /// first and sharing the file: then it is their file, handed over by the system, and
+    /// transcription happens on device with nothing fetched and nothing circumvented.
+    public let movieFilename: String?
     public let probe: [ProviderProbe]
 
     public init(
@@ -37,6 +45,7 @@ public struct ShareInboxRecord: Codable, Sendable, Equatable {
         rawURL: String?,
         rawText: String?,
         imageFilename: String? = nil,
+        movieFilename: String? = nil,
         probe: [ProviderProbe] = []
     ) {
         self.id = id
@@ -44,15 +53,23 @@ public struct ShareInboxRecord: Codable, Sendable, Equatable {
         self.rawURL = rawURL
         self.rawText = rawText
         self.imageFilename = imageFilename
+        self.movieFilename = movieFilename
         self.probe = probe
     }
 
     /// The best string to canonicalise from. A URL attachment is authoritative; the text is a
     /// fallback because several apps send the link only inside a sentence.
+    ///
+    /// YouTube in particular arrives as `public.plain-text` rather than `public.url`, which is
+    /// the most common way a share extension silently drops a save.
     public var linkCandidate: String? {
         if let rawURL, !rawURL.isEmpty { return rawURL }
         return rawText
     }
+
+    /// A share carrying a video file rather than a link. These are the ones that can be
+    /// transcribed, because the user handed over their own file.
+    public var carriesMovie: Bool { movieFilename != nil }
 }
 
 /// The App Group directory both processes agree on.

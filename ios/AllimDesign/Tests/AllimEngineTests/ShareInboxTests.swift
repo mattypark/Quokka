@@ -78,6 +78,27 @@ struct ShareInboxTests {
         #expect(record.linkCandidate == "https://youtu.be/abc")
     }
 
+    @Test("A shared video is carried in the record and flagged")
+    func recordCarriesMovie() throws {
+        // The lawful route to a transcript: the user saves a reel to Photos and shares the
+        // file. No platform hands a video to the share sheet for a link, and every sanctioned
+        // API refuses the media for a video the user does not own -- so this is the only door,
+        // and it has to survive the wire format.
+        let record = ShareInboxRecord(rawURL: nil, rawText: nil, movieFilename: "abc.mov")
+        #expect(record.carriesMovie == true)
+
+        let decoded = try ShareInbox.decoder.decode(
+            ShareInboxRecord.self, from: ShareInbox.encoder.encode(record)
+        )
+        #expect(decoded.movieFilename == "abc.mov")
+        #expect(decoded.carriesMovie == true)
+    }
+
+    @Test("A link-only share carries no movie")
+    func linkShareHasNoMovie() {
+        #expect(ShareInboxRecord(rawURL: "https://youtu.be/abc", rawText: nil).carriesMovie == false)
+    }
+
     @Test("Pending records drain oldest first, so import order matches save order")
     func drainOrder() throws {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())

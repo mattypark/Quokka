@@ -49,6 +49,7 @@ final class ShareViewController: UIViewController {
         var rawURL: String?
         var rawText: String?
         var imageFilename: String?
+        var movieFilename: String?
         var probes: [ProviderProbe] = []
         var probeIndex = 0
 
@@ -69,17 +70,27 @@ final class ShareViewController: UIViewController {
                 if imageFilename == nil, provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     imageFilename = await storeImage(from: provider, in: directory)
                 }
+                // The Info.plist has declared movie support since the first commit, but nothing
+                // ever loaded one -- so a shared video was silently dropped. This branch is the
+                // entire on-device transcription path: a user saves a reel to Photos, shares
+                // the file, and Allim transcribes their own file with nothing fetched.
+                if movieFilename == nil, provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+                    movieFilename = await storeMovie(from: provider, in: directory)
+                }
             }
         }
 
-        // A share with an image and no link is still worth keeping -- it is a screenshot of
-        // something, which is exactly the kind of thing this app exists to hold.
-        guard rawURL != nil || rawText != nil || imageFilename != nil else { return .nothingUsable }
+        // A share with no link is still worth keeping -- a screenshot, or a video straight
+        // out of Photos, is exactly the kind of thing this app exists to hold.
+        guard rawURL != nil || rawText != nil || imageFilename != nil || movieFilename != nil else {
+            return .nothingUsable
+        }
 
         let record = ShareInboxRecord(
             rawURL: rawURL,
             rawText: rawText,
             imageFilename: imageFilename,
+            movieFilename: movieFilename,
             probe: probes
         )
 
@@ -150,6 +161,32 @@ final class ShareViewController: UIViewController {
         } catch {
             logger.error("Could not write the thumbnail: \(error.localizedDescription)")
             return nil
+        }
+    }
+
+    /// Copies a shared video into the inbox.
+    ///
+    /// A file copy, never a read into memory. Extensions are killed at roughly 120 MB and a
+    /// phone video is routinely larger than that, so `FileManager.copyItem` streams it while
+    /// `Data(contentsOf:)` would be an instant jetsam. Nothing here decodes a single frame.
+    private func storeMovie(from provider: NSItemProvider, in directory: URL) async -> String? {
+        await withCheckedContinuation { continuation in
+            _ = provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, error in
+                if let error { self.logger.error("movie load failed: \(error.localizedDescription)") }
+                guard let url else { continuation.resume(returning: nil); return }
+
+                // The temp file is deleted the moment this closure returns, so the copy has to
+                // happen here rather than after.
+                let filename = "\(UUID().uuidString).\(url.pathExtension.isEmpty ? "mov" : url.pathExtension)"
+                let destination = directory.appendingPathComponent(filename)
+                do {
+                    try FileManager.default.copyItem(at: url, to: destination)
+                    continuation.resume(returning: filename)
+                } catch {
+                    self.logger.error("Could not copy the video: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                }
+            }
         }
     }
 
