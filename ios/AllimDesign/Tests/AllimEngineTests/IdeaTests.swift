@@ -62,6 +62,41 @@ struct IdeaTests {
     }
 }
 
+struct SampleScriptTests {
+
+    @Test("The same title always produces the same sample")
+    func deterministic() {
+        // A different placeholder on every render would read as the app losing work.
+        let title = "Day in my life as a 25 year old entrepreneur"
+        #expect(SampleScript.body(for: title) == SampleScript.body(for: title))
+        #expect(SampleScript.hook(for: title) == SampleScript.hook(for: title))
+    }
+
+    @Test("Different titles get different samples")
+    func varies() {
+        let a = Set((1...30).map { SampleScript.body(for: "idea \($0)") })
+        #expect(a.count > 1)
+    }
+
+    @Test("A sampled idea is flagged, so the screen can say so")
+    func flagged() {
+        // The flag is the whole safeguard: invented text shown as a real transcript would be
+        // the product lying, which is a different thing from an obvious placeholder.
+        let idea = Idea(title: "x", body: SampleScript.body(for: "x"), isSample: true)
+        #expect(idea.isSample == true)
+        #expect(Idea(title: "x", body: "typed by hand").isSample == false)
+    }
+
+    @Test("The sample has the shape of a real short-form script")
+    func realisticShape() {
+        let body = SampleScript.body(for: "anything")
+        #expect(body.contains("1."))
+        #expect(body.contains("2."))
+        #expect(body.contains("3."))
+        #expect(body.count > 200)
+    }
+}
+
 struct PlaylistTests {
 
     @Test("The subtitle reads the way the reference does")

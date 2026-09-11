@@ -147,6 +147,12 @@ final class AllimStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v6-sample-flag") { db in
+            try db.alter(table: "idea") { t in
+                t.add(column: "isSample", .boolean).notNull().defaults(to: false)
+            }
+        }
+
         return migrator
     }
 

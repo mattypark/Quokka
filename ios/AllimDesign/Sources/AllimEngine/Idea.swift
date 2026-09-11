@@ -28,6 +28,12 @@ public struct Idea: Codable, Sendable, Equatable, Identifiable {
     public var status: Status
     public var createdAt: Date
     public var modifiedAt: Date
+    /// True when `body` is placeholder text rather than anything derived from a real video.
+    ///
+    /// Carried on the row rather than inferred, so the screen can say so plainly. Showing
+    /// invented text as a real transcript would be the product lying, which is categorically
+    /// worse than an obvious placeholder.
+    public var isSample: Bool
 
     /// Tracked from the start even though the planner screen is not built yet, so that ideas
     /// created before it exists are not all stranded in a default state when it arrives.
@@ -46,7 +52,8 @@ public struct Idea: Codable, Sendable, Equatable, Identifiable {
         playlistID: Int64? = nil,
         status: Status = .todo,
         createdAt: Date = Date(),
-        modifiedAt: Date = Date()
+        modifiedAt: Date = Date(),
+        isSample: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -57,6 +64,7 @@ public struct Idea: Codable, Sendable, Equatable, Identifiable {
         self.status = status
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
+        self.isSample = isSample
     }
 
     /// Whether there is anything to copy. Drives whether the copy control is even offered --

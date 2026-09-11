@@ -97,6 +97,24 @@ struct IdeaDetailView: View {
                     }
                 }
 
+                if idea?.isSample == true {
+                    // Said plainly, on the screen, next to the text it describes. Invented
+                    // words presented as a real transcript would be the product lying; an
+                    // obvious placeholder is scaffolding.
+                    HStack(spacing: Space.snug) {
+                        Image(systemName: "exclamationmark.circle")
+                            .font(.system(size: 12))
+                        Text("Sample text — not a transcript of this video")
+                            .font(Type.caption)
+                    }
+                    .foregroundStyle(Label.tertiary)
+                    .padding(.horizontal, Space.base)
+                    .padding(.vertical, Space.snug)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Surface.elevated)
+                    .tileShape(.control, stroked: false)
+                }
+
                 if let hook = idea?.hook, !hook.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("HOOK")

@@ -140,8 +140,11 @@ extension AppState {
             guard let playlist = createPlaylist(name: name), let playlistID = playlist.id else { continue }
             for (title, body, hook) in ideas {
                 guard var idea = createIdea(title: title, playlistID: playlistID) else { continue }
-                idea.body = body
-                idea.hook = hook
+                idea.body = body.isEmpty ? SampleScript.body(for: title) : body
+                idea.hook = hook ?? SampleScript.hook(for: title)
+                // Flagged, always. The screen says so, and a placeholder that does not
+                // announce itself is indistinguishable from a lie.
+                idea.isSample = true
                 save(idea)
 
                 // Attach a couple of real saved videos so the Inspiration grid and the floating
