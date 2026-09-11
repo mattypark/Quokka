@@ -2,86 +2,78 @@ import SwiftUI
 
 /// The mascot.
 ///
-/// Pixel art, so it is rendered with **nearest-neighbour interpolation** -- SwiftUI's default
-/// smoothing turns hard pixel edges into mush at any size above 1x, which is the single fastest
-/// way to make pixel art look broken.
-public struct QuokkaView: View {
-    public enum Pose: String, CaseIterable, Sendable {
-        case idle, blink, happy, wink, love
+/// Five animations cut from transparent sprite strips. Rendered with **nearest-neighbour
+/// interpolation and antialiasing off** -- SwiftUI's default smoothing turns hard pixel edges
+/// into mush at any size above 1x, which is the fastest way to make pixel art look broken.
+public struct Quokka: View {
 
-        var asset: String {
+    public enum Animation: String, CaseIterable, Sendable {
+        /// Standing, breathing. The resting state.
+        case idle
+        /// Walking. Reads as working on something.
+        case walk
+        /// Hearts. For a save landing.
+        case love
+        /// Cheering, with sparkles.
+        case cheer
+        /// Asleep. For an empty screen -- nothing to do yet.
+        case sleep
+
+        var frameCount: Int {
             switch self {
-            case .idle: "quokka-idle-0"
-            case .blink: "quokka-idle-1"
-            case .happy: "quokka-happy-0"
-            case .wink: "quokka-happy-1"
-            case .love: "quokka-love"
+            case .idle, .walk: 6
+            case .love, .sleep: 8
+            case .cheer: 7
             }
+        }
+
+        /// Seconds per frame.
+        ///
+        /// Sleep is slow because breathing is; cheer is fast because excitement is. Getting
+        /// these wrong is most of the difference between a character and a flickering image.
+        var interval: Double {
+            switch self {
+            case .idle: 0.18
+            case .walk: 0.11
+            case .love: 0.14
+            case .cheer: 0.10
+            case .sleep: 0.32
+            }
+        }
+
+        func asset(_ index: Int) -> String {
+            "quokka-\(rawValue)-\(index % frameCount)"
         }
     }
 
-    let pose: Pose
+    let animation: Animation
     let size: CGFloat
+    /// Stops on the first frame. For a still mascot in a list or a header.
+    let animated: Bool
 
-    public init(_ pose: Pose = .idle, size: CGFloat = 96) {
-        self.pose = pose
+    @State private var frame = 0
+
+    public init(_ animation: Animation = .idle, size: CGFloat = 96, animated: Bool = true) {
+        self.animation = animation
         self.size = size
+        self.animated = animated
     }
 
     public var body: some View {
-        Image(pose.asset, bundle: .module)
+        Image(animation.asset(frame), bundle: .module)
             .resizable()
             .interpolation(.none)
             .antialiased(false)
             .aspectRatio(contentMode: .fit)
             .frame(height: size)
             .accessibilityHidden(true)
-    }
-}
-
-/// The mascot, alive.
-///
-/// Two-frame animation rather than a full sprite loop: the sheet only yielded a handful of
-/// frames cleanly, and a slow two-frame breath reads as alive where a fast one reads as a
-/// glitch. Held on `idle` under Reduce Motion.
-public struct AnimatedQuokka: View {
-    public enum Mood: Sendable {
-        case idle, thinking, celebrating
-
-        var frames: [QuokkaView.Pose] {
-            switch self {
-            case .idle: [.idle, .blink]
-            case .thinking: [.idle, .happy]
-            case .celebrating: [.happy, .wink]
-            }
-        }
-
-        var interval: Double {
-            switch self {
-            case .idle: 2.4
-            case .thinking: 0.5
-            case .celebrating: 0.32
-            }
-        }
-    }
-
-    let mood: Mood
-    let size: CGFloat
-
-    @State private var frame = 0
-
-    public init(_ mood: Mood = .idle, size: CGFloat = 96) {
-        self.mood = mood
-        self.size = size
-    }
-
-    public var body: some View {
-        QuokkaView(mood.frames[frame % mood.frames.count], size: size)
-            .task(id: mood.interval) {
-                guard !Motion.reduced else { return }
+            .task(id: animation) {
+                // Reduce Motion holds frame zero. A looping character is exactly the kind of
+                // persistent movement the preference exists to stop.
+                guard animated, !Motion.reduced else { frame = 0; return }
                 while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(mood.interval))
-                    frame += 1
+                    try? await Task.sleep(for: .seconds(animation.interval))
+                    frame &+= 1
                 }
             }
     }

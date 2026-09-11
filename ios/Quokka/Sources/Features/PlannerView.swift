@@ -141,11 +141,15 @@ struct PlannerView: View {
         let ideas = state.ideas(status: lane.status)
         return VStack(spacing: Space.snug) {
             if ideas.isEmpty {
-                Text(emptyText)
-                    .font(Type.caption)
-                    .foregroundStyle(Label.tertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.loose)
+                VStack(spacing: Space.base) {
+                    Quokka(lane == .completed ? .cheer : .sleep, size: 80)
+                    Text(emptyText)
+                        .font(Type.caption)
+                        .foregroundStyle(Label.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Space.loose)
             } else {
                 ForEach(ideas) { idea in
                     PlannerRow(

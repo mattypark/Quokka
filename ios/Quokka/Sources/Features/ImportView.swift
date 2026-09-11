@@ -29,6 +29,10 @@ struct ImportView: View {
                 VStack(alignment: .leading, spacing: Space.loose) {
                     if let result {
                         summary(result)
+                    } else if importing {
+                        importingState
+                    } else if scanning {
+                        scanningState
                     } else if let contents {
                         chooser(contents)
                     } else {
@@ -65,9 +69,12 @@ struct ImportView: View {
 
     private var instructions: some View {
         VStack(alignment: .leading, spacing: Space.roomy) {
-            Text("Bring your Instagram history in")
-                .font(Type.title(24))
-                .foregroundStyle(Label.primary)
+            HStack(alignment: .bottom, spacing: Space.base) {
+                Quokka(.idle, size: 72)
+                Text("Bring your Instagram history in")
+                    .font(Type.title(24))
+                    .foregroundStyle(Label.primary)
+            }
 
             Text("Everything you have ever sent yourself, saved, or liked — in one pass. Quokka reads the file Instagram gives you. It never signs in to your account and never touches your DMs directly.")
                 .font(Type.body)
@@ -93,6 +100,34 @@ struct ImportView: View {
             }
             .disabled(scanning)
         }
+    }
+
+    /// Scanning an export walks thousands of files and takes real seconds, so it gets a
+    /// character rather than a spinner. A spinner says the system is busy; this says something
+    /// is being worked through, which is what is actually happening.
+    private var scanningState: some View {
+        VStack(spacing: Space.base) {
+            Quokka(.walk, size: 96)
+            Text("reading your export…")
+                .font(Type.body)
+                .foregroundStyle(Label.secondary)
+            Text("This can take a minute on a big one.")
+                .font(Type.caption)
+                .foregroundStyle(Label.tertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Space.chapter)
+    }
+
+    private var importingState: some View {
+        VStack(spacing: Space.base) {
+            Quokka(.walk, size: 96)
+            Text("bringing them in…")
+                .font(Type.body)
+                .foregroundStyle(Label.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Space.chapter)
     }
 
     @ViewBuilder
@@ -144,6 +179,7 @@ struct ImportView: View {
 
     private func summary(_ result: ImportResult) -> some View {
         VStack(alignment: .leading, spacing: Space.base) {
+            Quokka(.cheer, size: 84)
             Text("Done")
                 .font(Type.title(24))
                 .foregroundStyle(Label.primary)

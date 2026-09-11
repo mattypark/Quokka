@@ -32,7 +32,7 @@ struct ShareConfirmation: View {
 
             VStack(spacing: 22) {
                 Spacer()
-                AnimatedQuokka(.thinking, size: 104)
+                Quokka(.walk, size: 112)
                 Text(carriesVideo ? "extracting idea…" : "saving…")
                     .font(.system(size: 15, weight: .regular, design: .serif))
                     .foregroundStyle(.black.opacity(0.45))
@@ -71,7 +71,7 @@ struct ShareConfirmation: View {
                 }
 
                 if state == .saved {
-                    AnimatedQuokka(.celebrating, size: 62)
+                    Quokka(.cheer, size: 66)
 
                     Button { onPreview?() } label: {
                         Text("Preview")
