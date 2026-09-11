@@ -154,6 +154,45 @@ extension AllimStore {
         }
     }
 
+    // MARK: - Journal
+
+    /// The day key the journal is stored under. UTC-stable and human-readable.
+    static func dayKey(for date: Date) -> String {
+        var formatter = Date.FormatStyle(date: .numeric, time: .omitted)
+        formatter.calendar = Calendar(identifier: .gregorian)
+        // ISO yyyy-MM-dd rather than a locale format, or the key changes when the phone moves.
+        return date.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+    }
+
+    func journal(for date: Date) throws -> String {
+        try dbPool.read { db in
+            try String.fetchOne(
+                db, sql: "SELECT text FROM journal WHERE day = ?", arguments: [Self.dayKey(for: date)]
+            ) ?? ""
+        }
+    }
+
+    func setJournal(_ text: String, for date: Date) throws {
+        try dbPool.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO journal (day, text, modifiedAt) VALUES (?, ?, ?)
+                    ON CONFLICT(day) DO UPDATE SET text = excluded.text, modifiedAt = excluded.modifiedAt
+                    """,
+                arguments: [Self.dayKey(for: date), text, Date()]
+            )
+        }
+    }
+
+    func setStatus(_ status: Idea.Status, forIdea id: Int64) throws {
+        try dbPool.write { db in
+            try db.execute(
+                sql: "UPDATE idea SET status = ?, modifiedAt = ? WHERE id = ?",
+                arguments: [status.rawValue, Date(), id]
+            )
+        }
+    }
+
     /// Bumps a playlist's timestamp so "Updated 2hr ago" means what it says.
     private static func touch(playlist id: Int64, in db: Database) throws {
         try db.execute(sql: "UPDATE playlist SET updatedAt = ? WHERE id = ?", arguments: [Date(), id])

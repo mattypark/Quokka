@@ -3,7 +3,7 @@ import AllimDesign
 
 struct RootView: View {
     @Environment(AppState.self) private var state
-    @State private var showingSplash = Self.launchTab == .library
+    @State private var showingSplash = Self.launchTab == .today
     @State private var tab: TabBar.Tab = Self.launchTab
     @State private var needsOnboarding = !Self.skipsOnboarding && !UserDefaults.standard.bool(forKey: "allimOnboarded")
     @State private var importing = false
@@ -28,7 +28,7 @@ struct RootView: View {
             return tab
         }
         #endif
-        return .library
+        return .today
     }
 
     var body: some View {
@@ -63,6 +63,7 @@ struct RootView: View {
             // The grid runs to every edge of the screen. Chrome floats over it.
             Group {
                 switch tab {
+                case .today: PlannerView()
                 case .library: LibraryView(onImport: { importing = true })
                 case .playlists: PlaylistsView()
                 case .settings: SettingsView(embedded: true)

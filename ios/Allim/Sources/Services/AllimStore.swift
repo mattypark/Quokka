@@ -153,6 +153,19 @@ final class AllimStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v7-journal") { db in
+            // One row per day, keyed by a yyyy-MM-dd string rather than a timestamp.
+            //
+            // A date is what the screen actually asks about -- "what did I write on the 5th" --
+            // and keying by timestamp would make that a range query that has to reason about
+            // the device's timezone at write time versus read time.
+            try db.create(table: "journal") { t in
+                t.primaryKey("day", .text)
+                t.column("text", .text).notNull()
+                t.column("modifiedAt", .datetime).notNull()
+            }
+        }
+
         return migrator
     }
 

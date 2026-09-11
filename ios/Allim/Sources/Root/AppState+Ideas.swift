@@ -65,6 +65,28 @@ extension AppState {
         do { try store.deleteIdea(id: id) } catch { report(error) }
     }
 
+    // MARK: - Planner
+
+    func journal(for date: Date) -> String {
+        guard let store else { return "" }
+        do { return try store.journal(for: date) } catch { report(error); return "" }
+    }
+
+    func setJournal(_ text: String, for date: Date) {
+        guard let store else { return }
+        do { try store.setJournal(text, for: date) } catch { report(error) }
+    }
+
+    func setStatus(_ status: Idea.Status, forIdea id: Int64) {
+        guard let store else { return }
+        do { try store.setStatus(status, forIdea: id) } catch { report(error) }
+    }
+
+    func ideas(status: Idea.Status) -> [Idea] {
+        guard let store else { return [] }
+        do { return try store.ideas(status: status) } catch { report(error); return [] }
+    }
+
     // MARK: - What an idea was built from
 
     func sources(forIdea ideaID: Int64) -> [Item] {
