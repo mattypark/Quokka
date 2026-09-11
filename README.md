@@ -21,7 +21,7 @@ again. Allim takes that whole backlog in one import, then takes over the habit.
 | `ios/AllimDesign` | Local SPM package: `AllimDesign` (tokens) + `AllimEngine` (pure, testable logic). |
 | `mcp/` | `allim-mcp` — lets Claude Code read and retag the library with no API key. |
 | `tools/` | Instagram export importer, dev-side. |
-| `docs/` | Decisions and session split. |
+| `docs/` | Decisions, session split, and [the transcript research](docs/RESEARCH-TRANSCRIPTS.md). |
 
 ## Running it
 
