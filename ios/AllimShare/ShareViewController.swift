@@ -35,7 +35,7 @@ final class ShareViewController: UIViewController {
     // MARK: - Capture
 
     private enum Outcome {
-        case saved(platform: Platform?)
+        case saved(platform: Platform?, carriesVideo: Bool)
         case nothingUsable
     }
 
@@ -116,7 +116,7 @@ final class ShareViewController: UIViewController {
         let platform = record.linkCandidate
             .flatMap(LinkCanonicaliser.canonicalise)?
             .platform
-        return .saved(platform: platform)
+        return .saved(platform: platform, carriesVideo: movieFilename != nil)
     }
 
     // Two typed loaders rather than one generic one. `NSSecureCoding` is not Sendable, so
@@ -193,7 +193,12 @@ final class ShareViewController: UIViewController {
     // MARK: - Confirmation
 
     private func presentConfirmation() {
-        let hosting = UIHostingController(rootView: ShareConfirmation(state: .working, platform: nil))
+        // Video shares take seconds rather than milliseconds -- there is a file to copy -- so
+        // the first frame has to already say so. Guessed from the attachments before anything
+        // is loaded, because by the time loading confirms it the moment has passed.
+        let hosting = UIHostingController(
+            rootView: ShareConfirmation(state: .working, platform: nil, carriesVideo: expectsVideo)
+        )
         hosting.view.backgroundColor = .clear
         addChild(hosting)
         view.addSubview(hosting.view)
@@ -208,21 +213,57 @@ final class ShareViewController: UIViewController {
         self.hosting = hosting
     }
 
+    /// Whether the incoming share looks like a video, known before anything is loaded.
+    private var expectsVideo: Bool {
+        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return false }
+        return items.contains { item in
+            (item.attachments ?? []).contains {
+                $0.hasItemConformingToTypeIdentifier(UTType.movie.identifier)
+            }
+        }
+    }
+
     private func finish(_ outcome: Outcome) {
         switch outcome {
-        case .saved(let platform):
-            hosting?.rootView = ShareConfirmation(state: .saved, platform: platform)
+        case .saved(let platform, let carriesVideo):
             ShareHaptics.saved()
+            hosting?.rootView = ShareConfirmation(
+                state: .saved,
+                platform: platform,
+                carriesVideo: carriesVideo,
+                onPreview: { [weak self] in self?.openApp(preview: true) },
+                onOpen: { [weak self] in self?.openApp(preview: false) },
+                onDone: { [weak self] in self?.close() }
+            )
+            // A save with choices on it does not auto-dismiss. Closing the sheet under someone
+            // reaching for "Open in app" is worse than making them tap Done.
         case .nothingUsable:
-            hosting?.rootView = ShareConfirmation(state: .rejected, platform: nil)
             ShareHaptics.rejected()
+            hosting?.rootView = ShareConfirmation(
+                state: .rejected, platform: nil, onDone: { [weak self] in self?.close() }
+            )
+            // Nothing to decide here, so it gets out of the way on its own.
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.4))
+                self.close()
+            }
         }
+    }
 
-        // Long enough to read, short enough not to be in the way. The share sheet is
-        // somebody else's app; Allim is a guest in it.
-        Task {
-            try? await Task.sleep(for: .seconds(0.5))
-            extensionContext?.completeRequest(returningItems: nil)
+    private func close() {
+        extensionContext?.completeRequest(returningItems: nil)
+    }
+
+    /// Hands off to the app.
+    ///
+    /// `extensionContext.open` is the sanctioned route out of a share extension;
+    /// `UIApplication.shared` is unavailable in one and reaching for it through the responder
+    /// chain is the trick Apple rejects apps for.
+    private func openApp(preview: Bool) {
+        guard let url = URL(string: preview ? "allim://preview" : "allim://open") else { return }
+        extensionContext?.open(url) { [weak self] opened in
+            if !opened { self?.logger.error("Could not open the app") }
+            self?.close()
         }
     }
 }

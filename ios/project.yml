@@ -67,6 +67,13 @@ targets:
         # The mirror lives in Documents when iCloud is unavailable, and these two make that
         # folder visible in Files -- so the file can be moved by hand rather than the feature
         # being unusable until an App ID capability is enabled in the portal.
+        # Declared so the share extension can hand off with extensionContext.open --
+        # UIApplication.shared does not exist in an extension, and reaching for it through the
+        # responder chain is the trick Apple rejects apps for.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.matthewpark.allim
+            CFBundleURLSchemes:
+              - allim
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         UIAppFonts:

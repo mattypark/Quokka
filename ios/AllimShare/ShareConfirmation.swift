@@ -1,74 +1,147 @@
 import SwiftUI
 import AllimEngine
 
-/// What the share sheet shows. Deliberately tiny: a full-screen takeover for an action that
-/// takes 200 ms reads as an interruption, not a confirmation.
+/// What the share sheet shows while it works, and when it is done.
+///
+/// Two presentations, because the two moments are not the same shape. Extracting takes over
+/// the screen -- there is nothing to decide and something to watch. Saved is a card at the
+/// bottom, because now there are choices and the video underneath should stay visible.
 struct ShareConfirmation: View {
-    enum State { case working, saved, rejected }
+    enum State: Equatable { case working, saved, rejected }
 
     let state: State
     let platform: Platform?
+    var carriesVideo = false
+    var onPreview: (() -> Void)?
+    var onOpen: (() -> Void)?
+    var onDone: (() -> Void)?
 
     var body: some View {
+        switch state {
+        case .working: working
+        case .saved, .rejected: card
+        }
+    }
+
+    // MARK: - Working
+
+    private var working: some View {
+        ZStack {
+            Color.white.ignoresSafeArea()
+
+            VStack(spacing: 28) {
+                Spacer()
+                PulsingDots()
+                Text(carriesVideo ? "extracting idea…" : "saving…")
+                    .font(.system(size: 15, weight: .regular, design: .serif))
+                    .foregroundStyle(.black.opacity(0.45))
+                Spacer()
+            }
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Image(systemName: "xmark")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(.black.opacity(0.35))
+                        .padding(22)
+                }
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: - Saved / rejected
+
+    private var card: some View {
         VStack {
             Spacer()
-            HStack(spacing: 10) {
-                mark
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.55))
+            VStack(spacing: 16) {
+                HStack {
+                    Text(state == .saved ? "Video saved!" : "Nothing to save")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.black)
+                    Spacer()
+                    Button { onDone?() } label: {
+                        Text("Done")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.black.opacity(0.45))
                     }
                 }
-                Spacer(minLength: 0)
+
+                if state == .saved {
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 30, weight: .light))
+                        .foregroundStyle(.green)
+
+                    Button { onPreview?() } label: {
+                        Text("Preview")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 13)
+                            .overlay(Capsule().stroke(.black.opacity(0.18), lineWidth: 1))
+                    }
+
+                    Button { onOpen?() } label: {
+                        HStack(spacing: 6) {
+                            Text("Open in app").font(.system(size: 15, weight: .semibold))
+                            Image(systemName: "arrow.up.forward.square").font(.system(size: 13))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Capsule().fill(.black))
+                    }
+                } else {
+                    Text("No link or video came through in that share.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.black.opacity(0.45))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
+            .padding(20)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(.black)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(.white.opacity(0.16), lineWidth: 0.5)
-                    )
+                UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
+                    .fill(.white)
             )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black.opacity(state == .working ? 0.0 : 0.28))
-        .animation(.easeOut(duration: 0.18), value: state)
+        // A Color needs ignoresSafeArea applied to the view, not folded into the style --
+        // the ShapeStyle overload does not take it.
+        .background(Color.black.opacity(0.22).ignoresSafeArea())
+    }
+}
+
+/// Three dots, breathing.
+///
+/// A spinner says "the system is busy"; this reads as something being worked out, which is
+/// closer to what is happening and is the one moment the extension has any personality.
+private struct PulsingDots: View {
+    @State private var phase = 0.0
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(0..<3, id: \.self) { index in
+                Circle()
+                    .fill(.black)
+                    .frame(width: 11, height: 11)
+                    .scaleEffect(0.7 + 0.3 * pulse(index))
+                    .opacity(0.35 + 0.65 * pulse(index))
+            }
+        }
+        .task {
+            // Driven by a timer rather than a repeating animation, so the three dots stay in a
+            // fixed phase relationship instead of drifting apart over a long extraction.
+            guard !UIAccessibility.isReduceMotionEnabled else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(60))
+                phase += 0.06
+            }
+        }
     }
 
-    @ViewBuilder
-    private var mark: some View {
-        switch state {
-        case .working:
-            ProgressView().tint(.white).scaleEffect(0.8).frame(width: 18, height: 18)
-        case .saved:
-            Image(systemName: "checkmark").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
-        case .rejected:
-            Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(.white.opacity(0.6))
-        }
-    }
-
-    private var title: String {
-        switch state {
-        case .working: "Saving"
-        case .saved: "Saved to Allim"
-        case .rejected: "Nothing to save"
-        }
-    }
-
-    private var subtitle: String? {
-        switch state {
-        case .working: nil
-        case .saved: platform?.displayName.lowercased()
-        case .rejected: "no link or image in this share"
-        }
+    private func pulse(_ index: Int) -> Double {
+        let offset = Double(index) * 0.55
+        return (sin((phase - offset) * 2.4) + 1) / 2
     }
 }
