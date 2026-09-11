@@ -20,7 +20,7 @@ import os
 ///
 /// **Keyset pagination.** See `ItemPage`.
 final class AllimStore: Sendable {
-    private let dbPool: DatabasePool
+    let dbPool: DatabasePool
     private let logger = Logger(subsystem: "com.matthewpark.allim", category: "store")
 
     // MARK: - Lifecycle
@@ -107,6 +107,43 @@ final class AllimStore: Sendable {
         migrator.registerMigration("v3-retries") { db in
             try db.alter(table: "item") { t in
                 t.add(column: "enrichAttempts", .integer).notNull().defaults(to: 0)
+            }
+        }
+
+        migrator.registerMigration("v4-playlists") { db in
+            try db.create(table: "playlist") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("name", .text).notNull()
+                t.column("note", .text)
+                t.column("coverItemID", .integer)
+                t.column("createdAt", .datetime).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+        }
+
+        migrator.registerMigration("v5-ideas") { db in
+            try db.create(table: "idea") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("title", .text).notNull()
+                t.column("body", .text).notNull().defaults(to: "")
+                t.column("hook", .text)
+                t.column("transcript", .text)
+                // Nullable, and ON DELETE SET NULL rather than CASCADE: deleting a playlist
+                // must not destroy the work inside it. The ideas become loose, not gone.
+                t.column("playlistID", .integer).references("playlist", onDelete: .setNull)
+                t.column("status", .text).notNull().defaults(to: Idea.Status.todo.rawValue)
+                t.column("createdAt", .datetime).notNull()
+                t.column("modifiedAt", .datetime).notNull()
+            }
+            try db.create(index: "idea_on_playlist", on: "idea", columns: ["playlistID", "modifiedAt"])
+
+            // A join, because an idea cites several videos and a video inspires several ideas.
+            // The composite primary key is what makes adding the same reel twice a no-op.
+            try db.create(table: "idea_source") { t in
+                t.column("ideaID", .integer).notNull().references("idea", onDelete: .cascade)
+                t.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
+                t.column("position", .integer).notNull().defaults(to: 0)
+                t.primaryKey(["ideaID", "itemID"])
             }
         }
 
