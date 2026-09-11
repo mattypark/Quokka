@@ -180,3 +180,49 @@ It falls back to the app's own Documents when the iCloud entitlement is absent �
 capability is a portal change and is not always in place, and `UIFileSharingEnabled` keeps the
 fallback reachable through Files. The feature degrades from "syncs by itself" to "move one
 file" rather than disappearing.
+
+
+## Transcripts — the door that is actually open
+
+Researched, and the answer was not the one assumed going in.
+
+**There is no sanctioned route to the audio of a video the user does not own.** On any
+platform. `captions.download` is owner-only. YouTube's Developer Policies **III.I.7** forbid
+separating or isolating the audio component — that clause *is* this feature — and **III.E.6**
+forbids obtaining scraped YouTube content, so buying transcripts from Supadata or Apify is the
+same violation rather than a way around it.
+
+`timedtext` was tested live rather than assumed: a freshly-signed URL returns **HTTP 200 with
+zero bytes**, while a corrupted signature returns 404. That difference proves a second gate
+(the PO Token), not an absent one.
+
+**No platform hands the share sheet a video file for a link.** It is a URL every time. Worth
+knowing separately: **YouTube arrives as `public.plain-text`, not `public.url`** — the most
+common way a share extension silently drops a save, and the reason `linkCandidate` falls back
+to text.
+
+**A competitor already refused this category on the same grounds.** Mymind, publicly: *"We
+will not circumvent these protections, as it's in violation of DMCA anti-circumvention laws."*
+That is a third legal axis beyond copyright and contract, and fair use is not a defence to
+circumvention.
+
+### What ships instead
+
+The user saves the video to Photos, then shares the **file**. It is their file, handed over by
+the system. Transcription runs on device with `SpeechAnalyzer` (iOS 26 — batch file
+transcription is first-class, timestamps confirmed, no duration cap, no Apple Intelligence
+gate). Hook and title extraction goes to a small hosted model.
+
+Roughly **$8/month at 1,000 users**, against $100–230 for any server-side design.
+
+Not WhisperKit: the accurate models need a ~627 MB download and about 67 seconds of on-device
+compilation on first run, and the small ones are too inaccurate to be worth shipping. Memory
+was never the problem — Core ML keeps ANE weights out of the process footprint — cold start is.
+
+**The thing that kills this app is building the server-side fetcher because it demos better.**
+
+### Koino, for the record
+
+Still has not shipped. No App Store listing, no Terms page, waitlist only. Their privacy
+policy names Supabase and OpenRouter and conspicuously discloses no ASR vendor. Two solo-dev
+apps in the same category are already live.
