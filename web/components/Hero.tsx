@@ -40,7 +40,7 @@ export function Hero() {
         className="rise mt-8 max-w-md text-center text-base leading-relaxed text-ink-3"
         style={{ animationDelay: "0.56s" }}
       >
-        They are still in there. Allim is where they should have been going — and it can pull
+        They are still in there. Quokka is where they should have been going — and it can pull
         every one of them out in a single pass.
       </p>
 

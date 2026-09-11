@@ -1,6 +1,6 @@
 # Analytics
 
-What Allim can actually know about a saved post, per platform. The short version: **YouTube
+What Quokka can actually know about a saved post, per platform. The short version: **YouTube
 is complete and official, TikTok is best-effort, and everything else has nothing.**
 
 Designing around that honestly is the whole job here. A metric that was never fetchable must
@@ -50,7 +50,7 @@ Store the raw values, never the derived ones. Rates recompute for free and a sto
 stale the moment a count updates.
 
 VidIQ's proprietary "scores" are derived from historical baselines it accumulated over years.
-Allim has no such corpus and should not pretend to. What Allim *can* do honestly, once the
+Quokka has no such corpus and should not pretend to. What Quokka *can* do honestly, once the
 library is large enough, is compare a video against **the user's own saved set** — "this is in
 the top 10% of what you save for share rate" is a real, defensible statement built entirely
 from local data.

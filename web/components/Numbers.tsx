@@ -82,7 +82,7 @@ export function Numbers() {
         </h2>
         <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-ink-3">
           Raw counts cannot be compared across videos — a two-million-view post and a
-          forty-thousand-view post are not the same kind of thing. Rates can. Allim stores the
+          forty-thousand-view post are not the same kind of thing. Rates can. Quokka stores the
           counts and shows you the rates.
         </p>
       </Reveal>
@@ -100,7 +100,7 @@ export function Numbers() {
             tells you its limits up front is trusted on the ones it does not have. */}
         <p className="font-mono mt-8 max-w-2xl text-[11px] leading-relaxed text-ink-5">
           Full numbers on YouTube. Best-effort on TikTok. Instagram, Pinterest and X publish
-          nothing to anyone who is not logged in, so Allim shows no numbers there rather than
+          nothing to anyone who is not logged in, so Quokka shows no numbers there rather than
           inventing them.
         </p>
       </Reveal>

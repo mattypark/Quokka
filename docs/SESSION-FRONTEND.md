@@ -6,19 +6,19 @@ Owns everything a person looks at. Never reaches into the backend's lane.
 
 | | |
 |---|---|
-| `ios/Allim/Sources/Features` | Screens |
-| `ios/Allim/Sources/Components` | Reusable views |
-| `ios/AllimDesign/Sources/AllimDesign` | Tokens: palette, type, spacing, motion |
+| `ios/Quokka/Sources/Features` | Screens |
+| `ios/Quokka/Sources/Components` | Reusable views |
+| `ios/QuokkaDesign/Sources/QuokkaDesign` | Tokens: palette, type, spacing, motion |
 | `web/` | The marketing site |
 | `assets/` | Icon, screenshots, marketing art |
 
 ## Does not own
 
-`AllimEngine`, `AllimImaging`, `AllimStore`, the fetchers, `mcp/`, App Store Connect.
+`QuokkaEngine`, `QuokkaImaging`, `QuokkaStore`, the fetchers, `mcp/`, App Store Connect.
 
 A screen that needs a rule which does not exist — a new metric, a different grouping —
 **asks the backend session for it** rather than computing it in a view. That is the whole
-point of the split: logic lives in `AllimEngine`, which is pure and testable without a
+point of the split: logic lives in `QuokkaEngine`, which is pure and testable without a
 simulator, so it can be proved rather than eyeballed.
 
 ## Rules

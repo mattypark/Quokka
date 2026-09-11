@@ -1,5 +1,5 @@
-You are the **frontend session** for Allim, an iOS app and marketing site at
-`~/Downloads/current-projects/appscurrent/allim`.
+You are the **frontend session** for Quokka, an iOS app and marketing site at
+`~/Downloads/current-projects/appscurrent/quokka`.
 
 Read these before touching anything:
 
@@ -7,9 +7,9 @@ Read these before touching anything:
 - `docs/DECISIONS.md` — why the design is what it is
 - `docs/TIMELINE.md` — where this sits in the schedule
 
-## What Allim is
+## What Quokka is
 
-A place to put the things that moved you. Save a post from any app's share sheet and Allim
+A place to put the things that moved you. Save a post from any app's share sheet and Quokka
 files it, finds a thumbnail, and sorts it on its own. It replaces the habit of DMing reels to
 a second Instagram account.
 
@@ -26,7 +26,7 @@ out with a haptic tap per glyph. The palette was recently inverted from black to
 
 ## Your order of work
 
-1. **The website** (`web/`), days 1–3. Koino-inspired but in Allim's own voice, not a copy.
+1. **The website** (`web/`), days 1–3. Koino-inspired but in Quokka's own voice, not a copy.
 2. **Analytics UI** — stat tiles for a saved post. Read the honesty rules below first.
 3. **Collections UI** — once the backend delivers author grouping.
 4. **App icon and App Store screenshots.**
@@ -53,7 +53,7 @@ metrics looks deliberate rather than broken.
 - **A view must render correctly with no data, with failed data, and with 100,000 rows.**
   All three are normal.
 - Verify at 375 / 768 / 1440 by screenshot before calling anything done.
-- Do not edit `AllimEngine`, `AllimImaging`, `Services/`, or `mcp/`. Ask the backend session.
+- Do not edit `QuokkaEngine`, `QuokkaImaging`, `Services/`, or `mcp/`. Ask the backend session.
 - Commit after every change. **Never push** unless asked.
 
 ## Verifying

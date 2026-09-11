@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// allim-mcp — the Allim library, exposed to Claude Code.
+// quokka-mcp — the Quokka library, exposed to Claude Code.
 //
 // No API key and no per-save cost: this runs on the Claude Code subscription already on the
 // machine. It reads the JSONL mirror the iOS app writes and appends tags back for the app to
@@ -9,9 +9,9 @@
 // eighty lines of plumbing — less than the cost of a dependency tree that has to be audited
 // and kept current for a tool that reads two local files.
 //
-//   claude mcp add allim -- node /path/to/mcp/index.mjs
+//   claude mcp add quokka -- node /path/to/mcp/index.mjs
 //
-// Point it somewhere specific with ALLIM_DIR; otherwise it looks in the app's iCloud container
+// Point it somewhere specific with QUOKKA_DIR; otherwise it looks in the app's iCloud container
 // and then in a couple of obvious fallbacks.
 
 import { readFileSync, appendFileSync, existsSync, statSync } from "node:fs";
@@ -20,10 +20,10 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 
 const CANDIDATES = [
-  process.env.ALLIM_DIR,
-  join(homedir(), "Library/Mobile Documents/iCloud~com~matthewpark~allim/Documents"),
-  join(homedir(), "Library/Mobile Documents/com~apple~CloudDocs/Allim"),
-  join(homedir(), "Downloads/Allim"),
+  process.env.QUOKKA_DIR,
+  join(homedir(), "Library/Mobile Documents/iCloud~com~matthewpark~quokka/Documents"),
+  join(homedir(), "Library/Mobile Documents/com~apple~CloudDocs/Quokka"),
+  join(homedir(), "Downloads/Quokka"),
 ].filter(Boolean);
 
 function libraryDir() {
@@ -37,7 +37,7 @@ function libraryDir() {
 /// process and may be mid-sync, and one truncated line should not take the whole library down.
 function readLibrary() {
   const dir = libraryDir();
-  if (!dir) return { items: [], dir: null, error: `No library.jsonl found. Looked in:\n${CANDIDATES.map((c) => `  ${c}`).join("\n")}\n\nTurn on "Let Claude read your library" in Allim's settings, or set ALLIM_DIR.` };
+  if (!dir) return { items: [], dir: null, error: `No library.jsonl found. Looked in:\n${CANDIDATES.map((c) => `  ${c}`).join("\n")}\n\nTurn on "Let Claude read your library" in Quokka's settings, or set QUOKKA_DIR.` };
 
   const path = join(dir, "library.jsonl");
   const items = [];
@@ -63,9 +63,9 @@ function tagList(item) {
 
 const TOOLS = [
   {
-    name: "allim_search",
+    name: "quokka_search",
     description:
-      "Search the Allim library by free text across author, caption, tags, platform and URL. This is the main way to ask questions of a saved library, e.g. 'lighting', 'kitchen', a creator's handle.",
+      "Search the Quokka library by free text across author, caption, tags, platform and URL. This is the main way to ask questions of a saved library, e.g. 'lighting', 'kitchen', a creator's handle.",
     inputSchema: {
       type: "object",
       properties: {
@@ -77,18 +77,18 @@ const TOOLS = [
     },
   },
   {
-    name: "allim_list_untagged",
+    name: "quokka_list_untagged",
     description:
-      "Items with no tags yet, oldest first. Use this to work through a backlog in batches, then call allim_tag_item for each.",
+      "Items with no tags yet, oldest first. Use this to work through a backlog in batches, then call quokka_tag_item for each.",
     inputSchema: {
       type: "object",
       properties: { limit: { type: "number", description: "Max items (default 25)." } },
     },
   },
   {
-    name: "allim_tag_item",
+    name: "quokka_tag_item",
     description:
-      "Write tags for one item. Appends to tags.jsonl, which Allim reads and clears on its next launch. Tags should be short, lowercase, and describe the subject rather than the platform.",
+      "Write tags for one item. Appends to tags.jsonl, which Quokka reads and clears on its next launch. Tags should be short, lowercase, and describe the subject rather than the platform.",
     inputSchema: {
       type: "object",
       properties: {
@@ -99,7 +99,7 @@ const TOOLS = [
     },
   },
   {
-    name: "allim_stats",
+    name: "quokka_stats",
     description: "Counts across the library: by platform, by origin, by author, and by tag.",
     inputSchema: { type: "object", properties: {} },
   },
@@ -110,7 +110,7 @@ function call(name, args = {}) {
   if (error) return error;
 
   switch (name) {
-    case "allim_search": {
+    case "quokka_search": {
       const q = String(args.query || "").toLowerCase();
       const limit = args.limit ?? 40;
       let found = items.filter((item) => {
@@ -133,7 +133,7 @@ function call(name, args = {}) {
       ].join("\n");
     }
 
-    case "allim_list_untagged": {
+    case "quokka_list_untagged": {
       const limit = args.limit ?? 25;
       const untagged = items.filter((i) => tagList(i).length === 0).slice(0, limit);
       if (!untagged.length) return `Everything is tagged (${items.length} items).`;
@@ -146,16 +146,16 @@ function call(name, args = {}) {
       ].join("\n");
     }
 
-    case "allim_tag_item": {
+    case "quokka_tag_item": {
       if (!dir) return "No library directory.";
       const id = Number(args.id);
       const tags = (args.tags || []).map((t) => String(t).trim().toLowerCase()).filter(Boolean);
       if (!Number.isFinite(id) || !tags.length) return "Need an id and at least one tag.";
       appendFileSync(join(dir, "tags.jsonl"), JSON.stringify({ id, tags }) + "\n", "utf8");
-      return `Tagged [${id}] with ${tags.join(", ")}. Allim applies this on its next launch.`;
+      return `Tagged [${id}] with ${tags.join(", ")}. Quokka applies this on its next launch.`;
     }
 
-    case "allim_stats": {
+    case "quokka_stats": {
       const tally = (key) => {
         const counts = new Map();
         for (const item of items) {
@@ -212,7 +212,7 @@ createInterface({ input: process.stdin }).on("line", (line) => {
       reply({
         protocolVersion: params?.protocolVersion ?? "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "allim", version: "0.1.0" },
+        serverInfo: { name: "quokka", version: "0.1.0" },
       });
       break;
 

@@ -1,7 +1,0 @@
-// Build settings that are safe to commit.
-//
-// The `?` on the include makes a missing Secrets.xcconfig a no-op rather than a build error,
-// so a fresh checkout builds and runs on local data with nothing configured. Allim needs no
-// keys today -- every thumbnail endpoint it uses is public -- and this exists so that stays
-// true by default if one is ever added.
-#include? "Secrets.xcconfig"

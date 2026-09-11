@@ -41,7 +41,7 @@ Checked across platforms: it is a URL, every time. No file, no asset reference.
 Two details worth keeping:
 
 - **YouTube arrives as `public.plain-text`, not `public.url`.** This is the most common way a
-  share extension silently drops a save. Allim handles it — `linkCandidate` falls back to text
+  share extension silently drops a save. Quokka handles it — `linkCandidate` falls back to text
   and `LinkCanonicaliser.extractFirstURL` digs the link out of a sentence.
 - Instagram, Pinterest and X hand over nothing useful at all, which is the same wall the
   thumbnail pipeline already hit.

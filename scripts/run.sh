@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds Allim, runs it on a dedicated simulator, screenshots it, and shuts the simulator
+# Builds Quokka, runs it on a dedicated simulator, screenshots it, and shuts the simulator
 # back down.
 #
 # That last part is not optional. A booted simulator runtime leaves mediaanalysisd running,
@@ -15,9 +15,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DEVICE_NAME="Allim Sim"
-BUNDLE_ID="com.matthewpark.allim"
-APP_GROUP="group.com.matthewpark.allim"
+DEVICE_NAME="Quokka Sim"
+BUNDLE_ID="com.matthewpark.quokka"
+APP_GROUP="group.com.matthewpark.quokka"
 SHOTS="build/screenshots"
 KEEP=0
 SEED=0
@@ -72,12 +72,12 @@ echo "==> generating project"
 (cd ios && xcodegen generate >/dev/null)
 
 echo "==> building"
-xcodebuild -project ios/Allim.xcodeproj -scheme Allim \
+xcodebuild -project ios/Quokka.xcodeproj -scheme Quokka \
   -destination "id=$DEVICE" -derivedDataPath ios/build build \
   2>&1 | grep -E "error:|BUILD" || true
 
-APP=$(find ios/build/Build/Products -name "Allim.app" -maxdepth 3 | head -1)
-if [[ -z "$APP" ]]; then echo "no Allim.app was produced" >&2; exit 1; fi
+APP=$(find ios/build/Build/Products -name "Quokka.app" -maxdepth 3 | head -1)
+if [[ -z "$APP" ]]; then echo "no Quokka.app was produced" >&2; exit 1; fi
 
 echo "==> booting"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true
@@ -100,9 +100,9 @@ if [[ "$SEED" -eq 1 ]]; then
 fi
 
 LAUNCH_ARGS=()
-if [[ -n "$TAB" ]]; then LAUNCH_ARGS+=(-allimTab "$TAB"); fi
-if [[ "$IDEAS" -eq 1 ]]; then LAUNCH_ARGS+=(-allimSeedIdeas YES); fi
-if [[ -n "$SCREEN" ]]; then LAUNCH_ARGS+=(-allimScreen "$SCREEN"); fi
+if [[ -n "$TAB" ]]; then LAUNCH_ARGS+=(-quokkaTab "$TAB"); fi
+if [[ "$IDEAS" -eq 1 ]]; then LAUNCH_ARGS+=(-quokkaSeedIdeas YES); fi
+if [[ -n "$SCREEN" ]]; then LAUNCH_ARGS+=(-quokkaScreen "$SCREEN"); fi
 if [[ "$EXPORT" -eq 1 ]]; then
   # The document picker cannot be driven from a script, so the fixture is planted in the app's
   # own Documents and a debug-only launch argument points the importer straight at it.
@@ -112,7 +112,7 @@ if [[ "$EXPORT" -eq 1 ]]; then
     rm -rf "$DATA_DIR/Documents/TestExport"
     node scripts/seed-export.mjs "$DATA_DIR/Documents/TestExport"
     # Append, never assign -- assigning here silently discarded --tab.
-    LAUNCH_ARGS+=(-allimImportFixture TestExport)
+    LAUNCH_ARGS+=(-quokkaImportFixture TestExport)
   else
     echo "!! no data container yet -- launch once, then re-run with --export" >&2
   fi

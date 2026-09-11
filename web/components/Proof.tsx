@@ -6,12 +6,12 @@ const steps = [
   {
     number: "01",
     title: "Save from anywhere",
-    body: "Tap the three dots in any app, then Allim. Instagram, TikTok, YouTube, Pinterest, Reddit, X — anything with a share sheet. It saves and gets out of the way in under half a second.",
+    body: "Tap the three dots in any app, then Quokka. Instagram, TikTok, YouTube, Pinterest, Reddit, X — anything with a share sheet. It saves and gets out of the way in under half a second.",
   },
   {
     number: "02",
     title: "Bring the backlog",
-    body: "Everything you have ever sent yourself, saved, or liked on Instagram, imported in one pass. Allim reads the file Instagram gives you. It never signs in to your account.",
+    body: "Everything you have ever sent yourself, saved, or liked on Instagram, imported in one pass. Quokka reads the file Instagram gives you. It never signs in to your account.",
   },
   {
     number: "03",

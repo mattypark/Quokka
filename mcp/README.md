@@ -1,21 +1,21 @@
-# allim-mcp
+# quokka-mcp
 
-Your Allim library, readable by Claude Code. **No API key, no per-save cost** — it runs on the
+Your Quokka library, readable by Claude Code. **No API key, no per-save cost** — it runs on the
 Claude Code subscription already on your Mac.
 
 ```
 iPhone                                    Mac
-  Allim ──writes──> library.jsonl ──reads──> allim-mcp ──> Claude Code
-  Allim <──reads─── tags.jsonl    <─writes──┘
+  Quokka ──writes──> library.jsonl ──reads──> quokka-mcp ──> Claude Code
+  Quokka <──reads─── tags.jsonl    <─writes──┘
 ```
 
 ## Setup
 
-1. In Allim: **Settings → Let Claude read your library**.
+1. In Quokka: **Settings → Let Claude read your library**.
 2. On your Mac:
 
 ```sh
-claude mcp add allim -- node ~/Downloads/current-projects/appscurrent/allim/mcp/index.mjs
+claude mcp add quokka -- node ~/Downloads/current-projects/appscurrent/quokka/mcp/index.mjs
 ```
 
 That's it. No install step — the server has **zero dependencies**.
@@ -28,29 +28,29 @@ That's it. No install step — the server has **zero dependencies**.
 >
 > go through my untagged Instagram saves and tag them
 
-Tags are appended to `tags.jsonl` and applied by Allim on its next launch.
+Tags are appended to `tags.jsonl` and applied by Quokka on its next launch.
 
 ## Where it looks
 
 In order, first hit wins:
 
-1. `$ALLIM_DIR`
-2. `~/Library/Mobile Documents/iCloud~com~matthewpark~allim/Documents`
-3. `~/Library/Mobile Documents/com~apple~CloudDocs/Allim`
-4. `~/Downloads/Allim`
+1. `$QUOKKA_DIR`
+2. `~/Library/Mobile Documents/iCloud~com~matthewpark~quokka/Documents`
+3. `~/Library/Mobile Documents/com~apple~CloudDocs/Quokka`
+4. `~/Downloads/Quokka`
 
-If the iCloud entitlement is not set up on the App ID yet, Allim writes the mirror to its own
-Documents folder instead — visible in **Files → On My iPhone → Allim**. AirDrop it to
-`~/Downloads/Allim` and everything below works unchanged.
+If the iCloud entitlement is not set up on the App ID yet, Quokka writes the mirror to its own
+Documents folder instead — visible in **Files → On My iPhone → Quokka**. AirDrop it to
+`~/Downloads/Quokka` and everything below works unchanged.
 
 ## Tools
 
 | Tool | Does |
 |---|---|
-| `allim_search` | Free text over author, caption, tags, platform, URL |
-| `allim_list_untagged` | Untagged items, oldest first, for working a backlog |
-| `allim_tag_item` | Writes tags for one item |
-| `allim_stats` | Counts by platform, origin, author and tag |
+| `quokka_search` | Free text over author, caption, tags, platform, URL |
+| `quokka_list_untagged` | Untagged items, oldest first, for working a backlog |
+| `quokka_tag_item` | Writes tags for one item |
+| `quokka_stats` | Counts by platform, origin, author and tag |
 
 ## Notes
 

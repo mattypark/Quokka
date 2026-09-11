@@ -8,7 +8,7 @@ export function Nav() {
       <div className="pointer-events-none absolute inset-0 bg-canvas/70 backdrop-blur-md" />
 
       <a href="#top" className="font-display relative text-xl tracking-tight">
-        ALLIM
+        QUOKKA
       </a>
 
       <div className="font-mono relative hidden gap-8 text-[11px] uppercase tracking-widest text-ink-3 md:flex">

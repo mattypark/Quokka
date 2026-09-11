@@ -1,6 +1,6 @@
 # Decisions
 
-Why Allim is built the way it is. Each entry is a call that would otherwise look arbitrary,
+Why Quokka is built the way it is. Each entry is a call that would otherwise look arbitrary,
 paired with what would go wrong under the obvious alternative.
 
 ## Storage lives on the device, and there is no server
@@ -18,7 +18,7 @@ a remote tier starts to be worth building. Dropping to 600px and q0.75 brought t
 585px at 3x, and the tile is never a viewer because tapping opens the original post. The 800px
 version was storing pixels nothing would ever render.
 
-Allim never hosts video. It stores a link and one small image, so a remote media layer would
+Quokka never hosts video. It stores a link and one small image, so a remote media layer would
 be a monthly bill and a second system to maintain in exchange for nothing. Cloudflare R2 is
 the right tool for a problem this app does not have.
 
@@ -164,7 +164,7 @@ page makes the licence a clearer problem than a private build does.
 ## The mirror, and Claude with no API key
 
 The library is written to `library.jsonl` in the app's iCloud container, which on a Mac is an
-ordinary folder — so `mcp/allim-mcp` reads it directly with no server and no key, running on
+ordinary folder — so `mcp/quokka-mcp` reads it directly with no server and no key, running on
 the Claude Code subscription already on the machine. Tags come back through `tags.jsonl`,
 which the app applies and then clears.
 

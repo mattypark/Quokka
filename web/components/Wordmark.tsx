@@ -1,4 +1,4 @@
-/// ALLIM, set in Bagel Fat One.
+/// QUOKKA, set in Bagel Fat One.
 ///
 /// A server component with a CSS animation. This is the top of the page and must paint without
 /// waiting for a JavaScript bundle.
@@ -9,7 +9,7 @@ export function Wordmark({
   size?: string;
   animate?: boolean;
 }) {
-  const letters = "ALLIM".split("");
+  const letters = "QUOKKA".split("");
 
   return (
     <div className={`font-display flex ${size} leading-none tracking-[-0.01em]`}>

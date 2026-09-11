@@ -1,6 +1,6 @@
 # Next sessions
 
-Two sessions run in parallel on Allim. Open a terminal for each, paste the matching prompt,
+Two sessions run in parallel on Quokka. Open a terminal for each, paste the matching prompt,
 and leave them in their lanes.
 
 | | Owns | Prompt |
@@ -18,7 +18,7 @@ The line is drawn where two sessions would otherwise collide. Frontend owns ever
 person looks at; backend owns the rules, the data, and Apple. Neither reaches into the other.
 
 A screen that needs a number which does not exist — a new metric, a different grouping —
-**asks the backend session for it** rather than computing it in a view. Logic in `AllimEngine`
+**asks the backend session for it** rather than computing it in a view. Logic in `QuokkaEngine`
 is pure and provable in a second; logic in a view can only be eyeballed in a simulator.
 
 ## Before you paste

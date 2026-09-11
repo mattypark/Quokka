@@ -5,7 +5,7 @@ Three phases, run by two sessions in parallel. Days are working days.
 | Phase | Days | Owner | Ships |
 |---|---|---|---|
 | **1 — Website UI** | 1–3 | Frontend | `web/` — landing, waitlist, about, contact, privacy |
-| **2 — Backend** | 3–6 | Backend | Analytics, `allim-mcp`, waitlist API, collections engine |
+| **2 — Backend** | 3–6 | Backend | Analytics, `quokka-mcp`, waitlist API, collections engine |
 | **3 — Apple** | 6–9 | Backend | Icon, screenshots, privacy manifest, review notes, submission |
 
 The phases overlap on purpose. Backend starts on day 3 while the website is still being
@@ -14,7 +14,7 @@ Review's queue is the long pole and nothing else can shorten it.
 
 ## Phase 1 — Website (days 1–3)
 
-Koino-inspired, in Allim's own voice rather than a copy. Black on white, one display face,
+Koino-inspired, in Quokka's own voice rather than a copy. Black on white, one display face,
 photographic collage.
 
 - **Day 1** — tokens shared with the app, hero, nav, footer. Wordmark treatment.
@@ -27,7 +27,7 @@ photographic collage.
 
 - **Day 3** — analytics fetchers. YouTube Data API v3 first, since it is the only one that
   is both official and complete.
-- **Day 4** — `allim-mcp`: the library exposed to Claude Code with no API key.
+- **Day 4** — `quokka-mcp`: the library exposed to Claude Code with no API key.
 - **Day 5** — author-grouped collections, on-device tagging.
 - **Day 6** — waitlist endpoint, deploy.
 
@@ -39,7 +39,7 @@ photographic collage.
   export compliance.
 - **Day 8** — TestFlight build, internal test, `ios-app-store-readiness` pass, the 20-item
   launch checklist.
-- **Day 9** — submit. Review notes must explain the Instagram import in plain terms: Allim
+- **Day 9** — submit. Review notes must explain the Instagram import in plain terms: Quokka
   reads a file the user downloaded from Meta. It never signs in to Instagram, never automates
   an account, and never asks for Instagram credentials. Reviewers reject things that look
   like scrapers, and this one needs to be visibly not that.

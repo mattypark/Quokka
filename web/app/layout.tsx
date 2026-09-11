@@ -35,14 +35,14 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://allim.app"),
-  title: "Allim — a place for what moved you",
+  metadataBase: new URL("https://quokka.app"),
+  title: "Quokka — a place for what moved you",
   description:
-    "Save a post from any app and Allim files it, finds the picture, and sorts it on its own. Instagram, TikTok, YouTube, Pinterest, Reddit, X.",
+    "Save a post from any app and Quokka files it, finds the picture, and sorts it on its own. Instagram, TikTok, YouTube, Pinterest, Reddit, X.",
   openGraph: {
-    title: "Allim — a place for what moved you",
+    title: "Quokka — a place for what moved you",
     description:
-      "Save a post from any app and Allim files it, finds the picture, and sorts it on its own.",
+      "Save a post from any app and Quokka files it, finds the picture, and sorts it on its own.",
     type: "website",
     locale: "en_US",
   },

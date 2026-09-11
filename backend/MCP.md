@@ -1,4 +1,4 @@
-# allim-mcp
+# quokka-mcp
 
 The library, exposed to Claude Code. **No API key, no per-save cost** — it runs on the Claude
 Code subscription already on the machine.
@@ -17,8 +17,8 @@ does the syncing; nobody writes a server.
 
 ```
 iPhone                              Mac
-  Allim ──writes──> library.jsonl ──reads──> allim-mcp ──> Claude Code
-  Allim <──reads─── tags.jsonl   <──writes──┘
+  Quokka ──writes──> library.jsonl ──reads──> quokka-mcp ──> Claude Code
+  Quokka <──reads─── tags.jsonl   <──writes──┘
 ```
 
 The payoff is bidirectional, and the second direction is the better one:
@@ -50,11 +50,11 @@ and streams line by line, where a single array has to be parsed whole on both en
 
 | Tool | Does |
 |---|---|
-| `allim_search` | Free-text over author, caption, tags, host. **The one Matthew will actually use.** |
-| `allim_list_untagged` | Items with no tags, oldest first, for bulk passes |
-| `allim_tag_item` | Writes tags for one id |
-| `allim_create_collection` | A named saved filter over tags |
-| `allim_stats` | Counts by platform, origin, author, tag |
+| `quokka_search` | Free-text over author, caption, tags, host. **The one Matthew will actually use.** |
+| `quokka_list_untagged` | Items with no tags, oldest first, for bulk passes |
+| `quokka_tag_item` | Writes tags for one id |
+| `quokka_create_collection` | A named saved filter over tags |
+| `quokka_stats` | Counts by platform, origin, author, tag |
 
 ## Rules
 
@@ -63,7 +63,7 @@ and streams line by line, where a single array has to be parsed whole on both en
 - **Never block on iCloud.** A file that has not synced yet is normal, not an error. Report
   what is there.
 - Node, stdio transport, as few dependencies as the job allows.
-- Registered with `claude mcp add allim -- node /path/to/mcp/index.mjs`.
+- Registered with `claude mcp add quokka -- node /path/to/mcp/index.mjs`.
 
 ## The app's half
 

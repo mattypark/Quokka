@@ -12,7 +12,7 @@ Package.resolved
 *.ipa
 
 # Secrets. Base.xcconfig and Secrets.xcconfig.example ARE committed; this is not.
-ios/Allim/Secrets.xcconfig
+ios/Quokka/Secrets.xcconfig
 .env
 .env.*
 !.env.example
@@ -22,9 +22,13 @@ node_modules/
 *.tsbuildinfo
 
 # A real Instagram export is the user's own data and never belongs in the repo.
-# Redacted fixtures live in ios/AllimDesign/Tests/Fixtures/ and are committed.
+# Redacted fixtures live in ios/QuokkaDesign/Tests/Fixtures/ and are committed.
 tools/export/
 *.zip
 
 # macOS
 .DS_Store
+
+# Next build output (was tracked by mistake)
+web/.next/
+web/out/
