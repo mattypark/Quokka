@@ -18,10 +18,17 @@ saved work. It replaces the habit of DMing reels to a second Instagram account.
 
 ## Current state
 
-Working and verified by running it: share extension → App Group inbox → coordinated drain →
-canonicalise → GRDB → live thumbnail fetch → HEIC → masonry grid. Plus a full Instagram export
-importer (DMs filtered to one conversation, Saved, Liked) with deduplication across all three
-sources. 58 tests pass in about a second with `cd ios/QuokkaDesign && swift test`.
+Seven screens exist and were each verified by running them: onboarding, planner (Today),
+library, playlists, playlist detail, idea detail, settings — plus the share extension's
+extracting and saved states. The app is named Quokka, has a pixel mascot with five
+animations, and is pushed to `mattypark/Quokka`.
+
+Real transcription is **not** built. Sample scripts stand in and are labelled on screen as
+samples. `docs/RESEARCH-TRANSCRIPTS.md` explains why, and what the lawful path is.
+
+Two things block a TestFlight build: a personal-use font in the bundle, and no app icon. Both
+are in `docs/TESTFLIGHT.md`.
+
 
 ## Your order of work
 

@@ -20,9 +20,17 @@ which is the reason it was saved.
 
 ## Current state
 
-The app renders a working masonry library with real thumbnails, a typographic fallback tile
-for platforms that serve no image, an Instagram import flow, and a wordmark that spells itself
-out with a haptic tap per glyph. The palette was recently inverted from black to white.
+Seven screens exist and were each verified by running them: onboarding, planner (Today),
+library, playlists, playlist detail, idea detail, settings — plus the share extension's
+extracting and saved states. The app is named Quokka, has a pixel mascot with five
+animations, and is pushed to `mattypark/Quokka`.
+
+Real transcription is **not** built. Sample scripts stand in and are labelled on screen as
+samples. `docs/RESEARCH-TRANSCRIPTS.md` explains why, and what the lawful path is.
+
+Two things block a TestFlight build: a personal-use font in the bundle, and no app icon. Both
+are in `docs/TESTFLIGHT.md`.
+
 
 ## Your order of work
 
