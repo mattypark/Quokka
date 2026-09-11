@@ -67,7 +67,15 @@ struct PlaylistDetailView: View {
             Button("Save") { rename() }
             Button("Cancel", role: .cancel) {}
         }
-        .task { load() }
+        .task {
+            load()
+            #if DEBUG
+            // Continues the deep link one level further, into the idea itself.
+            if UserDefaults.standard.string(forKey: "allimScreen") == "idea" {
+                openIdea = ideas.first(where: { $0.hasScript })?.id ?? ideas.first?.id
+            }
+            #endif
+        }
     }
 
     private struct Opened: Identifiable { let id: Int64 }

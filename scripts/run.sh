@@ -25,6 +25,7 @@ RELAUNCH=0
 EXPORT=0
 IDEAS=0
 TAB=""
+SCREEN=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -33,6 +34,7 @@ while [[ $# -gt 0 ]]; do
     --relaunch) RELAUNCH=1; shift ;;
     --export) EXPORT=1; shift ;;
     --ideas) IDEAS=1; shift ;;
+    --screen) SCREEN="$2"; shift 2 ;;
     --tab) TAB="$2"; shift 2 ;;
     *) echo "unknown flag: $1" >&2; exit 1 ;;
   esac
@@ -100,6 +102,7 @@ fi
 LAUNCH_ARGS=()
 if [[ -n "$TAB" ]]; then LAUNCH_ARGS+=(-allimTab "$TAB"); fi
 if [[ "$IDEAS" -eq 1 ]]; then LAUNCH_ARGS+=(-allimSeedIdeas YES); fi
+if [[ -n "$SCREEN" ]]; then LAUNCH_ARGS+=(-allimScreen "$SCREEN"); fi
 if [[ "$EXPORT" -eq 1 ]]; then
   # The document picker cannot be driven from a script, so the fixture is planted in the app's
   # own Documents and a debug-only launch argument points the importer straight at it.

@@ -76,7 +76,10 @@ struct PlaylistsView: View {
             Button("Create") { create() }
             Button("Cancel", role: .cancel) {}
         }
-        .task { reload() }
+        .task {
+            reload()
+            openForScreenshot()
+        }
         .onChange(of: open) { _, value in if value == nil { reload() } }
     }
 
@@ -122,6 +125,20 @@ struct PlaylistsView: View {
     }
 
     private func reload() { summaries = state.playlists() }
+
+    /// Opens a screen directly, for screenshot runs. DEBUG-only so it cannot ship.
+    ///
+    /// A sheet cannot be driven from a script, and a screenshot of a screen nobody can reach
+    /// is not verification. This is the smallest hook that makes the two screens that matter
+    /// actually checkable.
+    private func openForScreenshot() {
+        #if DEBUG
+        guard let screen = UserDefaults.standard.string(forKey: "allimScreen") else { return }
+        // The richest playlist, not the first: a screenshot of an empty one proves nothing.
+        guard let target = summaries.max(by: { $0.ideaCount < $1.ideaCount }), let id = target.id else { return }
+        if screen == "playlist" || screen == "idea" { open = id }
+        #endif
+    }
 
     private func create() {
         let trimmed = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
