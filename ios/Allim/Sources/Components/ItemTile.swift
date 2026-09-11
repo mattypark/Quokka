@@ -33,11 +33,7 @@ struct ItemTile: View {
                 FallbackTile(item: item, retryable: item.thumbnailState == .failed)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .stroke(Surface.hairline, lineWidth: Stroke.thin)
-        )
+        .tileShape(.tile)
         .scaleEffect(pressed ? Motion.pressedScale : 1)
         .animation(Motion.respecting(Motion.press), value: pressed)
         .contentShape(Rectangle())

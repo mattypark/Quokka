@@ -35,6 +35,7 @@ struct RootView: View {
         .task {
             state.drainInbox()
             state.importFixtureIfRequested()
+            state.seedIdeasIfRequested()
         }
     }
 
@@ -44,7 +45,7 @@ struct RootView: View {
             Group {
                 switch tab {
                 case .library: LibraryView(onImport: { importing = true })
-                case .collections: CollectionsView()
+                case .playlists: PlaylistsView()
                 case .settings: SettingsView(embedded: true)
                 }
             }

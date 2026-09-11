@@ -8,6 +8,7 @@
 #   scripts/run.sh                # launch empty, screenshot, shut down
 #   scripts/run.sh --seed         # inject sample inbox records first, to see the drain path
 #   scripts/run.sh --export       # plant a synthetic Instagram export and import it
+#   scripts/run.sh --ideas        # seed sample playlists and ideas
 #   scripts/run.sh --relaunch     # relaunch after the first pass, to prove data persisted
 #   scripts/run.sh --keep         # leave the simulator up (it will run hot -- see below)
 set -euo pipefail
@@ -22,6 +23,7 @@ KEEP=0
 SEED=0
 RELAUNCH=0
 EXPORT=0
+IDEAS=0
 TAB=""
 
 while [[ $# -gt 0 ]]; do
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --seed) SEED=1; shift ;;
     --relaunch) RELAUNCH=1; shift ;;
     --export) EXPORT=1; shift ;;
+    --ideas) IDEAS=1; shift ;;
     --tab) TAB="$2"; shift 2 ;;
     *) echo "unknown flag: $1" >&2; exit 1 ;;
   esac
@@ -96,6 +99,7 @@ fi
 
 LAUNCH_ARGS=()
 if [[ -n "$TAB" ]]; then LAUNCH_ARGS+=(-allimTab "$TAB"); fi
+if [[ "$IDEAS" -eq 1 ]]; then LAUNCH_ARGS+=(-allimSeedIdeas YES); fi
 if [[ "$EXPORT" -eq 1 ]]; then
   # The document picker cannot be driven from a script, so the fixture is planted in the app's
   # own Documents and a debug-only launch argument points the importer straight at it.

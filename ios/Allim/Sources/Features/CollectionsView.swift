@@ -139,11 +139,7 @@ private struct CollectionCover: View {
                 }
             }
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                    .stroke(Surface.hairline, lineWidth: Stroke.thin)
-            )
+            .tileShape(.cover)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(author.name)

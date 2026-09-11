@@ -22,8 +22,8 @@ final class AppState {
 
     private let inbox = InboxDrain()
     private let mirror = LibraryMirror()
-    private let logger = Logger(subsystem: "com.matthewpark.allim", category: "state")
-    private var store: AllimStore?
+    let logger = Logger(subsystem: "com.matthewpark.allim", category: "state")
+    private(set) var store: AllimStore?
     private var fetcher: ThumbnailFetcher?
     private(set) var loader: ThumbnailLoader?
     private var cursor: ItemCursor?
@@ -186,6 +186,15 @@ final class AppState {
         } catch {
             logger.error("Mirror sync failed: \(error.localizedDescription)")
         }
+    }
+
+    /// One place database errors are surfaced.
+    ///
+    /// A view has nothing useful to do with one, and making every call site handle it would
+    /// scatter `try?` through the UI instead of keeping it here.
+    func report(_ error: Error) {
+        storeFailure = error.localizedDescription
+        logger.error("\(error.localizedDescription)")
     }
 
     /// Cover items for one author, for the collections grid.

@@ -11,12 +11,12 @@ import AllimDesign
 /// content scrolls underneath and stays edge-to-edge.
 struct TabBar: View {
     enum Tab: String, CaseIterable {
-        case library, collections, settings
+        case library, playlists, settings
 
         var icon: String {
             switch self {
             case .library: "square.grid.2x2"
-            case .collections: "rectangle.stack"
+            case .playlists: "rectangle.stack"
             case .settings: "slider.horizontal.3"
             }
         }
@@ -24,7 +24,7 @@ struct TabBar: View {
         var title: String {
             switch self {
             case .library: "Everything"
-            case .collections: "Collections"
+            case .playlists: "Playlists"
             case .settings: "Settings"
             }
         }
