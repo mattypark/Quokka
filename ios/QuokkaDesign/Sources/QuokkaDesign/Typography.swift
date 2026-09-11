@@ -18,7 +18,12 @@ public enum Face {
     /// Wordmark only.
     public static let wordmark = "BagelFatOne-Regular"
     /// Collection and section titles only.
-    public static let feature = "KeeponTruckinFW"
+    ///
+    /// Was Keep on Truckin, which is licensed for personal use only -- defensible on a private
+    /// build and not defensible in a public repo or a submitted bundle. Pointed at the wordmark
+    /// as a licence fallback rather than dropped, so the role survives and a commercial display
+    /// face can be swapped back in on this one line.
+    public static let feature = wordmark
     /// The statement face. Same as the wordmark, set large.
     ///
     /// Was a ransom-note face. It went because the app's character is now a very friendly

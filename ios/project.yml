@@ -2,7 +2,7 @@ name: Quokka
 options:
   bundleIdPrefix: com.matthewpark
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "26.0"
   createIntermediateGroups: true
 
 packages:
@@ -30,6 +30,10 @@ targets:
           - Secrets.xcconfig
           - Secrets.xcconfig.example
           - Base.xcconfig
+          # Personal-use licence. Shipping it inside the bundle is redistribution, which
+          # blocks submission -- so it is excluded here as well as untracked. The file stays
+          # on disk for private builds; Face.feature falls back to the wordmark.
+          - Resources/Fonts/KeeponTruckin.ttf
     configFiles:
       Debug: Quokka/Base.xcconfig
       Release: Quokka/Base.xcconfig
@@ -78,11 +82,13 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         UIAppFonts:
           - BagelFatOne-Regular.ttf
-          - KeeponTruckin.ttf
           - Newsreader.ttf
           - JetBrainsMono.ttf
         # Locked light. The interface is paper, and the saved work is the only colour on
         # it; a dark appearance would invert that relationship rather than adapt it.
+        # Quokka uses HTTPS and nothing else, which is the standard exemption. Declared
+        # here so App Store Connect stops asking on every build.
+        ITSAppUsesNonExemptEncryption: false
         UIUserInterfaceStyle: Light
         # Declared so a future release can add background enrichment without a plist change
         # shipping separately from the code that needs it.
