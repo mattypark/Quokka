@@ -25,15 +25,18 @@ final class AppState {
     let logger = Logger(subsystem: "com.matthewpark.quokka", category: "state")
     private(set) var store: QuokkaStore?
     private var fetcher: ThumbnailFetcher?
+    private var transcripts: TranscriptQueue?
     private(set) var loader: ThumbnailLoader?
     private var cursor: ItemCursor?
     private var enrichment: Task<Void, Never>?
+    private var transcription: Task<Void, Never>?
 
     init() {
         do {
             let store = try QuokkaStore.standard()
             self.store = store
             fetcher = ThumbnailFetcher(store: store)
+            transcripts = TranscriptQueue(store: store)
             loader = ThumbnailLoader(store: store)
         } catch {
             storeFailure = error.localizedDescription
@@ -47,19 +50,39 @@ final class AppState {
         let drained = inbox.drain()
         lastProbe = drained.filter { !$0.probe.isEmpty }
 
-        let items = drained.compactMap { record -> Item? in
-            guard let link = record.link else { return nil }
-            return Item(link: link, savedAt: record.receivedAt, origin: .shareSheet)
+        // A share that carried a video and no link used to be dropped here, which made rung 0
+        // -- the free, private, unbreakable one -- unreachable in practice. It gets a
+        // synthesised URL so it can be a row like anything else; the dedupe key stays unique
+        // because it is a fresh UUID per save.
+        let saves: [(item: Item, movie: URL?)] = drained.compactMap { record in
+            if let link = record.link {
+                return (Item(link: link, savedAt: record.receivedAt, origin: .shareSheet), record.movieURL)
+            }
+            guard let movie = record.movieURL else { return nil }
+            return (
+                Item(
+                    url: "quokka://movie/\(record.id.uuidString)",
+                    platform: .web,
+                    title: movie.deletingPathExtension().lastPathComponent,
+                    savedAt: record.receivedAt,
+                    origin: .shareSheet,
+                    // Nothing will ever fetch a thumbnail for a local file, so it starts
+                    // terminal rather than sitting in the enrichment queue forever.
+                    thumbnailState: .unavailable),
+                movie)
         }
 
         guard let store else { return }
         do {
+            let items = saves.map(\.item)
             if !items.isEmpty {
                 let inserted = try store.insert(items)
                 logger.info("Drained \(drained.count), inserted \(inserted)")
             }
+            try queueTranscripts(for: saves, in: store)
             try reload()
             enrich()
+            transcribe()
         } catch {
             storeFailure = error.localizedDescription
             logger.error("Write failed: \(error.localizedDescription)")
@@ -81,6 +104,55 @@ final class AppState {
                 // Reloads so the newly-stored thumbnails and aspect ratios are picked up.
                 try? self?.reload()
             }
+        }
+    }
+
+    /// Queues transcription for anything that arrived with a video file.
+    ///
+    /// Only the file-carrying saves. A link-only save could go up the ladder to rung 2, but
+    /// doing it for every save would mean a web view rendering a page for every item in a
+    /// 4,000-row Instagram import -- so rung 2 runs when someone asks for it, and rung 0 runs
+    /// on its own because the file is already in hand and will otherwise be deleted.
+    private func queueTranscripts(for saves: [(item: Item, movie: URL?)], in store: QuokkaStore) throws {
+        for save in saves {
+            guard let movie = save.movie else { continue }
+            guard let staged = Self.stage(movie) else { continue }
+            // Re-read rather than trusting the insert: a save that deduped against an existing
+            // row has no id of its own, and the transcript belongs on the row that survived.
+            guard let id = try store.itemID(forURL: save.item.url) else { continue }
+            try store.enqueueTranscript(itemID: id, mediaPath: staged.path)
+        }
+    }
+
+    /// Moves a shared video out of the inbox's temporary home into one the app owns.
+    ///
+    /// Application Support rather than Caches: the system may purge Caches at any time, and a
+    /// video purged before it was transcribed is gone -- the share sheet will not hand it over
+    /// twice.
+    private static func stage(_ movie: URL) -> URL? {
+        guard let support = try? FileManager.default.url(
+            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        else { return nil }
+        let directory = support.appendingPathComponent("staged-media", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let destination = directory.appendingPathComponent(
+            "\(UUID().uuidString).\(movie.pathExtension.isEmpty ? "mov" : movie.pathExtension)")
+        do {
+            try FileManager.default.moveItem(at: movie, to: destination)
+            return destination
+        } catch {
+            return nil
+        }
+    }
+
+    /// Works the transcript queue. Cancellable and never blocking, exactly like `enrich`.
+    func transcribe() {
+        guard let transcripts else { return }
+        transcription?.cancel()
+        transcription = Task { [weak self] in
+            let produced = await transcripts.run()
+            guard !Task.isCancelled, produced > 0 else { return }
+            await MainActor.run { try? self?.reload() }
         }
     }
 

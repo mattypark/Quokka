@@ -166,6 +166,42 @@ final class QuokkaStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v8-transcripts") { db in
+            // The result. One row per item, because a second transcript of the same video
+            // would be the same words -- there is nothing to version.
+            try db.create(table: "item_transcript") { t in
+                t.primaryKey("itemID", .integer).references("item", onDelete: .cascade)
+                t.column("text", .text).notNull()
+                // JSON, in a text column, for the same reason tags are: segments are only
+                // ever read alongside their transcript and written as a complete set, so a
+                // second table would add a join to support a normalisation nothing needs.
+                t.column("segments", .text)
+                t.column("locale", .text)
+                // Which rung answered. On the row rather than inferred later, because it is
+                // what lets the app say how a transcript was obtained -- and `hosted` is the
+                // one that means a URL left the device.
+                t.column("source", .text).notNull()
+                t.column("producedAt", .datetime).notNull()
+            }
+
+            // The work queue. Separate from the result so a finished transcript is not
+            // carrying dead scheduling columns for the life of the library.
+            try db.create(table: "transcript_job") { t in
+                t.primaryKey("itemID", .integer).references("item", onDelete: .cascade)
+                // Absolute path to a staged video, when the share carried a file. Persisted
+                // rather than held in memory because the app can be killed between the save
+                // and the transcription, and a file nobody remembers is a file nobody deletes.
+                t.column("mediaPath", .text)
+                t.column("attempts", .integer).notNull().defaults(to: 0)
+                // The last reason, kept so a permanent failure can be shown rather than
+                // retried. A private post will never resolve, and saying so beats three more
+                // attempts and silence.
+                t.column("lastFailure", .text)
+                t.column("queuedAt", .datetime).notNull()
+            }
+            try db.create(index: "idx_job_queuedAt", on: "transcript_job", columns: ["queuedAt"])
+        }
+
         return migrator
     }
 
