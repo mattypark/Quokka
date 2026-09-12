@@ -12,8 +12,10 @@ export function Nav() {
       </a>
 
       <div className="font-mono relative hidden gap-8 text-[11px] uppercase tracking-widest text-ink-3 md:flex">
+        <a href="#app" className="transition-colors hover:text-ink-0">The app</a>
         <a href="#how" className="transition-colors hover:text-ink-0">How it works</a>
-        <a href="#numbers" className="transition-colors hover:text-ink-0">The numbers</a>
+        <a href="#pricing" className="transition-colors hover:text-ink-0">Pricing</a>
+        <a href="#faq" className="transition-colors hover:text-ink-0">FAQ</a>
       </div>
 
       <a
