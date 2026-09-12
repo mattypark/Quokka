@@ -105,3 +105,40 @@ body {
     }
   }
 }
+
+/* The hero leaving.
+   ---------------------------------------------------------------------------
+   It does not slide away, it loses its nerve: the type drains to grey and then to
+   nothing as the section scrolls past, so the page underneath arrives on a clean
+   sheet rather than emerging from behind a headline.
+
+   Scroll-driven, so it costs no JavaScript and no scroll listener -- the compositor
+   runs it. Chrome 115+ and Safari 26+; everywhere else the hero simply scrolls off
+   the top like any other section, which is not a degraded experience so much as an
+   ordinary one. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-fade {
+      animation: hero-leave linear both;
+      animation-timeline: view();
+      /* Nothing happens until the section has started to leave, so the hero is at full
+         strength for the whole time it is the only thing on screen. */
+      animation-range: exit -12% exit 92%;
+    }
+  }
+}
+
+@keyframes hero-leave {
+  0% {
+    opacity: 1;
+    filter: grayscale(0);
+  }
+  55% {
+    /* The grey beat. Long enough to read as a decision rather than as a dip. */
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0;
+    filter: grayscale(1);
+  }
+}
