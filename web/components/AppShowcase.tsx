@@ -10,9 +10,9 @@ import { Reveal } from "./Reveal";
 /// the simulator by `scripts/capture-web-demos.sh`, which is the same build that ships.
 const SCREENS = [
   {
-    src: "/demos/summary.mp4",
-    poster: "/demos/summary.jpg",
-    label: "What a saved post knows",
+    src: "/demos/planner.mp4",
+    poster: "/demos/planner.jpg",
+    label: "One thing to make today",
     side: "left" as const,
   },
   {
@@ -22,9 +22,9 @@ const SCREENS = [
     side: "center" as const,
   },
   {
-    src: "/demos/transcript.mp4",
-    poster: "/demos/transcript.jpg",
-    label: "The words, pulled out",
+    src: "/demos/idea.mp4",
+    poster: "/demos/idea.jpg",
+    label: "Turned into something you can shoot",
     side: "right" as const,
   },
 ];
