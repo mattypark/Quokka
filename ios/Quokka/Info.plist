@@ -39,6 +39,8 @@
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>QuokkaWorkerHost</key>
+	<string>$(QUOKKA_WORKER_HOST)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>BagelFatOne-Regular.ttf</string>

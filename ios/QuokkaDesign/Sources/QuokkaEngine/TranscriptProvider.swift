@@ -54,6 +54,12 @@ public struct TranscriptRequest: Sendable, Equatable {
     public var itemID: Int64?
     /// The canonical post URL. What rungs 1 and 2 work from.
     public var url: String?
+    /// The platform's own id for this post, as the canonicaliser extracted it.
+    ///
+    /// Carried separately from `url` because the resolver templates address a post by id --
+    /// re-parsing it out of the URL inside the resolver would mean two implementations of the
+    /// same extraction, and the one in `LinkCanonicaliser` is the tested one.
+    public var contentID: String?
     /// An absolute path to media already on this device. What rung 0 works from.
     ///
     /// A path rather than a `URL` so the type stays free of any filesystem assumption and
@@ -66,12 +72,14 @@ public struct TranscriptRequest: Sendable, Equatable {
     public init(
         itemID: Int64? = nil,
         url: String? = nil,
+        contentID: String? = nil,
         localMediaPath: String? = nil,
         platform: Platform,
         preferredLocale: String? = nil
     ) {
         self.itemID = itemID
         self.url = url
+        self.contentID = contentID
         self.localMediaPath = localMediaPath
         self.platform = platform
         self.preferredLocale = preferredLocale

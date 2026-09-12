@@ -78,6 +78,9 @@ targets:
           - CFBundleURLName: com.matthewpark.quokka
             CFBundleURLSchemes:
               - quokka
+        # Host only, never a full URL. A `//` in an xcconfig starts a comment, so
+        # `https://host` silently becomes `https:` -- the scheme is added in code.
+        QuokkaWorkerHost: $(QUOKKA_WORKER_HOST)
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         UIAppFonts:
@@ -99,6 +102,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.matthewpark.quokka
+        # Empty by default. With no worker, rung 2's config never arrives and the app runs
+        # fail-closed on rung 0 -- which is a working app, not a broken one.
+        QUOKKA_WORKER_HOST: ""
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
