@@ -36,3 +36,7 @@ web/out/
 # Keep on Truckin is licensed for personal use only. It stays on disk for private
 # builds and never enters the repo or the app bundle -- see docs/TESTFLIGHT.md.
 ios/Quokka/Resources/Fonts/KeeponTruckin.ttf
+
+# Worker secrets. .dev.vars.example IS committed; the real one never is.
+backend/worker/.dev.vars
+backend/worker/.wrangler/

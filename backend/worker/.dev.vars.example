@@ -1,0 +1,8 @@
+# Copy to .dev.vars for local `wrangler dev`. That file is gitignored; this one is
+# documentation. In production these are set with `wrangler secret put`, never committed.
+#
+# Both are optional. With neither set the worker still serves /config, which is the only
+# endpoint the app needs for rungs 0 through 2.
+#
+# TRANSCRIPT_API_KEY = supadata-key-here
+# ANTHROPIC_API_KEY = anthropic-key-here

@@ -1,0 +1,12 @@
+name = "quokka"
+main = "src/index.ts"
+compatibility_date = "2026-09-11"
+
+# No KV, no D1, no R2. There are no accounts and nothing to persist -- the config is code and
+# the two proxies are stateless. Adding storage here would be the first step toward a backend
+# this app has spent its whole architecture avoiding.
+
+# Secrets are set with `wrangler secret put`, never written into this file:
+#   wrangler secret put TRANSCRIPT_API_KEY
+#   wrangler secret put ANTHROPIC_API_KEY
+# TRANSCRIPT_API_KEY absent = rung 3 is stripped from /config and /transcript returns 503.
