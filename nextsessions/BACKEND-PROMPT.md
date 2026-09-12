@@ -44,6 +44,13 @@ are in `docs/TESTFLIGHT.md`.
 5. **Waitlist endpoint.**
 6. **Apple submission prep.**
 
+## What the frontend is waiting on
+
+[`BACKEND-ASKS.md`](BACKEND-ASKS.md), in full. The one that blocks nothing but is owed: a
+`UserProfile` in `QuokkaEngine` plus `QuokkaStore.profile()` / `saveProfile(_:)`, so the new
+multi-question onboarding stops writing its answers into a `UserDefaults` key owned by a view.
+Additive, therefore free under the contract.
+
 ## Hard rules
 
 - **Never read, print or edit `.env*`, keys or credentials.** Ship `Secrets.xcconfig.example`

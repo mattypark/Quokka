@@ -12,6 +12,10 @@ Full detail is in [`../docs/SESSION-FRONTEND.md`](../docs/SESSION-FRONTEND.md) a
 [`../docs/SESSION-BACKEND.md`](../docs/SESSION-BACKEND.md). The prompts point at those, so the
 rules stay in one place rather than being duplicated into a prompt that then drifts.
 
+Each session also keeps a list of what it needs from the other, so an ask survives the session
+that wrote it: [`FRONTEND-ASKS.md`](FRONTEND-ASKS.md) is what the backend needs from a screen,
+[`BACKEND-ASKS.md`](BACKEND-ASKS.md) is what the frontend needs from the engine.
+
 ## Why this split
 
 The line is drawn where two sessions would otherwise collide. Frontend owns everything a
