@@ -21,15 +21,23 @@ struct ResolvedMediaTranscriber: TranscriptProvider {
 
     private let session: URLSession
     private let onDevice: OnDeviceTranscriber
+    private let webResolver: WebViewMediaResolver
     private let logger = Logger(subsystem: "com.matthewpark.quokka", category: "resolve")
 
+    @MainActor
     init(session: URLSession = .shared, onDevice: OnDeviceTranscriber = OnDeviceTranscriber()) {
         self.session = session
         self.onDevice = onDevice
+        self.webResolver = WebViewMediaResolver()
     }
 
     func canAttempt(_ request: TranscriptRequest, config: ResolverConfig) -> Bool {
         guard let rule = config.rule(for: request.platform) else { return false }
+        // A webView rule with no script is a misconfiguration, not a route. Caught here so the
+        // ladder records it as inapplicable and moves on rather than spinning up a web process
+        // to run nothing.
+        if rule.strategy == .webView, rule.script?.isEmpty != false { return false }
+        if rule.strategy == .htmlPattern, rule.mediaPatterns.isEmpty { return false }
         return rule.requestURL(contentID: request.contentID, postURL: request.url) != nil
     }
 
@@ -44,16 +52,26 @@ struct ResolvedMediaTranscriber: TranscriptProvider {
               let url = URL(string: endpoint)
         else { throw TranscriptFailure.notApplicable }
 
-        let body = try await fetchPage(url, rule: rule)
-        guard let mediaURLString = rule.extractMediaURL(from: body),
-              let mediaURL = URL(string: mediaURLString)
-        else {
-            // The single most common real failure, and the one with a user-facing answer:
-            // open the post, tap Share, tap Download, share the file into Quokka. The rule
-            // version is logged because when this starts happening to everyone at once, the
-            // question is always "which config were they on".
-            logger.info("no media in payload for \(request.platform.rawValue, privacy: .public), config v\(config.version)")
-            throw TranscriptFailure.mediaUnreachable("no media in payload")
+        let mediaURL: URL
+        switch rule.strategy {
+        case .htmlPattern:
+            let body = try await fetchPage(url, rule: rule)
+            guard let found = rule.extractMediaURL(from: body),
+                  let parsed = URL(string: found)
+            else {
+                // The single most common real failure, and the one with a user-facing answer:
+                // open the post, tap Share, tap Download, share the file into Quokka. The
+                // config version is logged because when this starts happening to everyone at
+                // once, the question is always "which config were they on".
+                logger.info("no media in payload for \(request.platform.rawValue, privacy: .public), config v\(config.version)")
+                throw TranscriptFailure.mediaUnreachable("no media in payload")
+            }
+            mediaURL = parsed
+        case .webView:
+            // Instagram and TikTok both serve an application shell to a plain client, so there
+            // is no document to pattern-match. Rendering the page is what makes their media
+            // reachable at all -- see WebViewMediaResolver.
+            mediaURL = try await webResolver.mediaURL(for: url, rule: rule)
         }
 
         let media = try await download(mediaURL, rule: rule)

@@ -89,3 +89,47 @@ struct ResolverConfigTests {
         }
     }
 }
+
+/// The `webView` strategy exists because fetching stopped working. These pin the decoding
+/// defaults that keep an already-deployed config valid when a field is added to the rule.
+struct ResolverStrategyTests {
+
+    @Test("A rule written before strategy existed still decodes, as htmlPattern")
+    func strategyDefaultsForOlderConfigs() throws {
+        // Without this, adding a field silently invalidates every config already on a device,
+        // and those devices fall back to rung 0 with nothing to say why.
+        let json = #"""
+        {"platform":"reddit","requestTemplate":"https://x/{id}","mediaPatterns":["a(b)"]}
+        """#
+        let rule = try JSONDecoder().decode(ResolverRule.self, from: Data(json.utf8))
+        #expect(rule.strategy == .htmlPattern)
+        #expect(rule.maxBytes == 120_000_000)
+        #expect(rule.script == nil)
+    }
+
+    @Test("A webView rule loads the post itself, verbatim")
+    func rawURLTokenIsNotEncoded() {
+        // The page a webView rule needs to render *is* the post, so percent-encoding it the
+        // way a query parameter needs would produce a URL that loads nothing.
+        let rule = ResolverRule(
+            platform: .tiktok,
+            strategy: .webView,
+            requestTemplate: "{rawurl}",
+            script: "document.querySelector('video')?.src ?? null")
+        #expect(rule.requestURL(contentID: nil, postURL: "https://www.tiktok.com/@a/video/12")
+                == "https://www.tiktok.com/@a/video/12")
+        #expect(rule.requestURL(contentID: "12", postURL: nil) == nil)
+    }
+
+    @Test("A webView rule decodes its script")
+    func scriptSurvivesTheWire() throws {
+        let json = #"""
+        {"platform":"instagram","strategy":"webView","requestTemplate":"{rawurl}",
+         "script":"document.querySelector('video')?.src ?? null","maxBytes":80000000}
+        """#
+        let rule = try JSONDecoder().decode(ResolverRule.self, from: Data(json.utf8))
+        #expect(rule.strategy == .webView)
+        #expect(rule.script?.contains("querySelector") == true)
+        #expect(rule.mediaPatterns.isEmpty)
+    }
+}
