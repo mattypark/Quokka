@@ -23,6 +23,7 @@ KEEP=0
 SEED=0
 RELAUNCH=0
 EXPORT=0
+EXPORT_ZIP=0
 IDEAS=0
 TAB=""
 SCREEN=""
@@ -33,6 +34,7 @@ while [[ $# -gt 0 ]]; do
     --seed) SEED=1; shift ;;
     --relaunch) RELAUNCH=1; shift ;;
     --export) EXPORT=1; shift ;;
+    --export-zip) EXPORT=1; EXPORT_ZIP=1; shift ;;
     --ideas) IDEAS=1; shift ;;
     --screen) SCREEN="$2"; shift 2 ;;
     --tab) TAB="$2"; shift 2 ;;
@@ -109,10 +111,19 @@ if [[ "$EXPORT" -eq 1 ]]; then
   # Everything after that -- the walk, the parse, the dedupe, the insert -- is the real path.
   DATA_DIR=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data 2>/dev/null || true)
   if [[ -n "$DATA_DIR" ]]; then
-    rm -rf "$DATA_DIR/Documents/TestExport"
+    rm -rf "$DATA_DIR/Documents/TestExport" "$DATA_DIR/Documents/TestExport.zip"
     node scripts/seed-export.mjs "$DATA_DIR/Documents/TestExport"
-    # Append, never assign -- assigning here silently discarded --tab.
-    LAUNCH_ARGS+=(-quokkaImportFixture TestExport)
+    if [[ "$EXPORT_ZIP" -eq 1 ]]; then
+      # Zipped with the real `zip`, then the folder is removed -- so the run proves the archive
+      # path and cannot accidentally fall back to reading the folder next to it.
+      ( cd "$DATA_DIR/Documents/TestExport" && zip -rq ../TestExport.zip . )
+      rm -rf "$DATA_DIR/Documents/TestExport"
+      echo "  zipped to TestExport.zip, folder removed"
+      LAUNCH_ARGS+=(-quokkaImportFixture TestExport.zip)
+    else
+      # Append, never assign -- assigning here silently discarded --tab.
+      LAUNCH_ARGS+=(-quokkaImportFixture TestExport)
+    fi
   else
     echo "!! no data container yet -- launch once, then re-run with --export" >&2
   fi
