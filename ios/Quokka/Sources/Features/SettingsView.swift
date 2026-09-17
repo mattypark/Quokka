@@ -60,6 +60,19 @@ struct SettingsView: View {
                         Text("Quokka keeps everything on this device. Nothing is uploaded.")
                             .font(Type.caption).foregroundStyle(Label.tertiary)
                     }
+
+                    Divider().overlay(Surface.hairline)
+
+                    // Apple requires the privacy policy to be reachable from inside the app as
+                    // well as from the App Store listing, and a reviewer who cannot find it
+                    // cites the app rather than going looking.
+                    HStack(spacing: Space.loose) {
+                        Link("Privacy Policy", destination: Legal.privacy)
+                        Link("Terms", destination: Legal.terms)
+                        Link("Support", destination: Legal.support)
+                    }
+                    .font(Type.control)
+                    .foregroundStyle(Label.secondary)
                 }
                 .padding(Space.roomy)
                 .padding(.bottom, Grid.bottomInset)

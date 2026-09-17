@@ -92,6 +92,13 @@ targets:
         # Quokka uses HTTPS and nothing else, which is the standard exemption. Declared
         # here so App Store Connect stops asking on every build.
         ITSAppUsesNonExemptEncryption: false
+        # Present even though SpeechAnalyzer reads a file the user already handed over and
+        # never asks for authorisation. The Speech framework is linked, Apple's static check
+        # at upload looks for the string rather than for a call to requestAuthorization, and a
+        # missing one is a rejection while an unused one costs nothing.
+        NSSpeechRecognitionUsageDescription: >-
+          Quokka reads the audio of a video you saved, on this device, to write out what was
+          said. The audio is never uploaded and is discarded as soon as the words are written.
         UIUserInterfaceStyle: Light
         # Declared so a future release can add background enrichment without a plist change
         # shipping separately from the code that needs it.

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Quokka collects nothing, so this list is empty and that is the whole declaration.
+	     It has to match the App Privacy answers in App Store Connect exactly: Data Not
+	     Collected there, an empty array here. The two drifting apart is a metadata rejection,
+	     and it is the kind that is invisible until a reviewer opens both. -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- No tracking, and no domains to list. A non-empty NSPrivacyTrackingDomains with
+	     NSPrivacyTracking false is rejected as contradictory. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- Required-reason APIs. Undeclared use of any of these is an automated rejection at
+	     upload, before a human sees the build, and the reason code has to be the true one
+	     rather than the most permissive one that validates. -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- UserDefaults: the onboarding flag, the haptics and mirror toggles, the tile
+			     style, and the debug launch arguments. All of it is read back by this app or
+			     by its own share extension through the shared App Group, which is exactly
+			     what CA92.1 describes. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- File timestamps: ShareInbox.pendingRecords sorts the App Group inbox by
+			     contentModificationDate so saves drain in the order they arrived. The files
+			     are inside the app group container, which is C617.1 and not DDA9.1 -- nothing
+			     is displayed to the user. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

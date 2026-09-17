@@ -24,9 +24,13 @@ struct OnboardingView: View {
 
                 Spacer(minLength: 0)
 
-                Text("By continuing you agree to the Terms and Privacy Policy.")
+                // Markdown links rather than plain text. The sentence read as though the two
+                // documents were reachable long before either one was, which is the version of
+                // this that gets cited.
+                Text("By continuing you agree to the [Terms](\(Legal.terms)) and [Privacy Policy](\(Legal.privacy)).")
                     .font(Type.caption)
                     .foregroundStyle(Label.dim)
+                    .tint(Label.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Space.section)
 
