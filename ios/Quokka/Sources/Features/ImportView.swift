@@ -54,9 +54,10 @@ struct ImportView: View {
         .tint(Label.primary)
         .fileImporter(
             isPresented: $pickingFolder,
-            // A folder, not a zip. iOS Files unzips natively, so Quokka needs no archive
-            // dependency and never has to hold a multi-gigabyte export in memory.
-            allowedContentTypes: [.folder],
+            // The .zip Meta actually hands you, or the folder if you already expanded it.
+            // ExportScanner reads either, so whichever one is in Files is the right one --
+            // and nobody has to find "Uncompress" in a context menu first.
+            allowedContentTypes: [.zip, .folder],
             allowsMultipleSelection: false
         ) { outcome in
             guard case .success(let urls) = outcome, let picked = urls.first else { return }
