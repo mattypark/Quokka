@@ -17,6 +17,17 @@ public struct Playlist: Codable, Sendable, Equatable, Identifiable {
     public var coverItemID: Int64?
     public var createdAt: Date
     public var updatedAt: Date
+    /// A digest of everything in the playlist, written by whatever summarised it.
+    ///
+    /// Separate from `note`, which is the user's own writing. Overwriting what somebody typed
+    /// by hand with something a model produced is data loss that no saved column justifies.
+    public var summary: String?
+    /// When `summary` was written. Nil means never.
+    ///
+    /// Held rather than derived so a screen can say the digest is *behind* the playlist rather
+    /// than merely absent -- adding ten videos to a summarised playlist must not leave a stale
+    /// paragraph presenting itself as current.
+    public var summarisedAt: Date?
 
     public init(
         id: Int64? = nil,
@@ -24,7 +35,9 @@ public struct Playlist: Codable, Sendable, Equatable, Identifiable {
         note: String? = nil,
         coverItemID: Int64? = nil,
         createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        updatedAt: Date = Date(),
+        summary: String? = nil,
+        summarisedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -32,6 +45,17 @@ public struct Playlist: Codable, Sendable, Equatable, Identifiable {
         self.coverItemID = coverItemID
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.summary = summary
+        self.summarisedAt = summarisedAt
+    }
+
+    /// True when the playlist has changed since its digest was written.
+    ///
+    /// A second of slack: adding items touches `updatedAt` and the summary lands a moment
+    /// after, so an exact comparison would report every fresh summary as already stale.
+    public var summaryIsStale: Bool {
+        guard let summarisedAt else { return false }
+        return updatedAt.timeIntervalSince(summarisedAt) > 1
     }
 
     /// "4 ideas | Updated 2hr ago" -- the subtitle under a playlist's name.

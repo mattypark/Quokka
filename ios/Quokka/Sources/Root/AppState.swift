@@ -252,12 +252,40 @@ final class AppState {
                 cursor = page.cursor
             } while cursor != nil && all.count < 200_000
 
-            mirror.write(all)
+            // Transcripts go out with the library. They are what makes the mirror worth
+            // reading: captions are marketing and a YouTube title is often the URL, so the
+            // transcript is the only place the actual content of a video lives.
+            var transcripts: [Int64: String] = [:]
+            for item in all {
+                guard let id = item.id,
+                      let transcript = try? store.transcript(forItem: id),
+                      transcript.isUsable
+                else { continue }
+                transcripts[id] = transcript.text
+            }
+            mirror.write(all, transcripts: transcripts)
+
+            let playlists = (try? store.playlistsForMirror()) ?? []
+            mirror.writePlaylists(playlists.compactMap { entry in
+                guard let id = entry.playlist.id else { return nil }
+                let items = (try? store.playlistItems(id)) ?? []
+                return LibraryMirror.PlaylistMirror(
+                    id: id,
+                    name: entry.playlist.name,
+                    note: entry.playlist.note,
+                    itemCount: entry.itemCount,
+                    summary: entry.playlist.summary,
+                    summaryIsStale: entry.playlist.summaryIsStale,
+                    itemIDs: items.compactMap(\.id))
+            })
 
             let applied = mirror.ingestTags { id, tags in
                 try? store.setTags(itemID: id, tags)
             }
-            if applied > 0 { try reload() }
+            let summarised = mirror.ingestSummaries { playlistID, summary in
+                try? store.setPlaylistSummary(playlistID, summary)
+            }
+            if applied > 0 || summarised > 0 { try reload() }
         } catch {
             logger.error("Mirror sync failed: \(error.localizedDescription)")
         }

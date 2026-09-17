@@ -52,6 +52,24 @@ function readLibrary() {
   return { items, dir, error: null, updated: statSync(path).mtime.toISOString() };
 }
 
+/// Reads the playlists mirror. Absent is normal -- an app with no playlists writes no file.
+function readPlaylists() {
+  const dir = libraryDir();
+  if (!dir) return [];
+  const path = join(dir, "playlists.jsonl");
+  if (!existsSync(path)) return [];
+  const out = [];
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      out.push(JSON.parse(line));
+    } catch {
+      // skip, same reasoning as the library
+    }
+  }
+  return out;
+}
+
 function tagList(item) {
   if (!item.tags) return [];
   try {
@@ -99,6 +117,37 @@ const TOOLS = [
     },
   },
   {
+    name: "quokka_list_playlists",
+    description:
+      "List the playlists, with how many videos are in each and whether the summary is current. Start here when asked to summarise something.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "quokka_read_playlist",
+    description:
+      "Everything in one playlist: each video's author, title, caption and — where it has been transcribed — what was actually said. This is what you summarise from.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "Playlist id from quokka_list_playlists" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "quokka_write_summary",
+    description:
+      "Write a summary back to a playlist. Quokka applies it on its next launch. Summarise only from quokka_read_playlist output — never invent content for a video with no transcript.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "number", description: "Playlist id" },
+        summary: { type: "string", description: "The digest. Plain text, no markdown headings." },
+      },
+      required: ["id", "summary"],
+    },
+  },
+  {
     name: "quokka_stats",
     description: "Counts across the library: by platform, by origin, by author, and by tag.",
     inputSchema: { type: "object", properties: {} },
@@ -115,7 +164,11 @@ function call(name, args = {}) {
       const limit = args.limit ?? 40;
       let found = items.filter((item) => {
         if (args.platform && item.platform !== args.platform) return false;
-        const hay = [item.author, item.caption, item.title, item.platform, item.url, ...tagList(item)]
+        // The transcript is in the haystack deliberately. Captions are marketing and a
+        // YouTube title is frequently the URL, so searching what was *said* is the difference
+        // between finding "the reel called something about lighting" and finding "the reel
+        // where someone explained three-point lighting".
+        const hay = [item.author, item.caption, item.title, item.platform, item.url, item.transcript, ...tagList(item)]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -153,6 +206,71 @@ function call(name, args = {}) {
       if (!Number.isFinite(id) || !tags.length) return "Need an id and at least one tag.";
       appendFileSync(join(dir, "tags.jsonl"), JSON.stringify({ id, tags }) + "\n", "utf8");
       return `Tagged [${id}] with ${tags.join(", ")}. Quokka applies this on its next launch.`;
+    }
+
+    case "quokka_list_playlists": {
+      const playlists = readPlaylists();
+      if (!playlists.length) {
+        return "No playlists yet. Make one in Quokka and add some saves to it.";
+      }
+      return playlists
+          .map((p) => {
+            const state = !p.summary
+              ? "no summary"
+              : p.summaryIsStale
+                ? "summary is behind the contents"
+                : "summarised";
+            return `[${p.id}] ${p.name} — ${p.itemCount} video${p.itemCount === 1 ? "" : "s"}, ${state}`;
+          })
+          .join("\n");
+    }
+
+    case "quokka_read_playlist": {
+      const playlists = readPlaylists();
+      const playlist = playlists.find((p) => p.id === args.id);
+      if (!playlist) return `No playlist ${args.id}. Run quokka_list_playlists.`;
+
+      const { items, error } = readLibrary();
+      if (error) return error;
+
+      const byID = new Map(items.map((i) => [i.id, i]));
+      const chosen = playlist.itemIDs.map((id) => byID.get(id)).filter(Boolean);
+
+      // Said plainly, because it changes what an honest summary can claim. A playlist where
+      // most videos have no transcript can only be summarised from captions and titles, and
+      // the summary should say so rather than sounding equally confident about both.
+      const withWords = chosen.filter((i) => i.transcript).length;
+      const header =
+        `${playlist.name} — ${chosen.length} video${chosen.length === 1 ? "" : "s"}, ` +
+        `${withWords} transcribed.` +
+        (withWords < chosen.length
+          ? ` ${chosen.length - withWords} ${chosen.length - withWords === 1 ? "has" : "have"} no transcript: summarise those from title and caption only, and do not invent what was said in them.`
+          : "");
+
+      const body = chosen
+        .map((i, n) => {
+          const lines = [`--- ${n + 1}. ${i.author ?? "unknown"} — ${i.title ?? i.url}`];
+          if (i.caption) lines.push(`caption: ${i.caption}`);
+          lines.push(i.transcript ? `transcript: ${i.transcript}` : "transcript: (none)");
+          return lines.join("\n");
+        })
+        .join("\n\n");
+
+      return `${header}\n\n${body}`;
+    }
+
+    case "quokka_write_summary": {
+      const dir = libraryDir();
+      if (!dir) return "No library directory found.";
+      const summary = String(args.summary ?? "").trim();
+      if (!summary) return "Refusing to write an empty summary.";
+      // Appended as a queue the app drains and deletes, exactly like tags.jsonl -- this file
+      // is work that has been done, never a second source of truth competing with the database.
+      appendFileSync(
+        join(dir, "summaries.jsonl"),
+        JSON.stringify({ playlistID: args.id, summary }) + "\n",
+      );
+      return `Queued a summary for playlist ${args.id}. Quokka applies it on next launch.`;
     }
 
     case "quokka_stats": {

@@ -202,6 +202,31 @@ final class QuokkaStore: Sendable {
             try db.create(index: "idx_job_queuedAt", on: "transcript_job", columns: ["queuedAt"])
         }
 
+        migrator.registerMigration("v9-playlist-items") { db in
+            // Items straight onto a playlist, without inventing an Idea first.
+            //
+            // Until now a playlist reached its videos through its ideas, which is right when
+            // the playlist exists to produce scripts and wrong for the thing people actually
+            // do first: drop thirty saved reels into "Wellness" and ask what is in them. An
+            // idea per video to express that is bookkeeping nobody asked for.
+            try db.create(table: "playlist_item") { t in
+                t.column("playlistID", .integer).notNull().references("playlist", onDelete: .cascade)
+                t.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
+                t.column("position", .integer).notNull().defaults(to: 0)
+                t.primaryKey(["playlistID", "itemID"])
+            }
+
+            // The digest of everything in the playlist. Separate from `note`, which is the
+            // user's own text -- overwriting what someone wrote by hand with something a
+            // model produced is the kind of data loss that is never worth the saved column.
+            try db.alter(table: "playlist") { t in
+                t.add(column: "summary", .text)
+                // Nil means never summarised. Compared against the playlist's updatedAt to
+                // tell "no summary" from "summary is behind the contents".
+                t.add(column: "summarisedAt", .datetime)
+            }
+        }
+
         return migrator
     }
 
