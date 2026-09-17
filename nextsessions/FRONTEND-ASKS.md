@@ -1,5 +1,11 @@
 # What the backend needs from a screen
 
+> **Already changed in your lane, two lines, sorry:** `ImportView`'s `allowedContentTypes`
+> was `[.folder]` and is now `[.zip, .folder]`. Without it the archive reader is unreachable
+> and the import still requires finding "Uncompress" in a Files context menu. If you rewrite
+> the view, carry it.
+
+
 Written by the backend session. **Nothing here has been built** — `Features/`, `Components/`
 and the design tokens are the frontend session's, and reaching into them mid-session is how
 two people end up with the same file open.
@@ -65,3 +71,64 @@ a synthesised `quokka://movie/<uuid>` URL, platform `.web`, and `thumbnailState 
 It will render as a typographic tile like Instagram and X do, which is survivable. A first
 frame out of the video would be better, and the imaging package can already downsample — but
 what it should look like is a design decision, not mine.
+
+
+---
+
+# Added since: the import and the playlist
+
+## 7. The import now takes the .zip
+
+`ExportScanner.scan(root:)` and `.shares(from:root:...)` are unchanged — hand them the `.zip`
+or the unzipped folder and both work. `ExportScanner.isArchive(url)` says which one you got.
+
+The instructions screen should now say something much shorter. The real flow is:
+
+1. Instagram → Settings → **Download your information** → request it (Meta emails a link, takes
+   a few hours to a day)
+2. Download the `.zip` on the phone
+3. Quokka → Import → pick the `.zip`
+
+There is no longer an unzip step, and `ExportScanner.Contents.isEmpty` distinguishes "picked
+the wrong thing" from "your account is empty" — worth different copy.
+
+## 8. Videos onto a playlist, without inventing an Idea
+
+New and this is the one that matters for the way the app is actually used: pick saves in the
+library, drop them in a playlist, ask what is in them.
+
+- `QuokkaStore.addToPlaylist(_:itemIDs:)` → returns how many were *new*, so a confirmation can
+  honestly say "added 24 of 30, six were already there"
+- `QuokkaStore.playlistItems(_:)` → everything in it, directly-added and idea-sourced, deduped
+- `QuokkaStore.removeFromPlaylist(_:itemIDs:)`
+
+The old playlist → idea → item route still works and still matters; this is the other
+direction, and no screen should have to know which one put something there.
+
+## 9. The playlist summary
+
+`Playlist.summary` and `Playlist.summarisedAt`, plus `Playlist.summaryIsStale`.
+
+Three states, and they are genuinely different:
+
+| State | What it means | What it should say |
+|---|---|---|
+| `summary == nil` | never summarised | offer to summarise |
+| `summaryIsStale` | videos added since | show it, marked as behind |
+| otherwise | current | show it |
+
+`summary` is **not** `note`. `note` is the user's own writing and must never be overwritten by
+something a model produced.
+
+## 10. Where the summary comes from
+
+Claude Code, over the MCP, on the subscription already on the machine — no API key, no
+per-summary cost. The app writes `playlists.jsonl` and `library.jsonl` (now carrying
+transcripts) into the mirror; `quokka_write_summary` appends to `summaries.jsonl`; the app
+drains and clears it on next launch.
+
+So the UI affordance is closer to "ask Claude to summarise this" than to a spinner: the work
+happens on the Mac and lands on the next launch. Copy should not promise it is instant.
+
+Requires **"Let Claude read your library"** in settings — the mirror is off by default, and
+without it none of this exists.
