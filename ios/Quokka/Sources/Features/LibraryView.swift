@@ -74,7 +74,6 @@ private struct EmptyLibrary: View {
         VStack(spacing: Space.roomy) {
             Spacer()
 
-            Quokka(.sleep, size: 130)
 
             Text("BUILD TASTE")
                 .font(Type.statement(38))

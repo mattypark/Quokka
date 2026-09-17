@@ -113,8 +113,6 @@ struct PlaylistsView: View {
 
     private var empty: some View {
         VStack(spacing: Space.snug) {
-            Quokka(.sleep, size: 96)
-                .padding(.bottom, Space.snug)
             Text("No playlists yet")
                 .font(Type.body)
                 .foregroundStyle(Label.secondary)

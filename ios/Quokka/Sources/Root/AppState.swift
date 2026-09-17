@@ -167,7 +167,10 @@ final class AppState {
             for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false
         ) else { return }
 
-        let root = documents.appendingPathComponent(name, isDirectory: true)
+        // Not `isDirectory: true`: that appends a trailing slash, which is right for a folder
+        // and produces an unopenable URL for a .zip -- and the whole point of the fixture is
+        // that it exercises whichever one the user would actually have picked.
+        let root = documents.appendingPathComponent(name)
         guard FileManager.default.fileExists(atPath: root.path) else {
             logger.error("No fixture at \(root.path)")
             return

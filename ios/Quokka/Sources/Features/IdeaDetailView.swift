@@ -18,7 +18,10 @@ struct IdeaDetailView: View {
     @State private var pane: Pane = .note
     @State private var copied = false
 
-    private enum Pane: Hashable { case note, inspiration }
+    /// Where the words come from until the store can hand one over. See TranscriptAccess.swift.
+    var transcripts: TranscriptReading = UnbuiltTranscripts()
+
+    private enum Pane: Hashable { case note, transcript, inspiration }
 
     var body: some View {
         NavigationStack {
@@ -27,15 +30,16 @@ struct IdeaDetailView: View {
 
                 VStack(spacing: 0) {
                     SegmentedTabs(
-                        options: [(.note, "Note"), (.inspiration, "Inspiration")],
+                        options: [(.note, "Note"), (.transcript, "Transcript"), (.inspiration, "Inspiration")],
                         selection: $pane
                     )
-                    .frame(width: 220)
+                    .frame(width: 310)
                     .padding(.top, Space.snug)
                     .padding(.bottom, Space.base)
 
                     switch pane {
                     case .note: note
+                    case .transcript: transcript
                     case .inspiration: inspiration
                     }
                 }
@@ -43,7 +47,7 @@ struct IdeaDetailView: View {
                 // The video sits ON the script, bottom-left, rather than above or beside it.
                 // That single overlap is what makes the screen read as derived from a video
                 // instead of as a document that happens to have one attached.
-                if pane == .note, let first = sources.first {
+                if pane != .inspiration, let first = sources.first {
                     SourceChip(item: first, loader: state.loader)
                         .padding(.leading, Space.roomy)
                         .padding(.bottom, 68)
@@ -73,7 +77,7 @@ struct IdeaDetailView: View {
     // MARK: - Note
 
     private var note: some View {
-        ScrollView(showsIndicators: false) {
+        FadingScroll {
             VStack(alignment: .leading, spacing: Space.base) {
                 HStack(alignment: .top, spacing: Space.base) {
                     Text(idea?.title ?? "")
@@ -140,6 +144,81 @@ struct IdeaDetailView: View {
             // stuck underneath either of them.
             .padding(.bottom, 200)
         }
+    }
+
+    // MARK: - Transcript
+
+    /// The words that were actually said, as opposed to the note written about them.
+    ///
+    /// Four states, and they are genuinely different things. No transcript yet is not a
+    /// failure; a failure that will be retried is not worth showing; and a failure that has
+    /// run out of rungs is the one that matters, because it is the only one with something for
+    /// the person to do about it.
+    private var transcript: some View {
+        Group {
+            if let item = sources.first, let id = item.id {
+                if let result = transcripts.transcript(forItem: id) {
+                    FadingScroll {
+                        VStack(alignment: .leading, spacing: Space.base) {
+                            // Where it came from, said quietly. `hosted` is the only value
+                            // that means anything left this device, which is worth being able
+                            // to check rather than take on trust.
+                            Text(result.source.rawValue.uppercased())
+                                .font(Type.meta(9))
+                                .foregroundStyle(Label.dim)
+
+                            Text(result.text)
+                                .font(Type.body)
+                                .foregroundStyle(Label.primary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Space.roomy)
+                        .padding(.bottom, 200)
+                    }
+                } else if transcripts.isTranscribing(itemID: id) {
+                    message(
+                        "Reading the audio",
+                        "It is seconds, not milliseconds — and the first one also downloads a speech model."
+                    )
+                } else if let reason = transcripts.transcriptFailure(forItem: id) {
+                    // The sentence the ladder wrote, verbatim. It is an instruction rather than
+                    // an error code precisely so it can be shown to a person unedited.
+                    message("No audio to read", reason)
+                } else {
+                    VStack(spacing: Space.base) {
+                        message(
+                            "Not transcribed yet",
+                            "Quokka can read the audio of this video on your device and write out what was said."
+                        )
+                        Button { transcripts.requestTranscript(itemID: id) } label: {
+                            Text("Get the transcript")
+                                .font(Type.control)
+                                .foregroundStyle(Label.onInverse)
+                                .padding(.horizontal, Space.loose)
+                                .padding(.vertical, Space.base)
+                                .background(Surface.inverse, in: Capsule())
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            } else {
+                message("No video attached", "A transcript comes from a video. Attach one first.")
+            }
+        }
+    }
+
+    private func message(_ title: String, _ detail: String) -> some View {
+        VStack(spacing: Space.snug) {
+            Text(title).font(Type.body).foregroundStyle(Label.secondary)
+            Text(detail)
+                .font(Type.caption)
+                .foregroundStyle(Label.tertiary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, Space.section)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Inspiration

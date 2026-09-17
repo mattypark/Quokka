@@ -59,7 +59,6 @@ struct OnboardingView: View {
 
             VStack(spacing: Space.base) {
                 Wordmark(size: 54, animated: false)
-                Quokka(.idle, size: 92)
             }
             .allowsHitTesting(false)
         }
