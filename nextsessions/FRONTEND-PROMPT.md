@@ -20,16 +20,18 @@ which is the reason it was saved.
 
 ## Current state
 
-Seven screens exist and were each verified by running them: onboarding, planner (Today),
-library, playlists, playlist detail, idea detail, settings — plus the share extension's
-extracting and saved states. The app is named Quokka, has a pixel mascot with five
-animations, and is pushed to `mattypark/Quokka`.
+**Redesigned 2026-09-28 to copy Cosmos** (branch `cosmos-redesign`, not merged, not pushed).
+The mascot and every custom font are gone; everything is SF Pro. Three tabs -- Home (Saved /
+Creators), Search (words and colour), Profile (Saves / Playlists / Ideas, where the planner
+and script editor now live) -- and item, playlist and creator pages you push into. Each was
+verified by screenshot in the simulator. The app icon is a black lowercase q on white.
+
+`extension/` is a Chrome extension, Save to Quokka, that queues right-click saves in the
+browser. **It has no route to the phone yet** -- the two candidates are in
+`docs/DECISIONS.md`, and the choice is Matthew's.
 
 Real transcription is **not** built. Sample scripts stand in and are labelled on screen as
 samples. `docs/RESEARCH-TRANSCRIPTS.md` explains why, and what the lawful path is.
-
-Two things block a TestFlight build: a personal-use font in the bundle, and no app icon. Both
-are in `docs/TESTFLIGHT.md`.
 
 
 ## Your order of work

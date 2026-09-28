@@ -14,6 +14,7 @@ Saving is table stakes. The product is what happens after.
 | | |
 |---|---|
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why the architecture is what it is. Read before changing anything structural. |
+| [`docs/DESIGN-REFS.md`](docs/DESIGN-REFS.md) | The interface copies Cosmos. Every measurement it was built from. |
 | [`docs/RESEARCH-TRANSCRIPTS.md`](docs/RESEARCH-TRANSCRIPTS.md) | What is actually possible for transcripts, with 33 sources. The finding the product turns on. |
 | [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) | Getting it onto a phone that is not yours. **Read the blockers at the top.** |
 | [`docs/TIMELINE.md`](docs/TIMELINE.md) | Phases and what ships when. |
@@ -26,8 +27,9 @@ scripts/run.sh                          # build, screenshot, shut the simulator 
 scripts/run.sh --seed                   # sample saves
 scripts/run.sh --ideas                  # sample playlists and ideas
 scripts/run.sh --export                 # a synthetic Instagram export, imported
-scripts/run.sh --tab today|library|playlists|settings
-scripts/run.sh --screen playlist|idea   # deep-link into a sheet
+scripts/run.sh --tab home|search|profile
+scripts/run.sh --screen item|playlist|idea   # push straight into a page
+swift scripts/render-icon.swift         # app icon + extension icons, from code
 scripts/run.sh --relaunch               # relaunch, to prove data persisted
 ```
 
@@ -35,7 +37,8 @@ scripts/run.sh --relaunch               # relaunch, to prove data persisted
 201°F on this machine.
 
 ```sh
-cd ios/QuokkaDesign && swift test       # 73 tests, ~1s, no simulator
+cd ios/QuokkaDesign && swift test       # 94 tests, ~1s, no simulator
+cd extension && npm test                # 11 tests, no dependencies
 ```
 
 ## Layout
@@ -46,9 +49,10 @@ ios/
   Quokka/                  App target
   QuokkaShare/             Share extension — the daily capture path
   QuokkaDesign/            Local SPM package:
-    QuokkaDesign             tokens, the mascot, tile shapes
+    QuokkaDesign             tokens and tile shapes
     QuokkaEngine             pure logic — models, canonicaliser, export parser
     QuokkaImaging            downsampling, encoding, average colour
+extension/                 Save to Quokka — right-click Chrome extension (queues locally for now)
 mcp/                       quokka-mcp — lets Claude Code read and tag the library, no API key
 web/                       Marketing site (paused; app is the priority)
 tools/  docs/  scripts/  nextsessions/
@@ -60,9 +64,14 @@ tools/  docs/  scripts/  nextsessions/
 - **Instagram import** — DMs filtered to one conversation, plus Saved and Liked, deduplicated
   across all three.
 - **Thumbnails** per platform, cached at save time, stored as SQLite BLOBs.
-- **Library** — masonry at native aspect ratio, grouped by creator.
-- **Playlists → Ideas** — script editor with hook, copy, and the videos behind it.
-- **Planner** — to-dos, completed, skipped, and a daily journal.
+- **Cosmos-style interface** — Home (Saved / Creators), Search, Profile, and item, playlist
+  and creator pages you push into. SF Pro only, no mascot.
+- **Search** — by word (titles, creators, captions, tags, transcripts) and by colour.
+- **Item page** — the picture, the original, the transcript if there is one, the playlists it
+  is on, and a picker with a Save pill.
+- **Playlists** — Organize (multi-select remove), Add, Share, and a script editor per idea.
+- **Planner** — to-dos, completed, skipped, and a daily journal, under Profile → Ideas.
+- **Save to Quokka** — a Chrome extension: right-click an image, link, video, text or page.
 - **`quokka-mcp`** — ask your terminal "what did I save about lighting?"
 
 ## What does not work yet
@@ -72,11 +81,12 @@ tools/  docs/  scripts/  nextsessions/
   labelled as such on screen.
 - **Metrics.** See `backend/ANALYTICS.md` for what is actually obtainable per platform.
 - **The blob shape mode.** The seam is in `QuokkaDesign/TileShape.swift`; the shapes are not.
+- **Extension → phone.** Saves wait in the browser; the two candidate routes are in
+  `docs/DECISIONS.md`.
 
 ## Known blockers
 
-1. **`KeeponTruckin.ttf` is personal-use licensed** and is committed to a public repo. Blocks
-   submission. One line to fix — see `docs/TESTFLIGHT.md`.
-2. **No app icon.**
-3. Instagram, Pinterest and X publish no thumbnail to an unauthenticated client. Settled and
-   designed around — the typographic tile is their intended state.
+1. Instagram, Pinterest and X publish no thumbnail to an unauthenticated client. Settled and
+   designed around — the typographic tile is their intended state. It does mean an
+   Instagram-heavy library is mostly text cards, which is the strongest argument for the
+   extension: on a computer, the right-click carries the image itself.

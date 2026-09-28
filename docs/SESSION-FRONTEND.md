@@ -23,8 +23,16 @@ simulator, so it can be proved rather than eyeballed.
 
 ## Rules
 
+- **The interface copies Cosmos.** Measure against `docs/DESIGN-REFS.md` before changing a
+  screen's structure; the screenshots it was measured from are in
+  `~/Documents/Reference images/cosmos/` and stay out of this public repo.
+- **SF Pro only, regular and medium.** No display faces, no mascot. See `docs/DECISIONS.md`.
 - **White ground, black text, no accent colour, ever.** The only colour on screen belongs to
-  the saved work. See `docs/DECISIONS.md`.
+  the saved work.
+- Three tabs -- Home, Search, Profile -- and everything else is pushed onto a tab's stack
+  through `Route`, with a grey back circle rather than the system bar.
+- Build screens from `Components/Chrome.swift` (circles, pills, text tabs, underline tabs,
+  count badge, top bar). A new size or fill belongs there or in the tokens, not in a view.
 - Tokens before components. Nothing reaches for a hex value or a ramp step directly.
 - Animate `transform` and `opacity` only. Every animated call site goes through
   `Motion.respecting(_:)` so Reduce Motion is the default rather than something each view
@@ -54,6 +62,8 @@ scripts/run.sh                    # build, screenshot, shut the simulator down
 scripts/run.sh --seed             # plant sample saves
 scripts/run.sh --export           # plant a synthetic Instagram export and import it
 scripts/run.sh --relaunch         # relaunch, to prove data actually persisted
+scripts/run.sh --seed --ideas --tab home|search|profile
+scripts/run.sh --seed --ideas --screen item|playlist|idea
 ```
 
 **Never pass `--keep`.** A booted simulator's `mediaanalysisd` has been measured at 691% CPU

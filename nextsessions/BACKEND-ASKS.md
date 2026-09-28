@@ -1,7 +1,7 @@
 # What the frontend needs from the engine
 
 Written by the frontend session, and the mirror of [`FRONTEND-ASKS.md`](FRONTEND-ASKS.md).
-**Nothing here has been built.** `QuokkaEngine`, `QuokkaStore` and `Services/` are the backend
+**Nothing here has been built** -- except section 5, which the frontend wrote and flags for review. `QuokkaEngine`, `QuokkaStore` and `Services/` are the backend
 session's, and reaching into them mid-session is how two people end up with the same file open.
 
 ## 1. A profile to write onboarding into
@@ -131,3 +131,33 @@ not fail.
 `quokka-mcp` stays the second route: it already mirrors the library, so Claude on the Mac can
 write richer summaries back into the same field. On-device fills it in immediately; the Mac
 improves it when it runs. Same column either way.
+
+## 5. Built by the frontend during the Cosmos redesign -- please review
+
+The Search tab and the item page needed queries that did not exist, and the redesign could not
+ship half a screen. They were written in the backend's files and are logged here so they can
+be reviewed, moved or rewritten rather than discovered:
+
+| Where | What | Worth a look |
+|---|---|---|
+| `Services/QuokkaStore+Search.swift` | `search(text:)` -- every word must match title, author, caption, tags, url or transcript | LIKE, not FTS5. Fine at 10k rows; FTS5 with triggers is the right answer at 100k |
+| same | `search(color:)` -- nearest `averageColor`, weighted RGB 2:4:3 | A full pass over one integer column |
+| same | `recentColors()` -- for the swatch row | |
+| same | `playlists(containing:)` -- both routes, direct and through an idea | |
+| `Root/AppState+Browse.swift` | Pass-throughs for the above, plus `playlistItems`, `addToPlaylist`, `removeFromPlaylist`, `playlistDigest`, `page(author:)` | `playlistCards()` reuses `playlistsForMirror()` for its item counts |
+
+## 6. A route from the Chrome extension to the phone
+
+`extension/` queues saves in `chrome.storage.local` and stops there. The record matches
+`ShareInboxRecord` (`id`, `receivedAt`, `rawURL`, `rawText`) plus `srcURL`, `pageURL` and
+`pageTitle`. The two candidate routes, and what each costs, are in `docs/DECISIONS.md`; the
+choice is Matthew's. Whichever lands, `InboxDrain` needs one new rule: an image save's
+`srcURL` is its thumbnail, to be fetched rather than downsampled from a file.
+
+## 7. The transcript screen is still wired to `UnbuiltTranscripts`
+
+`QuokkaStore` now has `transcript(forItem:)`, `enqueueTranscript` and
+`exhaustedTranscriptFailure`, and the new item page reads the first of them directly. But
+`IdeaDetailView` still receives `UnbuiltTranscripts()`, because `TranscriptReading` also wants
+`isTranscribing(itemID:)` and nothing answers that yet. One query on `transcript_job` and an
+adapter conforming `QuokkaStore` to the protocol, and the Transcript tab turns on.
