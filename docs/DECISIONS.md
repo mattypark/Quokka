@@ -136,30 +136,43 @@ this workload: a `UIImage` from a file, then a second resized one. Everything go
 
 So the extension writes a deliberately dumb record and gets out. The app does the thinking.
 
-## Fonts
+## One face, and the interface copies Cosmos
 
-| Face | Role | Note |
+**Decided 2026-09-28.** The app was redesigned to copy [Cosmos](https://www.cosmos.so)'s layout
+and interaction one for one -- measured, in `docs/DESIGN-REFS.md` -- and the mascot was removed.
+
+It used to carry five faces: Bagel Fat One for the wordmark, two personal-use display faces,
+Newsreader for tile titles and JetBrains Mono for metadata. Each had one job, and together
+they were five voices on a screen whose only colour is supposed to be the saved work. Cosmos
+sets everything in one neutral grotesk at two weights and lets the images be the only
+expressive thing on screen. It is the right call for a library that is all pictures.
+
+Cosmos's face is ABC Oracle, a paid Dinamo licence. **SF Pro stands in**: it is the closest
+neutral grotesk the OS ships, so it costs no licence, no bundle bytes and no fallback path.
+The personal-use submission blocker went with the rest.
+
+What is copied is structure -- screen anatomy, spacing, type sizes, the way chrome floats.
+What is not: the dots logo, the typeface file, any Cosmos image and any Cosmos copy.
+
+## The Chrome extension queues locally until a sync path is chosen
+
+**Decided 2026-09-28.** `extension/` saves images, links, videos, text and pages from a
+right-click, and holds them in `chrome.storage.local`. Nothing leaves the browser yet.
+
+The library lives only on the phone and there is no server, so a save made on a computer has
+no route to it today. Matthew chose to see the redesigned app before picking one. The two
+candidates:
+
+| Route | How | Trade |
 |---|---|---|
-| Bagel Fat One | Wordmark only | Carries full Hangul, so 알림 renders in its own face |
-| Very very punk font | The empty-state statement, and nothing else | **Personal-use licence.** Submission blocker |
-| Keep on Truckin | Collection titles only | **Personal-use licence.** Submission blocker |
-| Newsreader | Editorial, tile titles | Stands in for Copernicus, a licensed foundry face that is not distributable |
-| SF Pro | All functional text | System |
-| JetBrains Mono | Metadata | Counts, timestamps, hosts |
+| **Worker relay** | Quokka's worker gets a small D1 inbox. The app shows a pairing code once; the extension posts to the inbox; the app pulls on foreground and the rows are deleted on delivery | Works from any computer. It is the first server-side storage this app has had, even though it only holds what has not been delivered yet |
+| **Mac iCloud helper** | A native-messaging helper writes records into Quokka's iCloud Drive folder, the one `LibraryMirror` already uses, and the app drains them like the App Group inbox | No server. Macs only, one helper to install, and it needs the iCloud capability registered in the portal |
 
-Three display faces is far more than a minimal interface normally carries. They work only
-because each is scoped to one place -- everything a person actually *reads* is SF Pro or mono,
-and the display faces appear at sizes where they are read as images rather than as text.
-
-**The ransom-note face constrains its own copy.** Every glyph is a separate found object, and
-its `R` is a cutout carrying an apostrophe-e, so "BUILD YOUR TASTE" renders as
-"BUILD YOU'RE TASTE". That is invisible in source and only appears when rendered. Any word set
-in this face has to be looked at, not assumed — prefer short ones.
-
-**Two of these block submission.** Keep on Truckin and Very very punk font are personal-use
-only, which is defensible on a private build and is not defensible on the App Store. Swapping
-each is a one-line change in `Face`. Neither is used on the website, where a public commercial
-page makes the licence a clearer problem than a private build does.
+Either way, **the record is already the inbox's shape**. `extension/lib/record.js` builds `id`,
+`receivedAt`, `rawURL` and `rawText` exactly as `ShareInboxRecord` has them, plus `srcURL`,
+`pageURL` and `pageTitle`, so the sync is a transport and nothing else. `InboxDrain` will
+need to learn one thing: an image save's `srcURL` is the thumbnail, fetched rather than
+downsampled from a file.
 
 ## The mirror, and Claude with no API key
 

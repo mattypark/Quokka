@@ -1,0 +1,239 @@
+/* Tokens match the app's -- docs/DESIGN-REFS.md. */
+:root {
+  --canvas: #ffffff;
+  --field: #fbfaf8;
+  --control: #f2f2f2;
+  --ink: #0a0a0a;
+  --secondary: #6b6b6b;
+  --hairline: rgba(0, 0, 0, 0.1);
+  --hairline-strong: rgba(0, 0, 0, 0.12);
+  --gutter: 8px;
+  --margin: 14px;
+  --radius-tile: 2px;
+  --radius-card: 12px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  width: 360px;
+  max-height: 580px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px var(--margin) 10px;
+}
+
+.wordmark {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.count {
+  font-size: 12px;
+  color: var(--secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  margin: 0 var(--margin) 12px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: transform 120ms var(--ease), opacity 120ms ease-out;
+}
+
+.pill:active {
+  transform: scale(0.97);
+}
+
+.pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pill:focus-visible,
+.text-button:focus-visible,
+.tile:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--margin);
+}
+
+.empty {
+  margin: 28px 8px;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--secondary);
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* A two-column masonry, the same shape as the app's grid. */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+  column-gap: var(--gutter);
+}
+
+.grid li {
+  break-inside: avoid;
+  margin-bottom: var(--gutter);
+  position: relative;
+}
+
+.tile {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.tile img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-tile);
+  background: var(--control);
+}
+
+.card {
+  display: block;
+  padding: 10px;
+  min-height: 72px;
+  background: var(--field);
+  border: 0.5px solid var(--hairline);
+  border-radius: var(--radius-tile);
+}
+
+.card .kind {
+  display: block;
+  font-size: 11px;
+  color: var(--secondary);
+  margin-bottom: 6px;
+}
+
+.card .title {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 17px;
+  letter-spacing: -0.1px;
+}
+
+.card .host {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 0.5px var(--hairline-strong);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 22px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.grid li:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px var(--margin) 12px;
+  border-top: 0.5px solid var(--hairline);
+}
+
+.note {
+  flex: 1;
+  margin: 0;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--secondary);
+}
+
+.text-button {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.text-button:disabled {
+  color: var(--secondary);
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .remove {
+    transition: none;
+  }
+}

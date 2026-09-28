@@ -1,0 +1,9 @@
+{
+  "name": "quokka-extension",
+  "private": true,
+  "type": "module",
+  "description": "Save to Quokka -- Chrome extension. No dependencies; loaded unpacked.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

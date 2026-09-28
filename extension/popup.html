@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quokka</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <span class="wordmark">quokka</span>
+      <span class="count" id="count"></span>
+    </header>
+
+    <button class="pill" id="save-page" type="button">Save this page</button>
+
+    <main>
+      <p class="empty" id="empty" hidden>
+        Nothing saved yet. Right-click any image, link or text and choose
+        <strong>Save to Quokka</strong>.
+      </p>
+      <ul class="grid" id="grid"></ul>
+    </main>
+
+    <footer class="foot">
+      <p class="note">Saves wait here until Quokka on your phone can pick them up.</p>
+      <button class="text-button" id="clear" type="button">Clear all</button>
+    </footer>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
