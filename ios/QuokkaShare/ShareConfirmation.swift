@@ -13,7 +13,6 @@ struct ShareConfirmation: View {
     let state: State
     let platform: Platform?
     var carriesVideo = false
-    var onPreview: (() -> Void)?
     var onOpen: (() -> Void)?
     var onDone: (() -> Void)?
 
@@ -28,84 +27,83 @@ struct ShareConfirmation: View {
 
     private var working: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Surface.canvas.ignoresSafeArea()
 
-            VStack(spacing: 22) {
-                Spacer()
-                Text(carriesVideo ? "extracting idea…" : "saving…")
-                    .font(.system(size: 15, weight: .regular, design: .serif))
-                    .foregroundStyle(.black.opacity(0.45))
-                Spacer()
-            }
-
-            VStack {
-                HStack {
-                    Spacer()
-                    Image(systemName: "xmark")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.black.opacity(0.35))
-                        .padding(22)
-                }
-                Spacer()
+            VStack(spacing: Space.roomy) {
+                PulsingDots()
+                Text(carriesVideo ? "Reading the video" : "Saving")
+                    .font(Type.nav)
+                    .tracking(Type.navTracking)
+                    .foregroundStyle(Label.secondary)
             }
         }
     }
 
     // MARK: - Saved / rejected
 
+    /// A white card at the bottom, the way Cosmos confirms a save: what happened, where it
+    /// came from, one black pill and a quiet way out. The post underneath stays visible.
     private var card: some View {
         VStack {
             Spacer()
-            VStack(spacing: 16) {
-                HStack {
-                    Text(state == .saved ? "Video saved!" : "Nothing to save")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.black)
-                    Spacer()
+            VStack(alignment: .leading, spacing: Space.roomy) {
+                HStack(spacing: Space.base) {
+                    ZStack {
+                        Circle().fill(state == .saved ? Surface.inverse : Surface.control)
+                        Image(systemName: state == .saved ? "checkmark" : "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(state == .saved ? Label.onInverse : Label.secondary)
+                    }
+                    .frame(width: 36, height: 36)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(state == .saved ? "Saved to Quokka" : "Nothing to save")
+                            .font(Type.bodyEmphasis)
+                            .foregroundStyle(Label.primary)
+                        Text(subtitle)
+                            .font(Type.caption)
+                            .foregroundStyle(Label.secondary)
+                    }
+                    Spacer(minLength: 0)
                     Button { onDone?() } label: {
                         Text("Done")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.black.opacity(0.45))
+                            .font(Type.control)
+                            .foregroundStyle(Label.secondary)
+                            .padding(.vertical, Space.snug)
                     }
                 }
 
                 if state == .saved {
-
-                    Button { onPreview?() } label: {
-                        Text("Preview")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 13)
-                            .overlay(Capsule().stroke(.black.opacity(0.18), lineWidth: 1))
-                    }
-
                     Button { onOpen?() } label: {
                         HStack(spacing: 6) {
-                            Text("Open in app").font(.system(size: 15, weight: .semibold))
-                            Image(systemName: "arrow.up.forward.square").font(.system(size: 13))
+                            Text("Open Quokka").font(Type.control)
+                            Image(systemName: "arrow.up.right").font(.system(size: 13, weight: .semibold))
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Label.onInverse)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Capsule().fill(.black))
+                        .frame(height: Control.pillHeight)
+                        .background(Surface.inverse, in: Capsule())
                     }
-                } else {
-                    Text("No link or video came through in that share.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.black.opacity(0.45))
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(20)
+            .padding(Space.loose)
+            .padding(.bottom, Space.snug)
             .background(
-                UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
-                    .fill(.white)
+                UnevenRoundedRectangle(topLeadingRadius: Radius.sheet, topTrailingRadius: Radius.sheet)
+                    .fill(Surface.canvas)
+                    .ignoresSafeArea(edges: .bottom)
             )
         }
         // A Color needs ignoresSafeArea applied to the view, not folded into the style --
         // the ShapeStyle overload does not take it.
         .background(Color.black.opacity(0.22).ignoresSafeArea())
+    }
+
+    private var subtitle: String {
+        guard state == .saved else { return "No link or video came through in that share." }
+        let kind = carriesVideo ? "Video" : "Link"
+        if let platform { return "\(kind) from \(platform.displayName)" }
+        return kind
     }
 }
 
@@ -120,8 +118,8 @@ private struct PulsingDots: View {
         HStack(spacing: 10) {
             ForEach(0..<3, id: \.self) { index in
                 Circle()
-                    .fill(.black)
-                    .frame(width: 11, height: 11)
+                    .fill(Label.primary)
+                    .frame(width: 9, height: 9)
                     .scaleEffect(0.7 + 0.3 * pulse(index))
                     .opacity(0.35 + 0.65 * pulse(index))
             }

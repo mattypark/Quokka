@@ -231,7 +231,6 @@ final class ShareViewController: UIViewController {
                 state: .saved,
                 platform: platform,
                 carriesVideo: carriesVideo,
-                onPreview: { [weak self] in self?.openApp(preview: true) },
                 onOpen: { [weak self] in self?.openApp(preview: false) },
                 onDone: { [weak self] in self?.close() }
             )

@@ -3,64 +3,95 @@ import QuokkaDesign
 
 /// The first screen.
 ///
-/// Images scattered behind the wordmark, which sits through the middle of them rather than
-/// above or below -- the overlap is what makes it a composition instead of a logo with a
-/// gallery underneath it.
+/// Type and nothing else. On a first launch the library is empty, so a gallery here would be a
+/// gallery of grey squares -- and a Cosmos-style opener works because it is quiet: one large
+/// line, three short promises, one black pill.
 struct OnboardingView: View {
-    @Environment(AppState.self) private var state
     let onStart: () -> Void
 
     var body: some View {
-        ZStack {
-            Surface.canvas.ignoresSafeArea()
+        VStack(spacing: 0) {
+            Wordmark()
+                .padding(.top, Space.base)
 
-            VStack(spacing: 0) {
-                Text("Save what stopped your thumb,\nand turn it into something.")
-                    .font(Type.title(21))
+            Spacer(minLength: Space.loose)
+
+            VStack(spacing: Space.roomy) {
+                Text("Save what stops\nyour thumb.")
+                    .font(Type.headline)
+                    .tracking(Type.headlineTracking)
                     .foregroundStyle(Label.primary)
                     .multilineTextAlignment(.center)
-                    .padding(.top, Space.section)
-                    .padding(.horizontal, Space.section)
-
-                Spacer(minLength: 0)
-
-                // Markdown links rather than plain text. The sentence read as though the two
-                // documents were reachable long before either one was, which is the version of
-                // this that gets cited.
-                Text("By continuing you agree to the [Terms](\(Legal.terms)) and [Privacy Policy](\(Legal.privacy)).")
-                    .font(Type.caption)
-                    .foregroundStyle(Label.dim)
-                    .tint(Label.secondary)
+                Text("Everything you save, in one place — and something to make from it.")
+                    .font(Type.body)
+                    .foregroundStyle(Label.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, Space.section)
+            }
+            .padding(.horizontal, Space.section)
 
+            Spacer(minLength: Space.loose)
+
+            VStack(alignment: .leading, spacing: Space.loose) {
+                Promise(
+                    icon: "square.and.arrow.up",
+                    title: "Save from any app",
+                    detail: "Share a post from Instagram, TikTok, YouTube or anywhere else.")
+                Promise(
+                    icon: "magnifyingglass",
+                    title: "Find it again",
+                    detail: "Search by word, by creator, or by colour.")
+                Promise(
+                    icon: "text.quote",
+                    title: "Make something from it",
+                    detail: "Playlists, and scripts built from what you saved.")
+            }
+            .padding(.horizontal, Space.section)
+
+            Spacer(minLength: Space.loose)
+
+            VStack(spacing: Space.base) {
                 Button {
                     Haptics.shared.saved()
                     onStart()
                 } label: {
-                    Text("Start")
-                        .font(Type.bodyEmphasis)
-                        .foregroundStyle(Label.onInverse)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Space.roomy)
-                        .background(Surface.inverse, in: Capsule())
+                    FilledPill(title: "Get started")
                 }
-                .padding(.horizontal, Space.section)
-                .padding(.top, Space.roomy)
-                .padding(.bottom, Space.section)
-            }
+                .buttonStyle(PressStyle())
 
-            // Behind the text, in front of the canvas.
-            ScatteredGallery(items: state.items, loader: state.loader)
-                .allowsHitTesting(false)
-                .padding(.horizontal, Space.roomy)
-                .padding(.top, 150)
-                .padding(.bottom, 190)
-
-            VStack(spacing: Space.base) {
-                Wordmark(size: 54)
+                // Markdown links rather than plain text, so both documents are one tap away
+                // from the sentence that cites them.
+                Text("By continuing you agree to the [Terms](\(Legal.terms)) and [Privacy Policy](\(Legal.privacy)).")
+                    .font(Type.caption)
+                    .foregroundStyle(Label.secondary)
+                    .tint(Label.primary)
+                    .multilineTextAlignment(.center)
             }
-            .allowsHitTesting(false)
+            .padding(.horizontal, Space.loose)
+            .padding(.bottom, Space.base)
         }
+        .background(Surface.canvas)
+    }
+}
+
+/// One line of what the app does: a glyph in a grey circle, a title, one sentence.
+private struct Promise: View {
+    let icon: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Space.base) {
+            CircleGlyph(icon: icon)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(Type.bodyEmphasis)
+                    .foregroundStyle(Label.primary)
+                Text(detail)
+                    .font(Type.caption)
+                    .foregroundStyle(Label.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
