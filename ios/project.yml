@@ -30,10 +30,9 @@ targets:
           - Secrets.xcconfig
           - Secrets.xcconfig.example
           - Base.xcconfig
-          # Personal-use licence. Shipping it inside the bundle is redistribution, which
-          # blocks submission -- so it is excluded here as well as untracked. The file stays
-          # on disk for private builds; Face.feature falls back to the wordmark.
-          - Resources/Fonts/KeeponTruckin.ttf
+          # Personal-use licence, untracked, and no longer referenced -- the app is SF Pro
+          # only. Excluded so a copy left on disk can never ride into a submitted bundle.
+          - Resources/Fonts
     configFiles:
       Debug: Quokka/Base.xcconfig
       Release: Quokka/Base.xcconfig
@@ -83,10 +82,6 @@ targets:
         QuokkaWorkerHost: $(QUOKKA_WORKER_HOST)
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
-        UIAppFonts:
-          - BagelFatOne-Regular.ttf
-          - Newsreader.ttf
-          - JetBrainsMono.ttf
         # Locked light. The interface is paper, and the saved work is the only colour on
         # it; a dark appearance would invert that relationship rather than adapt it.
         # Quokka uses HTTPS and nothing else, which is the standard exemption. Declared

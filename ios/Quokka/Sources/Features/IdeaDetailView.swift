@@ -111,12 +111,12 @@ struct IdeaDetailView: View {
                         Text("Sample text — not a transcript of this video")
                             .font(Type.caption)
                     }
-                    .foregroundStyle(Accent.deep)
+                    .foregroundStyle(Label.primary)
                     .padding(.horizontal, Space.base)
                     .padding(.vertical, Space.snug)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Accent.wash)
-                    .tileShape(.control, stroked: false)
+                    .background(Surface.field)
+                    .tileShape(.control, stroked: true)
                 }
 
                 if let hook = idea?.hook, !hook.isEmpty {

@@ -11,53 +11,53 @@ import SwiftUI
 /// where a black one reads as a player. It also means the app is legible outdoors, which is
 /// where scrolling actually happens.
 public enum Ink {
-    public static let ink0 = Color(hex: 0x000000) // text
+    public static let ink0 = Color(hex: 0x000000)
     public static let ink1 = Color(hex: 0x060606)
     public static let ink2 = Color(hex: 0x222222)
-    public static let ink3 = Color(hex: 0x414141) // secondary text   10.1:1 on white
-    public static let ink4 = Color(hex: 0x636363) // tertiary text     5.9:1 on white
-    public static let ink5 = Color(hex: 0x878787) // dimmed            3.5:1 -- large only
-    public static let ink6 = Color(hex: 0xAEAEAE) // borders
-    public static let ink7 = Color(hex: 0xE8E8E8) // hairlines, fills
-    public static let ink8 = Color(hex: 0xFFFFFF) // canvas
+    public static let ink3 = Color(hex: 0x414141)
+    public static let ink4 = Color(hex: 0x636363)
+    public static let ink5 = Color(hex: 0x878787)
+    public static let ink6 = Color(hex: 0xAEAEAE)
+    public static let ink7 = Color(hex: 0xE8E8E8)
+    public static let ink8 = Color(hex: 0xFFFFFF)
 
     public static let all: [Color] = [ink0, ink1, ink2, ink3, ink4, ink5, ink6, ink7, ink8]
 }
 
-/// The one colour in the app that is not grey.
-///
-/// Sampled from the mascot's own body rather than picked independently, so the accent and the
-/// character are literally the same pink. A palette chosen next to a character instead of from
-/// it is how a mascot ends up looking pasted on.
-public enum Accent {
-    /// #F1B4B2 — Quokka's body.
-    public static let quokka = Color(hex: 0xF1B4B2)
-    /// A wash for fills behind text. The body pink at full strength is too strong to read on.
-    public static let wash = Color(hex: 0xFBEDEC)
-    /// For text on the wash. The body pink fails contrast as a text colour.
-    public static let deep = Color(hex: 0x8C4B47)
-}
-
 /// Semantic names, so a view never reaches for a ramp step directly and the contrast
 /// guarantees stay attached to a role rather than to a number.
+///
+/// Values follow Cosmos, measured from its computed styles -- see `docs/DESIGN-REFS.md`.
 public enum Surface {
     public static let canvas = Ink.ink8
-    /// Cards and grouped rows. Barely off-white: on paper the separation comes from the
-    /// hairline, not from a grey wash.
+    /// Typographic tiles and grouped rows. Barely off-white: on paper the separation comes
+    /// from the edge of the thing, not from a grey wash.
     public static let raised = Color(hex: 0xFAFAFA)
+    /// The search pill and other text fields. Warm rather than neutral, which is the whole
+    /// difference between a field that looks designed and one that looks disabled.
+    public static let field = Color(hex: 0xFBFAF8)
+    /// Grey-filled circle controls -- back, search, more.
+    public static let control = Color(hex: 0xF2F2F2)
     public static let elevated = Ink.ink7
-    public static let hairline = Ink.ink7
+    /// Hairlines are black at low opacity rather than a solid grey, so they sit correctly on
+    /// the field fill and on photographs as well as on white.
+    public static let hairline = Color.black.opacity(0.10)
+    /// The search pill's outline, a shade firmer than a button's.
+    public static let hairlineStrong = Color.black.opacity(0.12)
     public static let border = Ink.ink6
-    /// Filled buttons and the wordmark -- black on white.
-    public static let inverse = Ink.ink0
+    /// Filled buttons -- black on white.
+    public static let inverse = Color(hex: 0x0A0A0A)
 }
 
 public enum Label {
-    public static let primary = Ink.ink0    // 21.0:1
-    public static let secondary = Ink.ink3  // 10.1:1
-    public static let tertiary = Ink.ink4   //  5.9:1 -- passes AA at any size
-    /// Only for text at 17pt+ or semibold 14pt+.
-    public static let dim = Ink.ink5        //  3.5:1
+    /// Not pure black: Cosmos sets its text at #0A0A0A, and the difference is what keeps a
+    /// white screen of type from buzzing.
+    public static let primary = Color(hex: 0x0A0A0A)  // 19.8:1
+    /// Inactive tabs, handles, counts.
+    public static let secondary = Color(hex: 0x6B6B6B) //  5.3:1
+    public static let tertiary = Color(hex: 0x767676)  //  4.5:1 -- the AA floor, at any size
+    /// Only for text at 17pt+ or semibold 14pt+, and for glyphs.
+    public static let dim = Ink.ink5                    //  3.5:1
     /// Text on a filled black control.
     public static let onInverse = Ink.ink8
 }

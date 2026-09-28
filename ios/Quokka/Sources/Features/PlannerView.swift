@@ -142,7 +142,6 @@ struct PlannerView: View {
         return VStack(spacing: Space.snug) {
             if ideas.isEmpty {
                 VStack(spacing: Space.base) {
-                    Quokka(lane == .completed ? .cheer : .sleep, size: 80)
                     Text(emptyText)
                         .font(Type.caption)
                         .foregroundStyle(Label.tertiary)

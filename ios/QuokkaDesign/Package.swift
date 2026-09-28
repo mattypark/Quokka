@@ -18,14 +18,7 @@ let package = Package(
         .library(name: "QuokkaImaging", targets: ["QuokkaImaging"]),
     ],
     targets: [
-        .target(
-            name: "QuokkaDesign",
-            dependencies: ["QuokkaEngine"],
-            // The mascot ships with the design system rather than with the app, because the
-            // share extension needs it too and `Bundle.main` inside an extension is the
-            // extension's own bundle, not the app's.
-            resources: [.process("Resources")]
-        ),
+        .target(name: "QuokkaDesign", dependencies: ["QuokkaEngine"]),
         .target(name: "QuokkaEngine"),
         .target(name: "QuokkaImaging"),
         .testTarget(name: "QuokkaEngineTests", dependencies: ["QuokkaEngine"]),

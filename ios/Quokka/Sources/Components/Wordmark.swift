@@ -1,48 +1,19 @@
 import SwiftUI
 import QuokkaDesign
 
-/// The name spelling itself out, one glyph at a time, each landing with a haptic tap.
+/// The name, set in the interface face.
+///
+/// Lowercase SF Pro at medium weight, tracked in. A display face here would be the one loud
+/// thing on a screen whose only colour is supposed to be the saved work -- Cosmos's mark is
+/// a small black glyph in the corner for the same reason.
 struct Wordmark: View {
-    var text = "QUOKKA"
-    var size: CGFloat = 46
-    var animated = true
-    var onComplete: (() -> Void)?
-
-    @State private var revealed = 0
-
-    private var characters: [Character] { Array(text) }
+    var size: CGFloat = 19
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(characters.enumerated()), id: \.offset) { index, character in
-                Text(String(character))
-                    .font(Type.wordmark(size))
-                    .foregroundStyle(Label.primary)
-                    .opacity(index < revealed ? 1 : 0)
-                    // Rising rather than fading in place: the letters read as arriving, which
-                    // is the metaphor the whole app runs on.
-                    .offset(y: index < revealed ? 0 : size * 0.12)
-                    .animation(Motion.respecting(.easeOut(duration: 0.24)), value: revealed)
-            }
-        }
-        // The face carries generous sidebearings; without negative tracking the word reads as
-        // five letters rather than one mark.
-        .tracking(-size * 0.012)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(text)
-        .task {
-            guard animated, !Motion.reduced else {
-                revealed = characters.count
-                onComplete?()
-                return
-            }
-            for index in characters.indices {
-                try? await Task.sleep(for: .seconds(Motion.glyphInterval))
-                revealed = index + 1
-                Haptics.shared.glyph(index: index, of: characters.count)
-            }
-            try? await Task.sleep(for: .seconds(0.5))
-            onComplete?()
-        }
+        Text("quokka")
+            .font(.system(size: size, weight: .semibold))
+            .tracking(-size * 0.03)
+            .foregroundStyle(Label.primary)
+            .accessibilityLabel("Quokka")
     }
 }

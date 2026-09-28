@@ -75,8 +75,9 @@ private struct EmptyLibrary: View {
             Spacer()
 
 
-            Text("BUILD TASTE")
-                .font(Type.statement(38))
+            Text("Build taste")
+                .font(Type.headline)
+                .tracking(Type.headlineTracking)
                 .foregroundStyle(Label.primary)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Build taste")

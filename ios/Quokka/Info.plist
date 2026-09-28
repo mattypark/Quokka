@@ -43,12 +43,6 @@
 	<string>Quokka reads the audio of a video you saved, on this device, to write out what was said. The audio is never uploaded and is discarded as soon as the words are written.</string>
 	<key>QuokkaWorkerHost</key>
 	<string>$(QUOKKA_WORKER_HOST)</string>
-	<key>UIAppFonts</key>
-	<array>
-		<string>BagelFatOne-Regular.ttf</string>
-		<string>Newsreader.ttf</string>
-		<string>JetBrainsMono.ttf</string>
-	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>

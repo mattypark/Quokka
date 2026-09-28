@@ -3,7 +3,6 @@ import QuokkaDesign
 
 struct RootView: View {
     @Environment(AppState.self) private var state
-    @State private var showingSplash = Self.launchTab == .today
     @State private var tab: TabBar.Tab = Self.launchTab
     @State private var needsOnboarding = !Self.skipsOnboarding && !UserDefaults.standard.bool(forKey: "quokkaOnboarded")
     @State private var importing = false
@@ -35,12 +34,7 @@ struct RootView: View {
         ZStack {
             Surface.canvas.ignoresSafeArea()
 
-            if showingSplash {
-                Wordmark {
-                    withAnimation(Motion.respecting(.easeOut(duration: 0.3))) { showingSplash = false }
-                }
-                .transition(.opacity)
-            } else if needsOnboarding {
+            if needsOnboarding {
                 OnboardingView {
                     UserDefaults.standard.set(true, forKey: "quokkaOnboarded")
                     withAnimation(Motion.respecting(.easeOut(duration: 0.35))) { needsOnboarding = false }

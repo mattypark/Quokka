@@ -17,10 +17,6 @@ public enum Motion {
     /// Press feedback on a card.
     public static let press = Animation.easeOut(duration: 0.12)
 
-    /// The wordmark typing itself out on cold launch. One glyph per interval, matched by one
-    /// haptic transient each.
-    public static let glyphInterval: Double = 0.055
-
     public static let pressedScale: CGFloat = 0.97
     public static let enterScale: CGFloat = 0.98
 

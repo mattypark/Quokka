@@ -41,8 +41,8 @@ public enum TileRole {
 
     var radius: CGFloat {
         switch self {
-        case .tile: Radius.card
-        case .cover: Radius.card
+        case .tile: Radius.tile
+        case .cover: Radius.cover
         case .control: Radius.control
         case .sheet: Radius.sheet
         case .circle: Radius.pill
@@ -76,10 +76,13 @@ public enum Tiles {
 }
 
 public extension View {
-    /// Clips to the current tile shape and draws its hairline in one call, so the two can
-    /// never disagree about the radius.
+    /// Clips to the current tile shape and, when asked, draws its hairline in one call, so the
+    /// two can never disagree about the radius.
+    ///
+    /// Unstroked by default. A photograph needs no outline on white -- Cosmos draws none --
+    /// and only a tile with nothing in it wants its edge drawn.
     @MainActor
-    func tileShape(_ role: TileRole = .tile, stroked: Bool = true) -> some View {
+    func tileShape(_ role: TileRole = .tile, stroked: Bool = false) -> some View {
         let shape = Tiles.shape(role)
         return clipShape(shape)
             .overlay(stroked ? shape.stroke(Surface.hairline, lineWidth: Stroke.thin) : nil)

@@ -58,7 +58,7 @@ struct OnboardingView: View {
                 .padding(.bottom, 190)
 
             VStack(spacing: Space.base) {
-                Wordmark(size: 54, animated: false)
+                Wordmark(size: 54)
             }
             .allowsHitTesting(false)
         }
