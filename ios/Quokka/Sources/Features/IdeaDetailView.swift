@@ -29,12 +29,10 @@ struct IdeaDetailView: View {
                 Surface.canvas.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    SegmentedTabs(
-                        options: [(.note, "Note"), (.transcript, "Transcript"), (.inspiration, "Inspiration")],
+                    UnderlineTabs(
+                        options: [(.note, "Note", nil), (.transcript, "Transcript", nil), (.inspiration, "Inspiration", nil)],
                         selection: $pane
                     )
-                    .frame(width: 310)
-                    .padding(.top, Space.snug)
                     .padding(.bottom, Space.base)
 
                     switch pane {
@@ -50,11 +48,9 @@ struct IdeaDetailView: View {
                 if pane != .inspiration, let first = sources.first {
                     SourceChip(item: first, loader: state.loader)
                         .padding(.leading, Space.roomy)
-                        .padding(.bottom, 68)
+                        .padding(.bottom, Space.loose)
                         .transition(.opacity)
                 }
-
-                toolbar
             }
             .navigationTitle(idea.map { "Preview: \($0.title)" } ?? "Idea")
             .navigationBarTitleDisplayMode(.inline)
@@ -93,9 +89,9 @@ struct IdeaDetailView: View {
                         Button(action: copy) {
                             Image(systemName: copied ? "checkmark" : "doc.on.doc")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(copied ? Label.primary : Label.tertiary)
-                                .frame(width: 32, height: 32)
-                                .background(Surface.raised, in: Circle())
+                                .foregroundStyle(Label.primary)
+                                .frame(width: Control.circle, height: Control.circle)
+                                .background(Surface.control, in: Circle())
                         }
                         .accessibilityLabel(copied ? "Copied" : "Copy script")
                     }
@@ -121,17 +117,17 @@ struct IdeaDetailView: View {
 
                 if let hook = idea?.hook, !hook.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("HOOK")
-                            .font(Type.meta(9))
-                            .foregroundStyle(Label.dim)
+                        Text("Hook")
+                            .font(Type.caption)
+                            .foregroundStyle(Label.secondary)
                         Text(hook)
                             .font(Type.bodyEmphasis)
                             .foregroundStyle(Label.primary)
                     }
                     .padding(Space.base)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Surface.raised)
-                    .tileShape(.control, stroked: false)
+                    .background(Surface.field)
+                    .tileShape(.control, stroked: true)
                 }
 
                 ScriptEditor(text: Binding(
@@ -163,9 +159,9 @@ struct IdeaDetailView: View {
                             // Where it came from, said quietly. `hosted` is the only value
                             // that means anything left this device, which is worth being able
                             // to check rather than take on trust.
-                            Text(result.source.rawValue.uppercased())
-                                .font(Type.meta(9))
-                                .foregroundStyle(Label.dim)
+                            Text(result.source.rawValue)
+                                .font(Type.caption)
+                                .foregroundStyle(Label.secondary)
 
                             Text(result.text)
                                 .font(Type.body)
@@ -193,13 +189,10 @@ struct IdeaDetailView: View {
                             "Quokka can read the audio of this video on your device and write out what was said."
                         )
                         Button { transcripts.requestTranscript(itemID: id) } label: {
-                            Text("Get the transcript")
-                                .font(Type.control)
-                                .foregroundStyle(Label.onInverse)
-                                .padding(.horizontal, Space.loose)
-                                .padding(.vertical, Space.base)
-                                .background(Surface.inverse, in: Capsule())
+                            FilledPill(title: "Get the transcript")
+                                .frame(width: 220)
                         }
+                        .buttonStyle(PressStyle())
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -211,10 +204,10 @@ struct IdeaDetailView: View {
 
     private func message(_ title: String, _ detail: String) -> some View {
         VStack(spacing: Space.snug) {
-            Text(title).font(Type.body).foregroundStyle(Label.secondary)
+            Text(title).font(Type.bodyEmphasis).foregroundStyle(Label.primary)
             Text(detail)
                 .font(Type.caption)
-                .foregroundStyle(Label.tertiary)
+                .foregroundStyle(Label.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, Space.section)
@@ -247,32 +240,11 @@ struct IdeaDetailView: View {
                                 .frame(height: 210)
                         }
                     }
-                    .padding(.horizontal, Space.roomy)
+                    .padding(.horizontal, Grid.margin)
                     .padding(.bottom, 120)
                 }
             }
         }
-    }
-
-    // MARK: - Toolbar
-
-    private var toolbar: some View {
-        HStack(spacing: Space.loose) {
-            ForEach(["chevron.up", "paperclip", "tag", "calendar"], id: \.self) { icon in
-                Image(systemName: icon)
-                    .font(.system(size: 17))
-                    .foregroundStyle(Label.tertiary)
-            }
-            Spacer()
-            Image(systemName: "paperplane")
-                .font(.system(size: 17))
-                .foregroundStyle(Label.tertiary)
-        }
-        .padding(.horizontal, Space.roomy)
-        .padding(.vertical, Space.base)
-        .background(.regularMaterial)
-        .frame(maxHeight: .infinity, alignment: .bottom)
-        .ignoresSafeArea(edges: .bottom)
     }
 
     // MARK: - Work

@@ -8,7 +8,10 @@ import QuokkaEngine
 /// you will post, the ones you finished, and the ones you decided against. Skipped is a first
 /// class outcome rather than a deletion, because deciding not to make something is a decision
 /// worth keeping.
-struct PlannerView: View {
+///
+/// A pane inside the profile's Ideas tab since the Cosmos redesign, which has no planner of
+/// its own. So it draws no scroll view and no screen title; the profile owns both.
+struct IdeasPane: View {
     @Environment(AppState.self) private var state
 
     @State private var selectedDay = Date()
@@ -37,18 +40,13 @@ struct PlannerView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: Space.roomy) {
-                dayHeader
-                weekStrip
-                lanePicker
-                laneContents
-                journalPrompt
-            }
-            .padding(.bottom, Grid.bottomInset)
+        VStack(alignment: .leading, spacing: Space.roomy) {
+            dayHeader
+            weekStrip
+            lanePicker
+            laneContents
+            journalPrompt
         }
-        .background(Surface.canvas)
-        .ignoresSafeArea(edges: .bottom)
         .sheet(item: Binding(get: { openIdea.map(Opened.init) }, set: { openIdea = $0?.id })) { opened in
             IdeaDetailView(ideaID: opened.id)
         }
@@ -61,19 +59,11 @@ struct PlannerView: View {
     // MARK: - Header
 
     private var dayHeader: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(selectedDay.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
-                .font(Type.title(28))
-                .foregroundStyle(Label.primary)
-            Spacer()
-            Image(systemName: "list.bullet")
-                .font(.system(size: 15))
-                .foregroundStyle(Label.secondary)
-                .frame(width: 36, height: 36)
-                .background(Surface.raised, in: Circle())
-        }
-        .padding(.horizontal, Space.roomy)
-        .padding(.top, Space.base)
+        Text(selectedDay.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+            .font(Type.title(20))
+            .foregroundStyle(Label.primary)
+            .padding(.horizontal, Space.roomy)
+            .padding(.top, Space.roomy)
     }
 
     /// Seven days ending today, so the strip is a week of history rather than a calendar that
@@ -91,7 +81,7 @@ struct PlannerView: View {
                     selectedDay = day
                 } label: {
                     Text(day.formatted(.dateTime.day()))
-                        .font(Type.meta(13))
+                        .font(Type.meta(14))
                         .foregroundStyle(isSelected ? Label.onInverse : Label.secondary)
                         .frame(width: 34, height: 34)
                         .background {
@@ -108,33 +98,8 @@ struct PlannerView: View {
     }
 
     private var lanePicker: some View {
-        HStack(spacing: 0) {
-            ForEach(Lane.allCases, id: \.self) { option in
-                let active = lane == option
-                Button {
-                    guard !active else { return }
-                    withAnimation(Motion.respecting(.easeOut(duration: 0.2))) { lane = option }
-                    Haptics.shared.tick()
-                } label: {
-                    Text(option.title)
-                        .font(active ? Type.bodyEmphasis : Type.body)
-                        .foregroundStyle(active ? Label.primary : Label.tertiary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .background {
-                            if active {
-                                Capsule().fill(Surface.canvas)
-                                    .shadow(color: .black.opacity(0.07), radius: 5, y: 1)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(Capsule().fill(Surface.elevated))
-        .padding(.horizontal, Space.roomy)
+        TextTabs(options: Lane.allCases.map { (value: $0, title: $0.title) }, selection: $lane)
+            .padding(.horizontal, Space.roomy)
     }
 
     private var laneContents: some View {
@@ -144,7 +109,7 @@ struct PlannerView: View {
                 VStack(spacing: Space.base) {
                     Text(emptyText)
                         .font(Type.caption)
-                        .foregroundStyle(Label.tertiary)
+                        .foregroundStyle(Label.secondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -177,7 +142,7 @@ struct PlannerView: View {
     private var journalPrompt: some View {
         VStack(alignment: .leading, spacing: Space.base) {
             Text("What would you want your past self to know?")
-                .font(Type.title(24))
+                .font(Type.title(20))
                 .foregroundStyle(Label.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -245,8 +210,9 @@ private struct PlannerRow: View {
             }
             .accessibilityLabel(idea.status == .completed ? "Mark as to-do" : "Mark as done")
         }
-        .padding(Space.base)
-        .background(Surface.raised)
-        .tileShape(.control, stroked: false)
+        .padding(.vertical, Space.base)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Surface.hairline).frame(height: Stroke.thin)
+        }
     }
 }

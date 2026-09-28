@@ -3,50 +3,43 @@ import QuokkaDesign
 
 /// Where the app's navigation lives.
 ///
-/// A bottom bar rather than a top one, for the reason Pinterest and Cosmos both use it: the
-/// grid is the whole app, and a top toolbar puts chrome between the person and the first row
-/// of it. Down here it sits under the thumb and the content runs to the top edge of the screen.
+/// A small white pill resting on the grid, not a bar across it -- Cosmos's is about 155pt
+/// wide with three glyphs, and at that size it reads as an object rather than as chrome. The
+/// grid runs to every edge of the screen and scrolls underneath.
 ///
-/// Deliberately not `TabView`. The bar floats over the grid rather than pushing it up, so the
-/// content scrolls underneath and stays edge-to-edge.
+/// Deliberately not `TabView`, which would push the content up and draw a full-width bar.
 struct TabBar: View {
     enum Tab: String, CaseIterable {
-        case today, library, playlists, settings
-
-        var icon: String {
-            switch self {
-            case .today: "house"
-            case .library: "square.grid.2x2"
-            case .playlists: "rectangle.stack"
-            case .settings: "slider.horizontal.3"
-            }
-        }
+        case home, search, profile
 
         var title: String {
             switch self {
-            case .today: "Today"
-            case .library: "Everything"
-            case .playlists: "Playlists"
-            case .settings: "Settings"
+            case .home: "Home"
+            case .search: "Search"
+            case .profile: "Profile"
             }
         }
     }
 
     @Binding var selection: Tab
+    /// Tapping the tab you are already on scrolls it back to the top, as every feed app does.
+    var onReselect: (Tab) -> Void = { _ in }
+
+    @Environment(ProfileIdentity.self) private var profile
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { tab in
                 Button {
-                    guard selection != tab else { return }
-                    selection = tab
                     Haptics.shared.tick()
+                    if selection == tab {
+                        onReselect(tab)
+                    } else {
+                        selection = tab
+                    }
                 } label: {
-                    Image(systemName: tab.icon)
-                        .font(.system(size: 19, weight: selection == tab ? .semibold : .regular))
-                        .foregroundStyle(selection == tab ? Label.primary : Label.dim)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
+                    glyph(tab)
+                        .frame(width: 52, height: 48)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -54,14 +47,31 @@ struct TabBar: View {
                 .accessibilityAddTraits(selection == tab ? [.isButton, .isSelected] : .isButton)
             }
         }
-        .padding(.horizontal, Space.snug)
+        .padding(.horizontal, Space.tight)
         .background(
-            // Translucent rather than solid: the grid scrolling underneath is what tells you
-            // there is more, and a hard bar would cut that off.
-            Capsule().fill(.regularMaterial)
+            Capsule()
+                .fill(Surface.canvas)
                 .overlay(Capsule().stroke(Surface.hairline, lineWidth: Stroke.thin))
+                .shadow(color: .black.opacity(0.08), radius: 16, y: 4)
         )
-        .padding(.horizontal, Space.section)
-        .shadow(color: .black.opacity(0.06), radius: 18, y: 6)
+    }
+
+    @ViewBuilder
+    private func glyph(_ tab: Tab) -> some View {
+        let active = selection == tab
+        switch tab {
+        case .home:
+            Image(systemName: active ? "house.fill" : "house")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(active ? Label.primary : Label.dim)
+        case .search:
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 18, weight: active ? .semibold : .medium))
+                .foregroundStyle(active ? Label.primary : Label.dim)
+        case .profile:
+            Avatar(image: profile.avatar, name: profile.name, size: 24)
+                .padding(2)
+                .overlay(Circle().stroke(active ? Label.primary : .clear, lineWidth: 1.5))
+        }
     }
 }

@@ -26,7 +26,7 @@ struct MasonryGrid<Content: View>: View {
 
     /// A tile that will never have an image is a text card, not a photo, and giving it a
     /// portrait photo's shape leaves most of it empty. Slightly wide reads as a note.
-    private static var textCardRatio: Double { 1.15 }
+    private static var textCardRatio: Double { 1.4 }
 
     private static func ratio(for item: Item) -> Double {
         if let measured = item.aspectRatio { return measured }

@@ -7,6 +7,13 @@ struct RootView: View {
     @State private var needsOnboarding = !Self.skipsOnboarding && !UserDefaults.standard.bool(forKey: "quokkaOnboarded")
     @State private var importing = false
 
+    // One stack per tab, held here so the tab bar can pop one to its root when its tab is
+    // tapped again, and so switching tabs never loses where a person was.
+    @State private var homePath = NavigationPath()
+    @State private var searchPath = NavigationPath()
+    @State private var profilePath = NavigationPath()
+    @State private var scrollToTop: [TabBar.Tab: Int] = [:]
+
     /// Whether onboarding should be skipped for this launch.
     ///
     /// A screenshot run deep-linking to a screen would otherwise be stopped at the first one.
@@ -27,7 +34,7 @@ struct RootView: View {
             return tab
         }
         #endif
-        return .today
+        return .home
     }
 
     var body: some View {
@@ -52,22 +59,62 @@ struct RootView: View {
         }
     }
 
+    /// The bar steps aside on a pushed screen. An item page ends in its own Save pill and a
+    /// playlist in its own action pill -- Cosmos shows one floating control at a time.
+    private var showsTabBar: Bool {
+        switch tab {
+        case .home: homePath.isEmpty
+        case .search: searchPath.isEmpty
+        case .profile: profilePath.isEmpty
+        }
+    }
+
     private var content: some View {
         ZStack(alignment: .bottom) {
-            // The grid runs to every edge of the screen. Chrome floats over it.
-            Group {
-                switch tab {
-                case .today: PlannerView()
-                case .library: LibraryView(onImport: { importing = true })
-                case .playlists: PlaylistsView()
-                case .settings: SettingsView(embedded: true)
+            // All three stay alive, so a tab comes back exactly as it was left -- scroll
+            // position, pushed screen and all.
+            ZStack {
+                page(.home) {
+                    LibraryView(path: $homePath, scrollToTop: scrollToTop[.home, default: 0]) {
+                        importing = true
+                    }
+                }
+                page(.search) {
+                    SearchView(path: $searchPath)
+                }
+                page(.profile) {
+                    ProfileView(path: $profilePath, scrollToTop: scrollToTop[.profile, default: 0]) {
+                        importing = true
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            TabBar(selection: $tab)
-                .padding(.bottom, Space.snug)
+            if showsTabBar {
+                TabBar(selection: $tab, onReselect: reselect)
+                    .padding(.bottom, Space.tight)
+                    .transition(.opacity.combined(with: .offset(y: 12)))
+            }
         }
+        .animation(Motion.respecting(.easeOut(duration: 0.2)), value: showsTabBar)
         .sheet(isPresented: $importing) { ImportView() }
+    }
+
+    private func page(_ which: TabBar.Tab, @ViewBuilder _ view: () -> some View) -> some View {
+        view()
+            .opacity(tab == which ? 1 : 0)
+            .allowsHitTesting(tab == which)
+            .accessibilityHidden(tab != which)
+    }
+
+    /// A second tap on the open tab goes back to its root, and a tap at the root scrolls to
+    /// the top.
+    private func reselect(_ which: TabBar.Tab) {
+        switch which {
+        case .home where !homePath.isEmpty: homePath = NavigationPath()
+        case .search where !searchPath.isEmpty: searchPath = NavigationPath()
+        case .profile where !profilePath.isEmpty: profilePath = NavigationPath()
+        default: scrollToTop[which, default: 0] += 1
+        }
     }
 }

@@ -3,168 +3,130 @@ import QuokkaDesign
 import QuokkaEngine
 import QuokkaImaging
 
-/// Collections, as covers rather than as a list.
+/// Creators, as covers rather than as a list.
 ///
-/// Each author gets a mosaic built from their own saves, which is the whole idea: you recognise
-/// a collection by what is in it long before you read its name. A list of names with counts
-/// would be the same data and a fraction of the use.
-///
-/// The grouping is by author because that is what the data actually contains -- an Instagram
-/// import lands thousands of items each carrying the handle that made them. No inference, no
-/// AI, and a category that is true by construction.
-struct CollectionsView: View {
+/// Each author gets a mosaic built from their own saves: you recognise a creator by what is
+/// in the cover long before you read the name. The grouping is by author because that is what
+/// the data actually contains -- an Instagram import lands thousands of items each carrying
+/// the handle that made them. No inference, and a category that is true by construction.
+struct CreatorsPane: View {
     @Environment(AppState.self) private var state
-    @State private var opened: String?
 
     private var columns: [GridItem] {
         [GridItem(.flexible(), spacing: Grid.gutter), GridItem(.flexible(), spacing: Grid.gutter)]
     }
 
     var body: some View {
-        Group {
-            if state.authors.isEmpty {
-                empty
-            } else {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        FloatingHeader(
-                            title: "Collections",
-                            subtitle: "\(state.authors.count) creators",
-                            trailing: nil
-                        )
-
-                        LazyVGrid(columns: columns, spacing: Grid.gutter) {
-                            ForEach(state.authors) { author in
-                                Button {
-                                    Haptics.shared.tick()
-                                    opened = author.name
-                                } label: {
-                                    CollectionCover(
-                                        author: author,
-                                        items: state.coverItems(for: author.name),
-                                        loader: state.loader
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
+        if state.authors.isEmpty {
+            EmptyNote(
+                title: "Nothing to group yet",
+                detail: "Creators appear here on their own, from whoever made the things you save.")
+        } else {
+            ScrollView(showsIndicators: false) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: Space.loose) {
+                    ForEach(state.authors) { author in
+                        NavigationLink(value: Route.creator(author.name)) {
+                            CreatorCard(
+                                author: author,
+                                items: state.coverItems(for: author.name),
+                                loader: state.loader)
                         }
-                        .padding(.horizontal, Grid.margin)
+                        .buttonStyle(PressStyle())
                     }
-                    .padding(.bottom, Grid.bottomInset)
                 }
-                .ignoresSafeArea(edges: .bottom)
+                .padding(.horizontal, Grid.margin)
+                .padding(.top, Space.tight)
+                .padding(.bottom, Grid.bottomInset)
             }
         }
-        .background(Surface.canvas)
-        .sheet(item: Binding(get: { opened.map(Opened.init) }, set: { opened = $0?.name })) { item in
-            CollectionDetail(author: item.name)
-        }
-    }
-
-    private struct Opened: Identifiable {
-        let name: String
-        var id: String { name }
-    }
-
-    private var empty: some View {
-        VStack(spacing: Space.base) {
-            Text("Nothing to group yet")
-                .font(Type.title(20))
-                .foregroundStyle(Label.primary)
-            Text("Collections build themselves from whoever made the things you save.")
-                .font(Type.body)
-                .foregroundStyle(Label.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(Space.section)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-/// A 2x2 mosaic of the collection's own contents.
-private struct CollectionCover: View {
+/// A square cover at the cover radius, the name under it and the count under that -- a
+/// Cosmos cluster card.
+private struct CreatorCard: View {
     let author: AuthorGroup
     let items: [Item]
     let loader: ThumbnailLoader?
 
-    /// Only items that actually have a picture. A mosaic of blank cards says nothing about
-    /// what is inside, which is the one job a cover has.
-    private var usableItems: [Item] {
-        items.filter { $0.thumbnailState == .stored }
-    }
-
-    /// Two letters, from a handle like "kitchen.studio", "r/design" or "nasa".
-    ///
-    /// A multi-part handle takes one letter from each of the first two parts; a single word
-    /// takes its first two. Without that second case "nasa" renders as a lone "N" next to
-    /// "BA" and the grid looks inconsistent rather than considered.
-    private var monogram: String {
-        let parts = author.name
-            .split(whereSeparator: { ".-_/ ".contains($0) })
-            .filter { !$0.isEmpty }
-
-        if parts.count >= 2 {
-            return String(parts.prefix(2).compactMap(\.first)).uppercased()
-        }
-        return String((parts.first ?? "").prefix(2)).uppercased()
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: Space.snug) {
-            ZStack {
-                Surface.raised
-                // Four quadrants, filled with whatever exists. One item fills the whole cover,
-                // which reads better than one tile floating in three empty ones.
-                switch usableItems.count {
-                case 0:
-                    // Every save here is from a platform that publishes no image -- Instagram
-                    // collections are usually entirely this. A monogram is a deliberate cover
-                    // rather than a grey square that reads as a loading failure.
-                    Text(monogram)
-                        .font(Type.title(46))
-                        .foregroundStyle(Label.dim)
-                case 1:
-                    tile(usableItems[0])
-                default:
-                    Grid(horizontalSpacing: 1, verticalSpacing: 1) {
-                        GridRow {
-                            tile(usableItems[0])
-                            tile(usableItems[1 % usableItems.count])
-                        }
-                        GridRow {
-                            tile(usableItems[2 % usableItems.count])
-                            tile(usableItems[3 % usableItems.count])
-                        }
-                    }
-                }
-            }
-            .aspectRatio(1, contentMode: .fit)
-            .tileShape(.cover)
+            Mosaic(items: items, loader: loader, monogram: Mosaic.monogram(for: author.name))
+                .aspectRatio(1, contentMode: .fit)
+                .tileShape(.cover)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(author.name)
                     .font(Type.bodyEmphasis)
                     .foregroundStyle(Label.primary)
                     .lineLimit(1)
-                Text("\(author.count)")
-                    .font(Type.meta(10))
-                    .foregroundStyle(Label.tertiary)
+                Text(author.count == 1 ? "1 save" : "\(author.count) saves")
+                    .font(Type.caption)
+                    .foregroundStyle(Label.secondary)
             }
-            .padding(.horizontal, Space.tight)
         }
-        .padding(.bottom, Space.base)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(author.name), \(author.count) saved")
     }
+}
 
-    private func tile(_ item: Item) -> some View {
-        MosaicTile(item: item, loader: loader)
+/// A 2x2 of a group's own pictures. One picture fills it; none gets a monogram.
+///
+/// Shared by creator and playlist covers, which are the same object with different contents.
+struct Mosaic: View {
+    let items: [Item]
+    let loader: ThumbnailLoader?
+    var monogram = ""
+
+    /// Only items that actually have a picture. A mosaic of blank cards says nothing about
+    /// what is inside, which is the one job a cover has.
+    private var usable: [Item] { items.filter { $0.thumbnailState == .stored } }
+
+    var body: some View {
+        Surface.field.overlay {
+            switch usable.count {
+            case 0:
+                // Every save here is from a platform that publishes no image -- Instagram
+                // groups usually are. A monogram is a deliberate cover rather than a grey
+                // square that reads as a loading failure.
+                Text(monogram)
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(Label.dim)
+            case 1:
+                MosaicTile(item: usable[0], loader: loader)
+            default:
+                SwiftUI.Grid(horizontalSpacing: 1, verticalSpacing: 1) {
+                    GridRow {
+                        MosaicTile(item: usable[0], loader: loader)
+                        MosaicTile(item: usable[1 % usable.count], loader: loader)
+                    }
+                    GridRow {
+                        MosaicTile(item: usable[2 % usable.count], loader: loader)
+                        MosaicTile(item: usable[3 % usable.count], loader: loader)
+                    }
+                }
+            }
+        }
+        .clipped()
+    }
+
+    /// Two letters, from a handle like "kitchen.studio", "r/design" or "nasa".
+    ///
+    /// A multi-part handle takes one letter from each of the first two parts; a single word
+    /// takes its first two, or "nasa" renders as a lone "N" beside "BA".
+    static func monogram(for name: String) -> String {
+        let parts = name
+            .split(whereSeparator: { ".-_/ ".contains($0) })
+            .filter { !$0.isEmpty }
+        if parts.count >= 2 {
+            return String(parts.prefix(2).compactMap(\.first)).uppercased()
+        }
+        return String((parts.first ?? "").prefix(2)).uppercased()
     }
 }
 
-/// One quadrant of a cover. Deliberately not `ItemTile`: no press state, no tap target, no
-/// fallback text -- it is texture, and a cover made of readable cards would compete with its
-/// own label.
+/// One quadrant of a cover. Deliberately not `ItemTile`: no fallback text -- it is texture,
+/// and a cover made of readable cards would compete with its own label.
 private struct MosaicTile: View {
     let item: Item
     let loader: ThumbnailLoader?
@@ -172,19 +134,19 @@ private struct MosaicTile: View {
     @State private var image: UIImage?
 
     private var ground: Color {
-        guard let packed = item.averageColor else { return Surface.elevated }
+        guard let packed = item.averageColor else { return Surface.raised }
         let (r, g, b) = AverageColor.components(packed)
         return Color(.sRGB, red: r, green: g, blue: b)
     }
 
     var body: some View {
-        ZStack {
-            ground
-            if let image {
-                Image(uiImage: image).resizable().aspectRatio(contentMode: .fill)
+        ground
+            .overlay {
+                if let image {
+                    Image(uiImage: image).resizable().aspectRatio(contentMode: .fill)
+                }
             }
-        }
-        .clipped()
+            .clipped()
         .task(id: item.id) {
             guard let loader, let id = item.id, item.thumbnailState == .stored else { return }
             image = await loader.image(for: id)
@@ -192,46 +154,74 @@ private struct MosaicTile: View {
     }
 }
 
-/// One collection, opened.
-private struct CollectionDetail: View {
+/// One creator, opened.
+///
+/// Pages its own items rather than filtering the shared library, so going back lands on the
+/// home grid exactly as it was left.
+struct CreatorView: View {
     let author: String
 
     @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
 
+    @State private var items: [Item] = []
+    @State private var cursor: ItemCursor?
+    @State private var count: Int?
+
     var body: some View {
-        NavigationStack {
-            GeometryReader { proxy in
-                ScrollView(showsIndicators: false) {
+        GeometryReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: Space.loose) {
+                    VStack(spacing: Space.tight) {
+                        Text(author)
+                            .font(Type.screenTitle)
+                            .foregroundStyle(Label.primary)
+                            .multilineTextAlignment(.center)
+                        if let count {
+                            Text(count == 1 ? "1 save" : "\(count) saves")
+                                .font(Type.nav)
+                                .foregroundStyle(Label.secondary)
+                        }
+                    }
+                    .padding(.horizontal, Space.chapter)
+
                     MasonryGrid(
-                        items: state.items,
+                        items: items,
                         columns: Grid.columns,
                         spacing: Grid.gutter,
                         width: proxy.size.width - Grid.margin * 2
                     ) { item, _ in
-                        ItemTile(item: item, loader: state.loader)
-                            .onAppear {
-                                if item.id == state.items.last?.id { state.loadMore() }
-                            }
+                        TileLink(item: item, loader: state.loader)
+                            .onAppear { if item.id == items.last?.id { loadMore() } }
                     }
                     .padding(.horizontal, Grid.margin)
-                    .padding(.top, Space.snug)
                 }
-            }
-            .background(Surface.canvas)
-            .navigationTitle(author)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Surface.canvas, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }.font(Type.control)
-                }
+                .padding(.top, Space.tight)
+                .padding(.bottom, Grid.bottomInset)
             }
         }
-        .tint(Label.primary)
-        .task { state.select(author: author) }
-        // Filtering is app-wide state, so leaving the sheet has to put it back or the library
-        // tab silently stays filtered to a collection nobody is looking at any more.
-        .onDisappear { state.select(author: nil) }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            HStack {
+                CircleButton(icon: "chevron.left", label: "Back") { dismiss() }
+                Spacer()
+            }
+            .padding(.horizontal, Space.roomy)
+            .padding(.vertical, Space.tight)
+            .background(Surface.canvas)
+        }
+        .background(Surface.canvas)
+        .toolbar(.hidden, for: .navigationBar)
+        .task {
+            guard items.isEmpty else { return }
+            count = state.authors.first(where: { $0.name == author })?.count
+            loadMore()
+        }
+    }
+
+    private func loadMore() {
+        guard items.isEmpty || cursor != nil else { return }
+        guard let page = state.page(author: author, after: cursor) else { return }
+        items.append(contentsOf: page.items)
+        cursor = page.cursor
     }
 }
