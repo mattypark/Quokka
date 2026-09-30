@@ -8,15 +8,27 @@ Owns everything a view asks a question of. Never edits a screen.
 |---|---|
 | `ios/QuokkaDesign/Sources/QuokkaEngine` | Pure logic: models, canonicaliser, export parser |
 | `ios/QuokkaDesign/Sources/QuokkaImaging` | Downsampling, encoding, average colour |
-| `ios/Quokka/Sources/Services` | Store, fetchers, cache, scanner |
+| `ios/Quokka/Sources/Services` | Store, fetchers, transcribers, importers, cache, scanner |
+| `ios/Quokka/Sources/Root/AppState*.swift` | The data glue every view reads through |
+| `backend/worker` | The live Cloudflare worker |
+| `extension/background.js`, `extension/lib/record.js` | What the Chrome extension saves, and its sync |
 | `mcp/` | `quokka-mcp` |
 | `backend/` | Specs, and the waitlist endpoint |
 | App Store Connect | Submission, TestFlight |
 
 ## Does not own
 
-`Features/`, `Components/`, `QuokkaDesign/` tokens, `web/`. If a screen needs to change to show
-something new, **ask the frontend session** rather than editing the view.
+`Features/`, `Components/`, `Root/RootView.swift` and `Route.swift`, `QuokkaDesign/` tokens,
+the extension's popup and toast, `web/`. If a screen needs to change to show something new,
+**ask the frontend session** rather than editing the view.
+
+## Working with the frontend session
+
+Both sessions run at once and talk in the **`#quokka`** room on claude-multiplayer
+(`join_room quokka`), with the same four prefixes the frontend doc lists: **ASK**, **CONTRACT**,
+**DONE** (with the commit), **FYI**. Post CONTRACT *before* changing any type or method a view
+calls, and DONE when something the frontend waits on lands. An ASK also goes into the matching
+`nextsessions/*-ASKS.md` so it outlives the session. Never edit a file in the other lane.
 
 ## Order of work (2026-09-30)
 
