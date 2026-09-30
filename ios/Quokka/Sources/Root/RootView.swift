@@ -61,6 +61,7 @@ struct RootView: View {
             state.importFixtureIfRequested()
             state.seedIdeasIfRequested()
             state.seedSampleTranscriptsIfRequested()
+            await state.addLinksIfRequested()
         }
     }
 

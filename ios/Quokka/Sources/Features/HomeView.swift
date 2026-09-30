@@ -195,11 +195,15 @@ struct HomeView: View {
 
     private func paste() {
         let copied = UIPasteboard.general.url?.absoluteString ?? UIPasteboard.general.string ?? ""
-        let saved = state.saveLink(copied)
-        pasteResult = saved ? .saved : .notALink
-        if saved { Haptics.shared.saved() } else { Haptics.shared.rejected() }
-        refresh()
         Task {
+            let saved: Bool
+            switch await state.addLink(copied) {
+            case .saved, .alreadySaved, .collection: saved = true
+            case .notALink, .failed: saved = false
+            }
+            pasteResult = saved ? .saved : .notALink
+            if saved { Haptics.shared.saved() } else { Haptics.shared.rejected() }
+            refresh()
             try? await Task.sleep(for: .seconds(1.8))
             pasteResult = nil
         }

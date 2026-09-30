@@ -66,24 +66,59 @@ extension AppState {
         }
     }
 
-    /// Saves a pasted link the same way the share sheet does, and starts its thumbnail.
+    enum AddLinkResult: Equatable {
+        case saved
+        case alreadySaved
+        case collection(name: String, added: Int, found: Int)
+        case notALink
+        case failed(String)
+    }
+
+    /// Adds whatever was pasted: one post, or every post in a Pinterest board, Pinterest
+    /// profile or Are.na channel.
     ///
-    /// Returns false when the text is not a link Quokka can file -- the caller says so rather
-    /// than pretending something was saved.
-    @discardableResult
-    func saveLink(_ raw: String) -> Bool {
-        guard let store,
-              let link = LinkCanonicaliser.canonicalise(raw.trimmingCharacters(in: .whitespacesAndNewlines))
-        else { return false }
+    /// A single post is saved exactly as the share sheet saves it. A collection is read by
+    /// `CollectionImporter` and inserted in one go; either way enrichment starts straight after,
+    /// so the pictures and titles arrive while the person is still looking.
+    func addLink(_ raw: String) async -> AddLinkResult {
+        guard let store else { return .failed("The library could not be opened.") }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let source = CollectionSource.detect(trimmed) {
+            do {
+                let items = try await CollectionImporter().items(in: source)
+                let added = try store.insert(items)
+                try reload()
+                enrich()
+                return .collection(name: source.displayName, added: added, found: items.count)
+            } catch CollectionImporter.Failure.empty {
+                return .failed("Nothing public in that \(source.displayName). Is it secret?")
+            } catch {
+                return .failed("Couldn’t reach \(source.displayName). Try again in a moment.")
+            }
+        }
+
+        guard let link = LinkCanonicaliser.canonicalise(trimmed) else { return .notALink }
         do {
-            try store.insert([Item(link: link, origin: .manual)])
+            let added = try store.insert([Item(link: link, origin: .manual)])
             try reload()
             enrich()
-            return true
+            return added > 0 ? .saved : .alreadySaved
         } catch {
             report(error)
-            return false
+            return .failed("That link couldn’t be saved.")
         }
+    }
+
+    /// Adds links given at launch, for screenshot runs. DEBUG-only; `-quokkaAddLinks a,b,c`.
+    func addLinksIfRequested() async {
+        #if DEBUG
+        guard let list = UserDefaults.standard.string(forKey: "quokkaAddLinks") else { return }
+        for link in list.split(separator: ",") {
+            let result = await addLink(String(link))
+            logger.info("Added \(link, privacy: .public): \(String(describing: result), privacy: .public)")
+        }
+        #endif
     }
 
     // MARK: - Samples, for screenshots
