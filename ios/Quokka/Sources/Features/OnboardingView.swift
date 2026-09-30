@@ -18,9 +18,11 @@ struct OnboardingView: View {
             Spacer(minLength: Space.loose)
 
             VStack(alignment: .leading, spacing: Space.base) {
+                // In the hand, untracked: tightening a hand-drawn face makes the letters
+                // collide rather than look designed.
                 Text("Break down\nany video.")
-                    .font(Type.headline)
-                    .tracking(Type.headlineTracking)
+                    .font(Type.hand(46))
+                    .lineSpacing(-6)
                     .foregroundStyle(Label.onSky)
                 Text("Save a reel, a TikTok or a YouTube video. Quokka reads what was said and shows you what made it work.")
                     .font(Type.body)
