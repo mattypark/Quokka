@@ -88,14 +88,42 @@ struct ItemDetailView: View {
         HStack {
             CircleButton(icon: "chevron.left", label: "Back") { dismiss() }
             Spacer()
-            if let item, let url = URL(string: item.url), url.scheme?.hasPrefix("http") == true {
+            if let item {
                 Menu {
-                    Button { openURL(url) } label: { SwiftUI.Label("Open original", systemImage: "arrow.up.right") }
-                    Button {
-                        UIPasteboard.general.url = url
-                        Haptics.shared.saved()
-                    } label: { SwiftUI.Label("Copy link", systemImage: "link") }
-                    ShareLink(item: url) { SwiftUI.Label("Share", systemImage: "square.and.arrow.up") }
+                    // What to do with the video, first: get its words, or read what they say.
+                    Section {
+                        if transcript == nil, !queued, failure == nil {
+                            Button {
+                                Haptics.shared.tick()
+                                state.requestTranscript(itemID)
+                                load()
+                            } label: { SwiftUI.Label("Transcribe", systemImage: "waveform") }
+                        } else if queued {
+                            SwiftUI.Label("Transcribing…", systemImage: "waveform")
+                        }
+                        if breakdown != nil {
+                            Button { tab = .breakdown } label: {
+                                SwiftUI.Label("See the breakdown", systemImage: "checkmark.circle")
+                            }
+                            Button { tab = .transcript } label: {
+                                SwiftUI.Label("Read the transcript", systemImage: "text.alignleft")
+                            }
+                        }
+                        Button { tab = .save } label: {
+                            SwiftUI.Label("Add to a playlist", systemImage: "rectangle.stack.badge.plus")
+                        }
+                    }
+                    // Then the post itself.
+                    if let url = URL(string: item.url), url.scheme?.hasPrefix("http") == true {
+                        Section {
+                            Button { openURL(url) } label: { SwiftUI.Label("Open original", systemImage: "arrow.up.right") }
+                            Button {
+                                UIPasteboard.general.url = url
+                                Haptics.shared.saved()
+                            } label: { SwiftUI.Label("Copy link", systemImage: "link") }
+                            ShareLink(item: url) { SwiftUI.Label("Share", systemImage: "square.and.arrow.up") }
+                        }
+                    }
                 } label: {
                     CircleGlyph(icon: "ellipsis")
                 }
