@@ -35,9 +35,17 @@ struct HomeView: View {
                             hello.id(Self.top)
                             if !ready.isEmpty { readySection }
                             if !waiting.isEmpty { waitingSection }
-                            wall(width: proxy.size.width)
+                            wall(width: proxy.size.width).id(Self.wallAnchor)
                         }
                         .padding(.bottom, Grid.bottomInset)
+                    }
+                    .task {
+                        #if DEBUG
+                        // Screenshot runs can land on the wall: -quokkaScrollTo wall.
+                        guard UserDefaults.standard.string(forKey: "quokkaScrollTo") == "wall" else { return }
+                        try? await Task.sleep(for: .seconds(1))
+                        reader.scrollTo(Self.wallAnchor, anchor: .top)
+                        #endif
                     }
                     .onChange(of: scrollToTop) {
                         withAnimation(Motion.respecting(.easeOut(duration: 0.3))) {
@@ -58,6 +66,7 @@ struct HomeView: View {
     }
 
     private static let top = "top"
+    private static let wallAnchor = "wall"
 
     // MARK: - Hello
 
