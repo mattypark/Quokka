@@ -52,5 +52,7 @@ echo "==> transcript"
 sqlite3 "$DB" "SELECT source, length(text), substr(text, 1, 160) FROM item_transcript;"
 echo "==> job (attempts, last failure)"
 sqlite3 "$DB" "SELECT attempts, lastFailure FROM transcript_job;"
+echo "==> item (platform, thumbnail state)"
+sqlite3 "$DB" "SELECT platform, thumbnailState FROM item;"
 echo "==> what the app said"
-grep -iE "transcrib|config|webview|speech|resolve" "$OUT/log.txt" | tail -20
+grep -iE "transcrib|config|webview|speech|resolve|no media" "$OUT/log.txt" | tail -20

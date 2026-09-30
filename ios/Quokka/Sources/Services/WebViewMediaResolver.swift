@@ -77,11 +77,20 @@ final class WebViewMediaResolver {
         webView.load(request)
 
         let deadline = Date().addingTimeInterval(timeout)
+        // Kept rather than discarded: a rule whose script throws on every poll looks exactly
+        // like a page with no video, and the difference is a config fix versus a closed door.
+        var scriptError: String?
         while Date() < deadline {
             try? await Task.sleep(for: pollInterval)
             if Task.isCancelled { throw TranscriptFailure.transport(nil) }
 
-            let value = try? await webView.evaluateJavaScript(script)
+            let value: Any?
+            do {
+                value = try await webView.evaluateJavaScript(script)
+            } catch {
+                value = nil
+                if scriptError == nil { scriptError = error.localizedDescription }
+            }
             if let string = value as? String,
                let url = URL(string: string),
                url.scheme?.hasPrefix("http") == true {
@@ -96,7 +105,19 @@ final class WebViewMediaResolver {
         // The honest failure. The page rendered and still produced no media element, which for
         // a private account or a region-locked post is the correct and permanent answer -- and
         // the one the UI turns into "open it in the app, tap Download, share the file here".
-        throw TranscriptFailure.mediaUnreachable("page produced no media")
+        // The detail says which kind of "no media" it was; the user's sentence does not change.
+        let diagnosis = await diagnose(webView)
+        logger.info("no media for \(rule.platform.rawValue, privacy: .public): \(diagnosis, privacy: .public)\(scriptError.map { "; rule script threw: \($0)" } ?? "", privacy: .public)")
+        throw TranscriptFailure.mediaUnreachable("page produced no media: \(diagnosis)")
+    }
+
+    /// Asks the page where it ended up and what player it built. See `RenderedPageProbe`.
+    private func diagnose(_ webView: WKWebView) async -> String {
+        let value = try? await webView.evaluateJavaScript(RenderedPageProbe.script)
+        guard let probe = RenderedPageProbe.parse(value) else {
+            return RenderedPageProbe.pageDidNotAnswer
+        }
+        return "\(probe.diagnosis) (at \(probe.landedOn), \(probe.videos) video)"
     }
 
     /// The `Cookie` header a browser would send to the media host: only cookies whose domain
