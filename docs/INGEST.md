@@ -92,7 +92,7 @@ fills in.
 |---|---|---|
 | **0 -- shared file** | A video file handed over by the share sheet, read by `SpeechAnalyzer` on the phone | **Works.** Nothing leaves the phone |
 | **1 -- creator download** | The same as rung 0, reached by saving the video with the app's own Download button first | Works -- it *is* rung 0. An onboarding job, not code |
-| **2 -- resolve on device** | Renders the post in an offscreen web view (Instagram, TikTok) or reads its page (Reddit), downloads the media, transcribes it, deletes it | **Off.** Its rules come from the worker, and **the worker is not deployed** (`quokka.matthew-parkk0.workers.dev` answers Cloudflare 1042, no such worker). With no config the app fails closed to rung 0 -- on purpose |
+| **2 -- resolve on device** | Renders the post in an offscreen web view (Instagram, TikTok) or reads its page (Reddit), downloads the media with that page's own cookies and Referer, transcribes it, deletes it | **On since 2026-09-30.** The worker is live at `quokka.matthew-parkk0.workers.dev` (config v1). Proved on the Simulator with a real TikTok: config fetched, video found by the web view in ~2s, downloaded, handed to the speech step -- which the Simulator cannot finish, because it cannot download speech models. The last step needs a phone |
 | **3 -- hosted** | The URL goes to a paid transcript provider through the worker | Off by design. Switching it on changes the App Privacy answer from "Data Not Collected" |
 
 **Per platform**, once rung 2 is on:
@@ -111,11 +111,12 @@ be proved on a phone. Screenshot runs use the sample transcripts, and the screen
 
 ## 5. What to do next, in order
 
-1. **Deploy the worker.** No new Cloudflare account: the same one that runs Nudgy takes a second
-   worker on the free plan. `cd backend/worker && npx wrangler deploy`, then put its host in
-   `ios/Quokka/Secrets.xcconfig` as `QUOKKA_WORKER_HOST` (host only, no `https://`). That turns on
-   rung 2 for TikTok, Instagram and Reddit. It needs no secrets.
-2. **Prove it on a phone.** Paste a TikTok, tap Transcribe, watch the breakdown fill.
+1. ~~**Deploy the worker.**~~ Done 2026-09-30, on the same Cloudflare account as Nudgy (free plan,
+   no secrets). The app's default host is in `ios/Quokka/Base.xcconfig`; `Secrets.xcconfig` can
+   override it. (A target-level empty setting in `project.yml` used to beat the xcconfig, so a
+   host written there could never have applied -- fixed.)
+2. **Prove it on a phone.** Paste a TikTok, tap Transcribe, watch the breakdown fill. The first
+   one downloads Apple's speech model, so it takes longer than the rest.
 3. **Decide YouTube.** Share-the-file only, or a hosted provider for rung 3 (a key on the worker,
    a per-minute cost, and the privacy answer changes).
 4. **Give the extension its route to the phone** (the relay or the Mac helper -- `DECISIONS.md`).
