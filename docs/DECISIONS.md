@@ -71,6 +71,10 @@ norm there, not an edge case.
 
 ## Three platforms never get a thumbnail, and that is a designed state
 
+*Corrected 2026-09-30: two platforms now. Pinterest's oEmbed was measured serving a thumbnail on
+the permanent i.pinimg.com CDN to a logged-out client, so pins get pictures (asked for at 736px)
+and migration v10 re-queues pins saved before. Instagram and X are unchanged.*
+
 Instagram, Pinterest and X serve no `og:image` to an unauthenticated client. Pinterest and X
 do have permanently durable CDN URLs, but they are undiscoverable without auth, which makes
 their durability irrelevant.
