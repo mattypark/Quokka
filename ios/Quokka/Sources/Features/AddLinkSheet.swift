@@ -85,7 +85,12 @@ struct AddLinkSheet: View {
                         SectionLabel(text: "Or bring everything")
                         Button {
                             dismiss()
-                            onImport()
+                            // One sheet has to finish leaving before another can arrive; asked
+                            // for at once, the second is silently dropped.
+                            Task {
+                                try? await Task.sleep(for: .milliseconds(450))
+                                onImport()
+                            }
                         } label: {
                             Card(padding: Space.roomy) {
                                 HStack(spacing: Space.base) {
