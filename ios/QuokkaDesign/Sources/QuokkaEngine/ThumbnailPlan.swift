@@ -80,6 +80,17 @@ public enum ThumbnailResolver {
         return components.url ?? url
     }
 
+    /// Asks Pinterest's CDN for the 736px rendition instead of the 236px one oEmbed names.
+    ///
+    /// Same image, same permanent host; the size is only a path segment. 236px is a third of
+    /// what a two-column tile draws at 3x, and a blurry pin is the thing that makes a grid look
+    /// cheap.
+    public static func largerPinterestImage(_ url: URL) -> URL {
+        guard url.host?.lowercased() == "i.pinimg.com" else { return url }
+        let upgraded = url.absoluteString.replacingOccurrences(of: "/236x/", with: "/736x/")
+        return URL(string: upgraded) ?? url
+    }
+
     private static func encode(_ url: URL) -> String? {
         url.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
     }

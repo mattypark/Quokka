@@ -104,8 +104,9 @@ actor ThumbnailFetcher {
             guard let data = await download(endpoint, expectingImage: false),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let thumbnail = json["thumbnail_url"] as? String,
-                  let url = URL(string: thumbnail)
+                  var url = URL(string: thumbnail)
             else { return nil }
+            if platform == .pinterest { url = ThumbnailResolver.largerPinterestImage(url) }
             return await download(url)
 
         case .openGraph(let page):

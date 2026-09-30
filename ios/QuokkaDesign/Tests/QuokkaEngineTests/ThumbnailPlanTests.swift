@@ -40,6 +40,14 @@ struct ThumbnailPlanTests {
         #expect(plan("https://x.com/nasa/status/1234567890") == .unavailable)
     }
 
+    @Test("Pinterest's small rendition is swapped for the 736px one, and nothing else is touched")
+    func largerPinterestImage() {
+        let small = URL(string: "https://i.pinimg.com/236x/32/68/65/3268.jpg")!
+        #expect(ThumbnailResolver.largerPinterestImage(small).absoluteString == "https://i.pinimg.com/736x/32/68/65/3268.jpg")
+        let other = URL(string: "https://i.ytimg.com/vi/x/236x/hq.jpg")!
+        #expect(ThumbnailResolver.largerPinterestImage(other) == other)
+    }
+
     @Test("A Pinterest pin goes through Pinterest's oEmbed")
     func pinterestUsesOEmbed() {
         guard case .oEmbed(let url)? = plan("https://www.pinterest.com/pin/1234567890/") else {
