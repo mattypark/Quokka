@@ -191,7 +191,7 @@ struct ItemDetailView: View {
             VStack(alignment: .leading, spacing: Space.base) {
                 QuokkaMark(size: 40, blinks: true)
                 Text(queued ? "Reading the audio" : failure == nil ? "No transcript yet" : "Couldn’t get the words")
-                    .font(Type.title(22))
+                    .font(Type.hand(26))
                     .foregroundStyle(Label.primary)
                 Text(failure ?? (queued
                     ? "Quokka is reading this video on your phone. It takes seconds, not milliseconds — the first one also downloads a speech model."
@@ -438,7 +438,7 @@ private struct ChecksCard: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("What worked")
-                            .font(Type.title(22))
+                            .font(Type.hand(28))
                             .foregroundStyle(Label.primary)
                         Text(summary)
                             .font(Type.caption)
