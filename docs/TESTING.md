@@ -69,7 +69,7 @@ Settings → Privacy & Security → **Developer Mode** and restart. (Or ship a T
 | 9 | Paste a YouTube link | Saved with its real title and channel. Transcribe will fail -- YouTube has no free route (see `INGEST.md`) |
 | 10 | Library: search a word from a transcript, then tap the colour wheel and pick a swatch | Matching videos; then pictures near that colour |
 | 11 | Studio: **+** a playlist → open a video → Save tab → add it; playlist → Organize, Add, Share | All four work |
-| 12 | Settings → Import → your Instagram export `.zip` | Saved / liked / sent-to-self arrive, deduped |
+| 12 | Library → **Import** → your Instagram export `.zip` | Saved / liked / sent-to-self arrive, deduped |
 | 13 | Airplane mode, reopen | Everything already saved is still there, pictures included |
 
 Write down anything that looks wrong with a screenshot -- that is the whole bug report.
