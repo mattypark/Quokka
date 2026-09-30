@@ -13,6 +13,14 @@ actor TranscriptQueue {
     private let config: TranscriptConfigStore
     private let logger = Logger(subsystem: "com.matthewpark.quokka", category: "transcribe")
 
+    /// Whether a walk is in progress. An actor is re-entered at every `await`, so without this a
+    /// second `run` -- a foreground, a second tap -- would read the same pending jobs and render
+    /// the same page in a second web view, spending two attempts on one try.
+    private var running = false
+    /// Set when `run` is called while one is in progress, so what was queued meanwhile gets its
+    /// pass as soon as the current one ends rather than waiting for the next foreground.
+    private var rerunRequested = false
+
     @MainActor
     init(store: QuokkaStore, config: TranscriptConfigStore = TranscriptConfigStore()) {
         self.store = store
@@ -30,8 +38,27 @@ actor TranscriptQueue {
     /// and a speech model -- and because the user is looking at the screen while it happens.
     /// Five at a time keeps the first result close rather than making everything wait for the
     /// batch.
+    ///
+    /// A call made while a walk is running returns 0 at once and turns into one more pass at
+    /// the end of that walk, which reports everything it produced.
     @discardableResult
     func run(limit: Int = 5) async -> Int {
+        if running {
+            rerunRequested = true
+            return 0
+        }
+        running = true
+        defer { running = false }
+
+        var produced = 0
+        repeat {
+            rerunRequested = false
+            produced += await pass(limit: limit)
+        } while rerunRequested && !Task.isCancelled
+        return produced
+    }
+
+    private func pass(limit: Int) async -> Int {
         let current = await config.current()
         guard let jobs = try? store.pendingTranscriptJobs(limit: limit), !jobs.isEmpty else {
             return 0
@@ -59,6 +86,12 @@ actor TranscriptQueue {
                 discardStagedMedia(at: job.mediaPath)
                 produced += 1
                 logger.info("transcribed item \(job.itemID) via \(transcript.source.rawValue, privacy: .public)")
+            } else if Task.isCancelled {
+                // Stopped from outside, not failed. The rung reports a cancelled web view as a
+                // transport failure, and counting it would let three app switches mid-resolve
+                // exhaust a post that was never actually refused.
+                logger.info("item \(job.itemID) interrupted; attempt not counted")
+                break
             } else {
                 let reason = describe(outcome.reportableFailure)
                 try? store.failTranscript(itemID: job.itemID, reason: reason)

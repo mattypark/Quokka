@@ -152,10 +152,11 @@ final class AppState {
         }
     }
 
-    /// Works the transcript queue. Cancellable and never blocking, exactly like `enrich`.
+    /// Works the transcript queue. Never blocking, like `enrich` -- but unlike `enrich`, a run in
+    /// progress is not cancelled and restarted. It is usually a web view halfway through a page,
+    /// and this is called on every foreground; the queue folds a second call into one more pass.
     func transcribe() {
         guard let transcripts else { return }
-        transcription?.cancel()
         transcription = Task { [weak self] in
             let produced = await transcripts.run()
             guard !Task.isCancelled, produced > 0 else { return }
