@@ -158,18 +158,20 @@ struct Card<Content: View>: View {
 struct SectionLabel: View {
     let text: String
     var trailing: String?
+    /// Translucent white over the sky instead of grey, which would sink into the blue.
+    var onSky = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(text.uppercased())
                 .font(Type.section)
                 .tracking(Type.sectionTracking)
-                .foregroundStyle(Label.secondary)
+                .foregroundStyle(onSky ? Label.onSkySecondary : Label.secondary)
             Spacer()
             if let trailing {
                 Text(trailing)
                     .font(Type.meta(12))
-                    .foregroundStyle(Label.tertiary)
+                    .foregroundStyle(onSky ? Label.onSkySecondary : Label.tertiary)
             }
         }
         .accessibilityAddTraits(.isHeader)
