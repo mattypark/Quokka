@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Proves the transcript ladder end to end on the simulator: pastes a real TikTok, transcribes
+# Proves the transcript ladder end to end on the simulator: pastes a real post, transcribes
 # it through the live worker, and reports what happened at each step. Shuts the simulator
 # down, always.
 #
-#   scripts/transcribe-e2e.sh                       # the default TikTok
-#   scripts/transcribe-e2e.sh <tiktok-url>          # another one
+#   scripts/transcribe-e2e.sh                                    # the default TikTok
+#   scripts/transcribe-e2e.sh https://www.instagram.com/reel/…   # an Instagram reel
+#   scripts/transcribe-e2e.sh https://www.reddit.com/r/…/comments/…  # a Reddit video
 #
 # Expected on the simulator: config fetched, media found by the web view, download OK, then
 # "No speech model" -- the simulator cannot download Apple's speech models. On a phone the
@@ -13,6 +14,14 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 URL="${1:-https://www.tiktok.com/@scout2015/video/6718335390845095173}"
+# The platform the app should transcribe, read from the link's host.
+case "$URL" in
+  *instagram.com*) PLATFORM=instagram ;;
+  *tiktok.com*) PLATFORM=tiktok ;;
+  *reddit.com*|*redd.it*) PLATFORM=reddit ;;
+  *youtube.com*|*youtu.be*) PLATFORM=youtube ;;
+  *) echo "only Instagram, TikTok, Reddit or YouTube links" >&2; exit 1 ;;
+esac
 BUNDLE_ID="com.matthewpark.quokka"
 DEVICE=$(xcrun simctl list devices | grep "Quokka Sim (" | grep -oE "[0-9A-F-]{36}" | head -1)
 [[ -n "$DEVICE" ]] || { echo "no 'Quokka Sim' -- run scripts/tour.sh once to create it" >&2; exit 1; }
@@ -34,7 +43,7 @@ xcrun simctl install "$DEVICE" "$APP"
 xcrun simctl spawn "$DEVICE" log stream --level info --style compact \
   --predicate 'subsystem == "com.matthewpark.quokka"' > "$OUT/log.txt" 2>&1 &
 LOGPID=$!
-xcrun simctl launch "$DEVICE" "$BUNDLE_ID" -quokkaTab home -quokkaAddLinks "$URL" -quokkaTranscribe tiktok >/dev/null
+xcrun simctl launch "$DEVICE" "$BUNDLE_ID" -quokkaTab home -quokkaAddLinks "$URL" -quokkaTranscribe "$PLATFORM" >/dev/null
 sleep 90
 
 DATA=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data)
