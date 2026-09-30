@@ -19,11 +19,16 @@ struct OnboardingView: View {
 
             VStack(alignment: .leading, spacing: Space.base) {
                 // In the hand, untracked: tightening a hand-drawn face makes the letters
-                // collide rather than look designed.
-                Text("Break down\nany video.")
-                    .font(Type.hand(46))
-                    .lineSpacing(-6)
-                    .foregroundStyle(Label.onSky)
+                // collide rather than look designed. Two Texts rather than one with a line
+                // break, because Schoolbell's line box is tall and lineSpacing cannot go
+                // negative enough to close it.
+                VStack(alignment: .leading, spacing: -14) {
+                    Text("Break down")
+                    Text("any video.")
+                }
+                .font(Type.hand(46))
+                .foregroundStyle(Label.onSky)
+                .accessibilityElement(children: .combine)
                 Text("Save a reel, a TikTok or a YouTube video. Quokka reads what was said and shows you what made it work.")
                     .font(Type.body)
                     .foregroundStyle(Label.onSkySecondary)
