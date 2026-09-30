@@ -71,8 +71,8 @@ public enum Type {
     /// A person's name, a playlist's name.
     public static let name = Font.system(size: 20, weight: .semibold)
 
-    /// The centered title over a playlist or a creator.
-    public static let screenTitle = display(24, weight: .bold)
+    /// The centered title over a playlist or a creator, in the hand.
+    public static let screenTitle = hand(30)
 
     /// The typographic tile, for the platforms that never yield a thumbnail.
     public static func tileTitle(_ size: CGFloat = 17) -> Font {
