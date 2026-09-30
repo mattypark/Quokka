@@ -33,8 +33,7 @@ struct ShareConfirmation: View {
                 QuokkaMark(size: 56, blinks: true)
                 PulsingDots()
                 Text(carriesVideo ? "Reading the video" : "Saving")
-                    .font(Type.nav)
-                    .tracking(Type.navTracking)
+                    .font(Type.hand(22))
                     .foregroundStyle(Label.secondary)
             }
         }
@@ -61,7 +60,7 @@ struct ShareConfirmation: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(state == .saved ? "Saved to Quokka" : "Nothing to save")
-                            .font(Type.bodyEmphasis)
+                            .font(Type.hand(22))
                             .foregroundStyle(Label.primary)
                         Text(subtitle)
                             .font(Type.caption)

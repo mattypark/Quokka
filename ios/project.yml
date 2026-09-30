@@ -124,6 +124,10 @@ targets:
     platform: iOS
     sources:
       - path: QuokkaShare
+      # The extension is its own bundle -- Bundle.main inside it is not the app's -- so the
+      # hand face has to be copied in and registered here as well.
+      - path: Quokka/Resources/Fonts/Schoolbell-Regular.ttf
+        buildPhase: resources
     dependencies:
       - package: QuokkaDesign
       - package: QuokkaDesign
@@ -139,6 +143,8 @@ targets:
       path: QuokkaShare/Info.plist
       properties:
         CFBundleDisplayName: Quokka
+        UIAppFonts:
+          - Schoolbell-Regular.ttf
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
