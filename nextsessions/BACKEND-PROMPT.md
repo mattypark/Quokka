@@ -1,5 +1,7 @@
 You are the **backend session** for Quokka, an iOS app at
 `~/Downloads/current-projects/appscurrent/quokka` (repo `mattypark/Quokka`, work on `main`).
+A **frontend session** runs at the same time in the same repo. You talk to it in the `#quokka`
+room.
 
 Read these before touching anything, in this order:
 
@@ -10,14 +12,28 @@ Read these before touching anything, in this order:
 5. `docs/NETWORK.md` — the plan for making Quokka a network; build nothing past phase 0 without Matthew
 6. `docs/DECISIONS.md` — why the architecture is what it is
 
+## First, join the room
+
+```
+join_room quokka
+set_summary "Quokka backend: <what you are on>"
+post_to_room quokka "FYI: backend session up — starting on <item>"
+```
+
+Prefixes in the room: **ASK** (need something from their lane), **CONTRACT** (a type or method a
+view calls is changing — post it *before* changing it), **DONE** (with the commit hash), **FYI**.
+When a message arrives, answer it before carrying on. Every ASK also goes into
+`nextsessions/FRONTEND-ASKS.md` so it outlives the session.
+
 ## What Quokka is
 
 Save someone else's video and see what made it work — vidIQ-style, on the phone. Share a reel,
 a TikTok or a YouTube video into Quokka (or paste its link, or a whole Pinterest board or Are.na
 channel); Quokka files it with its picture and title, transcribes it, and breaks it down: the
 hook and when it lands, the pace, the numbered beats, the ending's ask, seven checks with the
-evidence for each. Black, white and sky, under Matthew's mark. Local-first: the library lives on
-the phone.
+evidence for each. **For you** in Studio reads the person's own saves into their taste
+(`QuokkaEngine/TasteProfile.swift`). Black, white and sky, under Matthew's mark. Local-first:
+the library lives on the phone.
 
 ## What you are walking into (2026-09-30)
 
@@ -31,13 +47,15 @@ the phone.
   owner-only.
 - New this week and tested: Pinterest thumbnails through oEmbed (at 736px), oEmbed titles and
   creators, pasting a Pinterest board / profile / Are.na channel imports every picture in it,
-  enrichment that keeps going until the queue is empty, and `Breakdown` — the rules that read a
-  transcript (`QuokkaEngine/Breakdown.swift`).
+  enrichment that keeps going until the queue is empty, `Breakdown` — the rules that read a
+  transcript (`QuokkaEngine/Breakdown.swift`) — and `TasteProfile`, which reads a library and its
+  breakdowns into one person's patterns. The frontend will want history from you next (saves per
+  week, how taste shifts) — expect an ASK.
 - The frontend wrote queries in your files to ship the redesign — `QuokkaStore+Search.swift`,
   `CollectionImporter.swift`, `AppState+Browse.swift`, `AppState+Breakdown.swift`. Review them.
 - The Chrome extension (`extension/`) queues saves in the browser; its route to the phone waits
   on Matthew's choice.
-- `swift test`: 114 green. `extension/`: 11 green.
+- `swift test`: 119 green. `extension/`: 11 green.
 
 ## Rules that bite most (the full list is in SESSION-BACKEND.md)
 
@@ -50,13 +68,14 @@ the phone.
   to his account — don't install another.
 - Simulator runs only when Matthew says "test it". `swift test` after every engine change,
   failures quoted verbatim.
-- Don't edit `Features/`, `Components/` or the design tokens — write what you need into
-  `nextsessions/FRONTEND-ASKS.md`.
+- Don't edit `Features/`, `Components/`, `RootView.swift`, `Route.swift` or the design tokens —
+  ask in the room and write it into `nextsessions/FRONTEND-ASKS.md`.
 - App Store Connect is a live commercial account: TestFlight and reading feedback only.
 
 ## Start here
 
-1. Run `cd ios/QuokkaDesign && swift test` and `curl https://quokka.matthew-parkk0.workers.dev/config`.
+1. `git log --oneline -15`, then `cd ios/QuokkaDesign && swift test` and
+   `curl https://quokka.matthew-parkk0.workers.dev/config`. Join `#quokka` and say what you are starting.
 2. Read `docs/INGEST.md` section 4 and the three files it names: `TranscriptQueue`,
    `ResolvedMediaTranscriber`, `WebViewMediaResolver`.
 3. Ask Matthew for one public Instagram reel link (Share → Copy link) and, once he says test it,

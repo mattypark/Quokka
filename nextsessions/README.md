@@ -8,6 +8,9 @@ and leave them in their lanes.
 | **Frontend** | Screens, components, design tokens, the website | [`FRONTEND-PROMPT.md`](FRONTEND-PROMPT.md) |
 | **Backend** | Engine, store, fetchers, MCP, Apple | [`BACKEND-PROMPT.md`](BACKEND-PROMPT.md) |
 
+They talk to each other in the **`#quokka`** room on claude-multiplayer -- both prompts start by
+joining it -- with ASK / CONTRACT / DONE / FYI messages, mirrored into the ASKS files below.
+
 Full detail is in [`../docs/SESSION-FRONTEND.md`](../docs/SESSION-FRONTEND.md) and
 [`../docs/SESSION-BACKEND.md`](../docs/SESSION-BACKEND.md). The prompts point at those, so the
 rules stay in one place rather than being duplicated into a prompt that then drifts.
