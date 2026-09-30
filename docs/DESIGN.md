@@ -38,12 +38,16 @@ video. Black is the brand and everything else.
 
 ## Type
 
-SF Pro, with one seam: `Face.display` in `Typography.swift`. Set it to a PostScript name and
-the screen titles, the hero numbers and the onboarding headline change. Everything read for
-information — transcripts, evidence, captions — stays SF Pro whatever lands there.
+Two faces, Matthew's pick (2026-09-30): **Schoolbell** and **SF Pro**.
 
-Titles are bold and large (32 for a screen, 36 for the onboarding headline); body is 16
-regular; section labels are 12 semibold, uppercase, tracked 1.1.
+| Face | Where | Why |
+|---|---|---|
+| **Schoolbell** (Font Diner, Apache 2.0, bundled) | Screen titles (38), the onboarding headline (46), the date on the sky, empty-state lines, "What worked", playlist and creator titles, the share sheet's "Saved to Quokka", the extension popup's wordmark | The lines with a voice -- the mark talking, the way Nudgy's hand is Mushy talking |
+| **SF Pro** | Everything read for information: transcripts, hooks as said, evidence, captions, controls -- and every number | Someone else's words have to read as exact, and a hand-drawn digit next to another reads as sloppy |
+
+`Type.hand(size)` sets Schoolbell 12% larger than asked, because its x-height runs small beside
+SF Pro, and relative to `.title` so it follows Dynamic Type. Never tracked tighter -- a hand face
+collides. Body is 16 regular; section labels are 12 semibold, uppercase, tracked 1.1.
 
 ## Screens
 
