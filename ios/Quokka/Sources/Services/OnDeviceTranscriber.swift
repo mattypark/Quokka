@@ -138,6 +138,10 @@ struct OnDeviceTranscriber: TranscriptProvider {
             logger.info("downloading speech model for \(locale.identifier, privacy: .public)")
             try await request.downloadAndInstall()
         } catch {
+            // Said in the log as well as mapped: the Simulator cannot download speech assets
+            // at all, and "no model" on a phone means something else -- storage, or no network
+            // -- so the real reason is what makes the two tell-apart-able.
+            logger.error("speech model for \(locale.identifier, privacy: .public) not installed: \(error.localizedDescription, privacy: .public)")
             throw TranscriptFailure.localeUnavailable(locale.identifier)
         }
     }
