@@ -5,8 +5,9 @@ import Foundation
 /// The cases are ordered by how much Quokka can actually learn about a link from that
 /// platform, because that ordering drives the whole thumbnail pipeline. `youtube` and
 /// `reddit` hand over a stable image; `tiktok` hands over one that expires in about two
-/// days; `instagram`, `pinterest` and `x` hand over nothing at all to an unauthenticated
-/// client and always fall through to a typographic tile.
+/// days; `instagram` and `x` hand over nothing at all to an unauthenticated client and always
+/// fall through to a typographic tile. `pinterest` was in that group until 2026-09-30, when its
+/// oEmbed endpoint was measured returning a durable `i.pinimg.com` thumbnail with no login.
 public enum Platform: String, Codable, Sendable, CaseIterable {
     case youtube
     case reddit
@@ -31,9 +32,9 @@ public enum Platform: String, Codable, Sendable, CaseIterable {
 
     public var thumbnailDurability: ThumbnailDurability {
         switch self {
-        case .youtube, .reddit, .vimeo: .stable
+        case .youtube, .reddit, .vimeo, .pinterest: .stable
         case .tiktok: .expiring
-        case .instagram, .pinterest, .x, .threads, .cosmos: .unreachable
+        case .instagram, .x, .threads, .cosmos: .unreachable
         case .web: .stable
         }
     }

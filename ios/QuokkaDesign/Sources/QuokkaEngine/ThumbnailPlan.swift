@@ -37,16 +37,23 @@ public enum ThumbnailResolver {
             guard let encoded = encode(link.url) else { return .unavailable }
             return .oEmbed(URL(string: "https://vimeo.com/api/oembed.json?url=\(encoded)")!)
 
+        case .pinterest:
+            // Measured 2026-09-30: the pin page serves an app shell, but the oEmbed endpoint
+            // answers an unauthenticated client with the pin's title, its board owner and a
+            // thumbnail_url on the permanent i.pinimg.com CDN. The fetcher asks for the 736px
+            // rendition rather than the 236px one oEmbed names.
+            guard let encoded = encode(link.url) else { return .unavailable }
+            return .oEmbed(URL(string: "https://www.pinterest.com/oembed.json?url=\(encoded)")!)
+
         case .reddit:
             // Reddit does serve og:image, but as a signed preview.redd.it URL. The fetcher
             // runs the result through `permanentRedditURL` to turn it into a durable one.
             return .openGraph(link.url)
 
-        case .instagram, .pinterest, .x, .threads, .cosmos:
-            // Researched and confirmed: no og:image to an unauthenticated client. Pinterest
-            // and X do have permanently durable CDN URLs, but they are undiscoverable without
-            // auth, which makes their durability irrelevant. Anything usable for these comes
-            // from the share sheet payload at save time, not from a fetch.
+        case .instagram, .x, .threads, .cosmos:
+            // Researched and confirmed: no og:image and no open oEmbed to an unauthenticated
+            // client. Anything usable for these comes from the share sheet payload at save
+            // time, or from the Chrome extension's right-click, not from a fetch.
             return .unavailable
 
         case .web:

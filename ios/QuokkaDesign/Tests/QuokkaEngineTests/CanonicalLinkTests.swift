@@ -205,14 +205,18 @@ struct PlatformTests {
         #expect(Platform.detect(host: "example.com") == .web)
     }
 
-    @Test("The three platforms that hand over nothing are marked unreachable")
+    @Test("The platforms that hand over nothing are marked unreachable")
     func unreachablePlatforms() {
-        // Instagram, Pinterest and X serve no og:image to an unauthenticated client. The
-        // fallback tile is their designed state, so this must stay true or the pipeline will
-        // sit retrying a fetch that can never succeed.
+        // Instagram and X serve no og:image and no open oEmbed to an unauthenticated client.
+        // The fallback tile is their designed state, so this must stay true or the pipeline
+        // will sit retrying a fetch that can never succeed.
         #expect(Platform.instagram.thumbnailDurability == .unreachable)
-        #expect(Platform.pinterest.thumbnailDurability == .unreachable)
         #expect(Platform.x.thumbnailDurability == .unreachable)
+    }
+
+    @Test("Pinterest is reachable through oEmbed, on a permanent CDN")
+    func pinterestIsStable() {
+        #expect(Platform.pinterest.thumbnailDurability == .stable)
     }
 
     @Test("TikTok is expiring, which is what forces caching bytes at save time")

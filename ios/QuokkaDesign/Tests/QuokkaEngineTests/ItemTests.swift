@@ -15,13 +15,13 @@ struct ItemTests {
         // pendingEnrichment() selects on .pending, so starting these anywhere else would put
         // them in a queue that retries a fetch which cannot succeed, forever.
         #expect(item("https://www.instagram.com/reel/C8xYzAbCdEf/")?.thumbnailState == .unavailable)
-        #expect(item("https://www.pinterest.com/pin/1234567890/")?.thumbnailState == .unavailable)
         #expect(item("https://x.com/nasa/status/1234567890")?.thumbnailState == .unavailable)
     }
 
     @Test("Platforms that do serve a thumbnail start pending")
     func reachablePlatformsAreQueued() {
         #expect(item("https://youtu.be/dQw4w9WgXcQ")?.thumbnailState == .pending)
+        #expect(item("https://www.pinterest.com/pin/1234567890/")?.thumbnailState == .pending)
         #expect(item("https://www.reddit.com/comments/1abc234/")?.thumbnailState == .pending)
         #expect(item("https://www.tiktok.com/@nasa/video/7234567890123456789")?.thumbnailState == .pending)
     }

@@ -32,13 +32,20 @@ struct ThumbnailPlanTests {
         #expect(url.absoluteString.hasPrefix("https://www.tiktok.com/oembed?url="))
     }
 
-    @Test("The three platforms that serve nothing are marked unavailable, not queued")
+    @Test("The platforms that serve nothing are marked unavailable, not queued")
     func unreachablePlatformsGetNoPlan() {
         // If any of these ever becomes a fetch plan, the enrichment queue will retry forever
         // against a wall. The typographic tile is the intended outcome.
         #expect(plan("https://www.instagram.com/p/C8xYzAbCdEf/") == .unavailable)
-        #expect(plan("https://www.pinterest.com/pin/1234567890/") == .unavailable)
         #expect(plan("https://x.com/nasa/status/1234567890") == .unavailable)
+    }
+
+    @Test("A Pinterest pin goes through Pinterest's oEmbed")
+    func pinterestUsesOEmbed() {
+        guard case .oEmbed(let url)? = plan("https://www.pinterest.com/pin/1234567890/") else {
+            Issue.record("expected oEmbed"); return
+        }
+        #expect(url.absoluteString.hasPrefix("https://www.pinterest.com/oembed.json?url="))
     }
 
     @Test("Reddit and unknown sites go through Open Graph")
