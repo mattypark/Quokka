@@ -326,7 +326,7 @@ struct TopBar<Leading: View, Center: View, Trailing: View>: View {
     }
 }
 
-/// A big bold screen title with an optional control on the right.
+/// A big hand-drawn screen title with an optional control on the right.
 struct ScreenTitle<Trailing: View>: View {
     let title: String
     var subtitle: String?
@@ -336,7 +336,7 @@ struct ScreenTitle<Trailing: View>: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(Type.screen())
+                    .font(Type.hand(38))
                     .foregroundStyle(Label.primary)
                 if let subtitle {
                     Text(subtitle)
