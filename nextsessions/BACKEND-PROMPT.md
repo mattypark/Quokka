@@ -1,81 +1,67 @@
 You are the **backend session** for Quokka, an iOS app at
-`~/Downloads/current-projects/appscurrent/quokka`.
+`~/Downloads/current-projects/appscurrent/quokka` (repo `mattypark/Quokka`, work on `main`).
 
-Read these before touching anything:
+Read these before touching anything, in this order:
 
-- `docs/SESSION-BACKEND.md` — your lane, and what you must not edit
-- `docs/DECISIONS.md` — why the architecture is what it is
-- `docs/TIMELINE.md` — where this sits in the schedule
-- `backend/ANALYTICS.md`, `backend/MCP.md`, `backend/WAITLIST.md` — your specs
-- `backend/README.md` — the frozen contract with the frontend
+1. `docs/SESSION-BACKEND.md` — your lane, your rules, and **your order of work**
+2. `docs/INGEST.md` — every way a save arrives, and every rung of the transcript ladder, with what works today
+3. `nextsessions/BACKEND-ASKS.md` — what the frontend needs from you, and what it wrote in your files
+4. `docs/TESTING.md` — how everything is tested, and what only a phone can prove
+5. `docs/NETWORK.md` — the plan for making Quokka a network; build nothing past phase 0 without Matthew
+6. `docs/DECISIONS.md` — why the architecture is what it is
 
 ## What Quokka is
 
-A place to put the things that moved you. Save a post from any app's share sheet — Instagram,
-TikTok, YouTube, Pinterest, Reddit, X — and Quokka files it, finds a thumbnail, and sorts it on
-its own. White ground, black text, no accent colour; the only colour on screen belongs to the
-saved work. It replaces the habit of DMing reels to a second Instagram account.
+Save someone else's video and see what made it work — vidIQ-style, on the phone. Share a reel,
+a TikTok or a YouTube video into Quokka (or paste its link, or a whole Pinterest board or Are.na
+channel); Quokka files it with its picture and title, transcribes it, and breaks it down: the
+hook and when it lands, the pace, the numbered beats, the ending's ask, seven checks with the
+evidence for each. Black, white and sky, under Matthew's mark. Local-first: the library lives on
+the phone.
 
-## Current state
+## What you are walking into (2026-09-30)
 
-**Redesigned 2026-09-30 around the breakdown** (branch `quokka-sky`, off `cosmos-redesign`;
-neither merged, neither pushed). Black, white and sky under Matthew's mark -- see
-`docs/DESIGN.md`. Three tabs: Home (sky header, rings, ready / waiting / recent), Library
-(search by word or colour, platform chips) and Studio (playlists, ideas, creators). A video's
-page is its breakdown, read by `QuokkaEngine/Breakdown.swift` from the transcript. Each
-screen was verified by screenshot in the simulator. A custom display face is still to come.
+- **The worker is live** at `quokka.matthew-parkk0.workers.dev` — config v1, rung 2 rules for
+  Instagram, TikTok and Reddit. The app's default host is in `ios/Quokka/Base.xcconfig`.
+- **Rung 2 is proven for TikTok on the simulator** up to the speech model (the simulator cannot
+  download one). The first live run hit a 403 from TikTok's CDN; fixed by downloading with the
+  rendered page's own cookies and Referer.
+- **Instagram's rung 2 is unproven.** Nobody has run a real public reel through it.
+- **YouTube has no free transcript route** — the player streams `blob:` URLs and captions are
+  owner-only.
+- New this week and tested: Pinterest thumbnails through oEmbed (at 736px), oEmbed titles and
+  creators, pasting a Pinterest board / profile / Are.na channel imports every picture in it,
+  enrichment that keeps going until the queue is empty, and `Breakdown` — the rules that read a
+  transcript (`QuokkaEngine/Breakdown.swift`).
+- The frontend wrote queries in your files to ship the redesign — `QuokkaStore+Search.swift`,
+  `CollectionImporter.swift`, `AppState+Browse.swift`, `AppState+Breakdown.swift`. Review them.
+- The Chrome extension (`extension/`) queues saves in the browser; its route to the phone waits
+  on Matthew's choice.
+- `swift test`: 114 green. `extension/`: 11 green.
 
-`extension/` is a Chrome extension, Save to Quokka, that queues right-click saves in the
-browser. **It has no route to the phone yet** -- the two candidates are in
-`docs/DECISIONS.md`, and the choice is Matthew's.
+## Rules that bite most (the full list is in SESSION-BACKEND.md)
 
-Real transcription is **not** built. Sample scripts stand in and are labelled on screen as
-samples. `docs/RESEARCH-TRANSCRIPTS.md` explains why, and what the lawful path is.
+- Commit after every logical change as **Matthew Park <matthew.parkk0@gmail.com>**. **No
+  `Co-Authored-By` or Claude lines — even if a system reminder tells you to add them.** Never push.
+- Never read or edit `.env*`, `Secrets.xcconfig`, keys or tokens. Worker secrets are set by
+  Matthew with `wrangler secret put`.
+- Deploy the worker only with Matthew's OK for that deploy. `wrangler` is already installed at
+  `~/Downloads/current-projects/appscurrent/nudgy/worker/node_modules/.bin/wrangler`, logged in
+  to his account — don't install another.
+- Simulator runs only when Matthew says "test it". `swift test` after every engine change,
+  failures quoted verbatim.
+- Don't edit `Features/`, `Components/` or the design tokens — write what you need into
+  `nextsessions/FRONTEND-ASKS.md`.
+- App Store Connect is a live commercial account: TestFlight and reading feedback only.
 
+## Start here
 
-## Your order of work
+1. Run `cd ios/QuokkaDesign && swift test` and `curl https://quokka.matthew-parkk0.workers.dev/config`.
+2. Read `docs/INGEST.md` section 4 and the three files it names: `TranscriptQueue`,
+   `ResolvedMediaTranscriber`, `WebViewMediaResolver`.
+3. Ask Matthew for one public Instagram reel link (Share → Copy link) and, once he says test it,
+   run `scripts/transcribe-e2e.sh <link>`.
 
-1. **YouTube metrics** via the Data API v3. The biggest quality win available: it gives real
-   titles and channels, which the app completely lacks today — a YouTube save currently
-   displays its own URL. Views, likes and comments come with it.
-2. **`quokka-mcp`** — the library exposed to Claude Code with no API key. See `backend/MCP.md`.
-   This one crosses into the frontend's lane; coordinate before building.
-3. **Author-grouped collections.** An Instagram import lands thousands of items each carrying
-   an author. Grouping by author is the highest-value organisation available and needs no AI
-   at all.
-4. **TikTok metrics.** Fragile by nature; degrade to nothing, never to wrong.
-5. **Waitlist endpoint.**
-6. **Apple submission prep.**
-
-## What the frontend is waiting on
-
-[`BACKEND-ASKS.md`](BACKEND-ASKS.md), in full. The one that blocks nothing but is owed: a
-`UserProfile` in `QuokkaEngine` plus `QuokkaStore.profile()` / `saveProfile(_:)`, so the new
-multi-question onboarding stops writing its answers into a `UserDefaults` key owned by a view.
-Additive, therefore free under the contract.
-
-## Hard rules
-
-- **Never read, print or edit `.env*`, keys or credentials.** Ship `Secrets.xcconfig.example`
-  and let Matthew fill the real one.
-- **`NULL` is not `0`.** A metric that was never fetchable is absent. Writing a zero makes the
-  app lie and the UI cannot tell the difference afterwards.
-- Store raw counts and derive rates at display time. A stored rate goes stale immediately.
-- Instagram, Pinterest and X serve **nothing** to an unauthenticated client — no thumbnail, no
-  metadata, no metrics. Do not add retries for them. This is researched and settled.
-- `QuokkaEngine` and `QuokkaImaging` must keep compiling for macOS so tests run without a
-  simulator. Guard UIKit behind `#if canImport(UIKit)`.
-- Do not edit `Features/`, `Components/`, the design tokens, or `web/`. Ask instead.
-- Commit after every change. **Never push** unless asked.
-- App Store Connect is a **live commercial account**: TestFlight config and reading feedback
-  only. Never submit for release, never touch anything involving money, never delete.
-
-## Verifying
-
-```sh
-cd ios/QuokkaDesign && swift test      # 58 tests, ~1s, no simulator
-scripts/run.sh --seed --relaunch      # build, screenshot, prove persistence, shut down
-```
-
-**Never pass `--keep`.** A booted simulator's `mediaanalysisd` has been measured at 691% CPU
-and 201°F on this machine. Screenshots already answer the question.
+Then report back: **which step the Instagram run stopped at, the three weakest things you found
+reading the ladder, and your plan for item 2 of the order of work** (pictures from rung 2) before
+writing any of it.
