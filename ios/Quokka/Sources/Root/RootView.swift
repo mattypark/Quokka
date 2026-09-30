@@ -111,6 +111,7 @@ struct RootView: View {
                         onImport: { importing = true },
                         onSettings: { showingSettings = true },
                         onLibrary: { select(.library) })
+                    .environment(\.skyPassage, SkyPassage(open: openFromHome, back: backToHome))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -169,6 +170,17 @@ struct RootView: View {
         } else {
             withAnimation(.easeOut(duration: 0.2)) { tab = next }
         }
+    }
+
+    /// Pushes onto Home's stack.
+    private func openFromHome(_ route: Route) {
+        homePath.append(route)
+    }
+
+    /// Pops one page off Home's stack.
+    private func backToHome() {
+        guard !homePath.isEmpty else { return }
+        homePath.removeLast()
     }
 
     /// Drains to the Library and pours back to Home on its own, so the transition can be

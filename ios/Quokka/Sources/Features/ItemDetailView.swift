@@ -15,6 +15,7 @@ struct ItemDetailView: View {
     @Environment(AppState.self) private var state
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.skyPassage) private var passage
 
     @State private var item: Item?
     @State private var transcript: Transcript?
@@ -86,7 +87,10 @@ struct ItemDetailView: View {
 
     private var topControls: some View {
         HStack {
-            CircleButton(icon: "chevron.left", label: "Back") { dismiss() }
+            // Opened from Home, going back pours the sky over the page first.
+            CircleButton(icon: "chevron.left", label: "Back") {
+                if let passage { passage.back() } else { dismiss() }
+            }
             Spacer()
             if let item {
                 Menu {

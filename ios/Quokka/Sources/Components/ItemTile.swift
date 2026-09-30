@@ -59,13 +59,21 @@ struct ItemTile: View {
 /// A tile that opens its item.
 ///
 /// The tile itself stays inert so it can be reused as a cover or a thumbnail inside some
-/// other control; only this wrapper makes it a way in.
+/// other control; only this wrapper makes it a way in. On Home's stack it opens through the
+/// sky passage, so the sky can drain into the page; everywhere else it is a plain link.
 struct TileLink: View {
     let item: Item
     let loader: ThumbnailLoader?
 
+    @Environment(\.skyPassage) private var passage
+
     var body: some View {
-        if let id = item.id {
+        if let id = item.id, let passage {
+            Button { passage.open(.item(id)) } label: {
+                ItemTile(item: item, loader: loader)
+            }
+            .buttonStyle(PressStyle())
+        } else if let id = item.id {
             NavigationLink(value: Route.item(id)) {
                 ItemTile(item: item, loader: loader)
             }

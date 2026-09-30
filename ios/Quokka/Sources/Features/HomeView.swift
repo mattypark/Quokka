@@ -11,6 +11,7 @@ import QuokkaImaging
 /// Text-only saves live in the Library -- the wall is for looking.
 struct HomeView: View {
     @Environment(AppState.self) private var state
+    @Environment(\.skyPassage) private var passage
     @Binding var path: NavigationPath
     var scrollToTop = 0
     var onImport: () -> Void = {}
@@ -133,7 +134,7 @@ struct HomeView: View {
                 HStack(alignment: .top, spacing: Space.base) {
                     ForEach(ready) { item in
                         if let id = item.id {
-                            NavigationLink(value: Route.item(id)) {
+                            Button { open(.item(id)) } label: {
                                 ReadyCard(item: item, breakdown: state.breakdown(forItem: id), loader: state.loader)
                             }
                             .buttonStyle(PressStyle())
@@ -163,7 +164,7 @@ struct HomeView: View {
                                 state.requestTranscript(id)
                                 refresh()
                             },
-                            onOpen: { path.append(Route.item(id)) })
+                            onOpen: { open(.item(id)) })
                         if index < min(waiting.count, 4) - 1 {
                             Rectangle().fill(Sky.glassStroke).frame(height: Stroke.thin)
                                 .padding(.leading, 72)
@@ -236,6 +237,16 @@ struct HomeView: View {
     }
 
     // MARK: - Work
+
+    /// Opens through the sky passage, so the sky drains into the page; a plain push if Home is
+    /// ever shown without one.
+    private func open(_ route: Route) {
+        if let passage {
+            passage.open(route)
+        } else {
+            path.append(route)
+        }
+    }
 
     private func refresh() {
         ready = state.transcribedItems(limit: 8)
