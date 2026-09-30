@@ -1,26 +1,33 @@
 import SwiftUI
 
-/// SF Pro for now, with one seam for the custom face Matthew is choosing.
+/// Two faces (Matthew, 2026-09-30: "we're using Schoolbell and SF Pro").
 ///
-/// `Face.display` is the only place that face will go: screen titles, the hero numbers on the
-/// sky, the onboarding headline. Everything a person reads for information -- a transcript, a
-/// check's evidence, a caption -- stays SF Pro whatever lands there, because a display face
-/// set at 15pt over a paragraph is decoration getting in the way.
+/// - **Schoolbell**, hand-drawn, for the lines with a voice: screen titles, the onboarding
+///   headline, the date on the sky, what the mark says on an empty screen, the verdict at the top
+///   of a breakdown. The way Nudgy uses its hand for everything Mushy says.
+/// - **SF Pro** for everything read for information -- transcripts, a check's evidence, counts,
+///   captions, controls -- and for every number, where even-width digits matter and a hand-drawn
+///   "7" next to a "1" reads as sloppy rather than warm.
 ///
-/// Titles are bold and large, the way Nudgy sets them; everything under a title stays at
-/// regular and medium so the hierarchy is carried by size and weight, not by colour.
+/// Titles are big; everything under them stays at regular and semibold so the hierarchy is
+/// carried by size and face, not by colour.
 public enum Face {
-    /// PostScript name of the display face, or nil for SF Pro. Set it and the titles change.
-    public static let display: String? = nil
+    /// Schoolbell (Font Diner, Apache 2.0), bundled in the app.
+    public static let hand = "Schoolbell-Regular"
 }
 
 public enum Type {
 
     private static func display(_ size: CGFloat, weight: Font.Weight) -> Font {
-        if let face = Face.display {
-            return .custom(face, size: size, relativeTo: .largeTitle).weight(weight)
-        }
-        return .system(size: size, weight: weight)
+        .system(size: size, weight: weight)
+    }
+
+    // MARK: Hand
+
+    /// Schoolbell. Its x-height runs small beside SF Pro, so it is set a notch up to sit at the
+    /// same optical size as the SF it replaces. Scales with Dynamic Type like a title.
+    public static func hand(_ size: CGFloat) -> Font {
+        .custom(Face.hand, size: size * 1.12, relativeTo: .title)
     }
 
     // MARK: Display
