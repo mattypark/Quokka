@@ -4,27 +4,29 @@ import QuokkaEngine
 
 /// Studio: where saved videos turn into your own.
 ///
-/// Playlists to group what you saved, Ideas for the scripts and the planner, and Creators --
-/// the library grouped by who made it. The tab row pins as the content scrolls.
+/// For you -- what your own saves say about your taste -- first, then Playlists to group what
+/// you saved, Ideas for the scripts and the planner, and Creators, the library grouped by who
+/// made it. The tab row pins as the content scrolls.
 struct StudioView: View {
     @Environment(AppState.self) private var state
     @Binding var path: NavigationPath
     var scrollToTop = 0
 
     @State private var pane: Pane = Self.launchPane
-    @State private var playlistCount = 0
     @State private var creating = false
     @State private var draftName = ""
 
-    enum Pane: Hashable { case playlists, ideas, creators }
+    enum Pane: Hashable { case forYou, playlists, ideas, creators }
 
     /// Screenshot runs deep-linking into a playlist or an idea start on that pane. DEBUG-only.
     private static var launchPane: Pane {
         #if DEBUG
         if UserDefaults.standard.string(forKey: "quokkaPane") == "ideas" { return .ideas }
         if UserDefaults.standard.string(forKey: "quokkaPane") == "creators" { return .creators }
+        if UserDefaults.standard.string(forKey: "quokkaPane") == "playlists" { return .playlists }
+        if UserDefaults.standard.string(forKey: "quokkaScreen") == "playlist" { return .playlists }
         #endif
-        return .playlists
+        return .forYou
     }
 
     var body: some View {
@@ -46,11 +48,14 @@ struct StudioView: View {
                         Section {
                             contents.padding(.top, Space.roomy)
                         } header: {
+                            // No counts on this row: four titles and a badge do not fit a
+                            // small phone, and each pane says its own count.
                             UnderlineTabs(
                                 options: [
-                                    (.playlists, "Playlists", playlistCount),
+                                    (.forYou, "For you", nil),
+                                    (.playlists, "Playlists", nil),
                                     (.ideas, "Ideas", nil),
-                                    (.creators, "Creators", state.authors.count),
+                                    (.creators, "Creators", nil),
                                 ],
                                 selection: $pane)
                             .background(Surface.canvas)
@@ -73,10 +78,6 @@ struct StudioView: View {
             Button("Create") { create() }
             Button("Cancel", role: .cancel) {}
         }
-        .task { playlistCount = state.playlistCards().count }
-        .onChange(of: path.count) { _, depth in
-            if depth == 0 { playlistCount = state.playlistCards().count }
-        }
     }
 
     private static let top = "top"
@@ -84,6 +85,7 @@ struct StudioView: View {
     @ViewBuilder
     private var contents: some View {
         switch pane {
+        case .forYou: ForYouPane()
         case .playlists: PlaylistsPane(path: $path)
         case .ideas: IdeasPane()
         case .creators: CreatorsPane()
@@ -94,7 +96,6 @@ struct StudioView: View {
         let trimmed = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         if let made = state.createPlaylist(name: trimmed), let id = made.id {
-            playlistCount = state.playlistCards().count
             path.append(Route.playlist(id))
         }
     }
