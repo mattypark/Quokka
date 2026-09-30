@@ -48,6 +48,25 @@ struct ThumbnailPlanTests {
         #expect(ThumbnailResolver.largerPinterestImage(other) == other)
     }
 
+    @Test("Title and creator come from oEmbed where it is open, and nowhere else")
+    func metadataEndpoints() {
+        func endpoint(_ raw: String) -> String? {
+            LinkCanonicaliser.canonicalise(raw).flatMap(ThumbnailResolver.metadataEndpoint)?.absoluteString
+        }
+        #expect(endpoint("https://youtu.be/dQw4w9WgXcQ")?.hasPrefix("https://www.youtube.com/oembed?format=json&url=") == true)
+        #expect(endpoint("https://www.pinterest.com/pin/1234567890/")?.hasPrefix("https://www.pinterest.com/oembed.json") == true)
+        #expect(endpoint("https://www.instagram.com/p/C8xYzAbCdEf/") == nil)
+        #expect(endpoint("https://x.com/nasa/status/1234567890") == nil)
+    }
+
+    @Test("oEmbed metadata keeps title and author, and drops empties")
+    func parseMetadata() {
+        let youtube = Data(#"{"title":"Never Gonna Give You Up","author_name":"Rick Astley","type":"video"}"#.utf8)
+        #expect(OEmbedMetadata.parse(youtube) == OEmbedMetadata(title: "Never Gonna Give You Up", author: "Rick Astley"))
+        #expect(OEmbedMetadata.parse(Data(#"{"title":"  ","author_name":""}"#.utf8)) == nil)
+        #expect(OEmbedMetadata.parse(Data("<html>login</html>".utf8)) == nil)
+    }
+
     @Test("A Pinterest pin goes through Pinterest's oEmbed")
     func pinterestUsesOEmbed() {
         guard case .oEmbed(let url)? = plan("https://www.pinterest.com/pin/1234567890/") else {

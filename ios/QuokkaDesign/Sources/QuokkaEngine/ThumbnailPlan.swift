@@ -80,6 +80,22 @@ public enum ThumbnailResolver {
         return components.url ?? url
     }
 
+    /// The oEmbed endpoint that names a post's title and its creator, where one is open.
+    ///
+    /// Separate from the thumbnail plan because YouTube's thumbnail needs no request at all
+    /// but its title does -- and a library full of tiles captioned "YouTube" is the most
+    /// visible thing wrong with a fresh save. Instagram and X have no open oEmbed.
+    public static func metadataEndpoint(for link: CanonicalLink) -> URL? {
+        guard let encoded = encode(link.url) else { return nil }
+        switch link.platform {
+        case .youtube: return URL(string: "https://www.youtube.com/oembed?format=json&url=\(encoded)")
+        case .tiktok: return URL(string: "https://www.tiktok.com/oembed?url=\(encoded)")
+        case .vimeo: return URL(string: "https://vimeo.com/api/oembed.json?url=\(encoded)")
+        case .pinterest: return URL(string: "https://www.pinterest.com/oembed.json?url=\(encoded)")
+        case .reddit, .instagram, .x, .threads, .cosmos, .web: return nil
+        }
+    }
+
     /// Asks Pinterest's CDN for the 736px rendition instead of the 236px one oEmbed names.
     ///
     /// Same image, same permanent host; the size is only a path segment. 236px is a third of
@@ -93,6 +109,26 @@ public enum ThumbnailResolver {
 
     private static func encode(_ url: URL) -> String? {
         url.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
+    }
+}
+
+/// The two fields worth keeping from an oEmbed response.
+public struct OEmbedMetadata: Equatable, Sendable {
+    public var title: String?
+    public var author: String?
+
+    /// Reads `title` and `author_name`, trimmed, with empties treated as absent. Nil when the
+    /// payload is not JSON or carries neither.
+    public static func parse(_ data: Data) -> OEmbedMetadata? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        func clean(_ key: String) -> String? {
+            guard let value = (json[key] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !value.isEmpty
+            else { return nil }
+            return value
+        }
+        let result = OEmbedMetadata(title: clean("title"), author: clean("author_name"))
+        return result.title == nil && result.author == nil ? nil : result
     }
 }
 
