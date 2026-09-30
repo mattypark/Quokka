@@ -98,11 +98,18 @@ final class AppState {
         guard let fetcher else { return }
         enrichment?.cancel()
         enrichment = Task { [weak self] in
-            let stored = await fetcher.enrichPending()
-            guard !Task.isCancelled, stored > 0 else { return }
-            await MainActor.run {
-                // Reloads so the newly-stored thumbnails and aspect ratios are picked up.
-                try? self?.reload()
+            // Pass after pass until one stores nothing. A single pass is 25, and an imported
+            // board or channel is up to a hundred -- stopping after one left three quarters of
+            // an import as grey rectangles until the next launch. A pass that stores nothing
+            // means what is left is failing, and it gets its retry on the next foreground.
+            while !Task.isCancelled {
+                let stored = await fetcher.enrichPending()
+                guard !Task.isCancelled, stored > 0 else { return }
+                await MainActor.run {
+                    // Reloads so the newly-stored thumbnails and aspect ratios appear as each
+                    // pass lands, not only at the end.
+                    try? self?.reload()
+                }
             }
         }
     }
