@@ -53,6 +53,7 @@ struct ResolvedMediaTranscriber: TranscriptProvider {
         else { throw TranscriptFailure.notApplicable }
 
         let mediaURL: URL
+        var extraHeaders: [String: String] = [:]
         switch rule.strategy {
         case .htmlPattern:
             let body = try await fetchPage(url, rule: rule)
@@ -71,10 +72,16 @@ struct ResolvedMediaTranscriber: TranscriptProvider {
             // Instagram and TikTok both serve an application shell to a plain client, so there
             // is no document to pattern-match. Rendering the page is what makes their media
             // reachable at all -- see WebViewMediaResolver.
-            mediaURL = try await webResolver.mediaURL(for: url, rule: rule)
+            let resolved = try await webResolver.resolve(url, rule: rule)
+            mediaURL = resolved.url
+            // The request the page itself would make for its video: same session's cookies,
+            // the page as Referer. Without them TikTok's CDN answers 403 -- measured on the
+            // first live run, 2026-09-30.
+            extraHeaders["Referer"] = resolved.referer.absoluteString
+            if let cookie = resolved.cookieHeader { extraHeaders["Cookie"] = cookie }
         }
 
-        let media = try await download(mediaURL, rule: rule)
+        let media = try await download(mediaURL, rule: rule, extraHeaders: extraHeaders)
         defer {
             // Not optional and not best-effort-later. The file exists only for as long as it
             // takes to read it, and leaving it behind would turn a transcriber into exactly
@@ -109,10 +116,13 @@ struct ResolvedMediaTranscriber: TranscriptProvider {
         return body
     }
 
-    private func download(_ url: URL, rule: ResolverRule) async throws -> URL {
+    private func download(_ url: URL, rule: ResolverRule, extraHeaders: [String: String] = [:]) async throws -> URL {
         var req = URLRequest(url: url)
         req.timeoutInterval = 60
         for (field, value) in rule.headers { req.setValue(value, forHTTPHeaderField: field) }
+        for (field, value) in extraHeaders { req.setValue(value, forHTTPHeaderField: field) }
+        // The session's own cookie jar must not add to or overwrite the header set above.
+        req.httpShouldHandleCookies = extraHeaders["Cookie"] == nil
 
         let temp: URL
         let response: URLResponse

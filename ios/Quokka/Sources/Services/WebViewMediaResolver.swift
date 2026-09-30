@@ -18,6 +18,17 @@ import QuokkaEngine
 ///
 /// Nothing is shown to the user and nothing is stored: the view is offscreen, lives for one
 /// resolution, and its data store is non-persistent, so no cookie or cache survives it.
+/// What a rendered page produced: the media URL, and what a request for it has to carry to be
+/// answered the way the page's own request was.
+struct ResolvedMedia: Sendable {
+    let url: URL
+    /// The page, sent as the Referer -- TikTok's video CDN refuses a request without it.
+    let referer: URL
+    /// The cookies the page set while it loaded, for the media host only. TikTok's CDN answers
+    /// 403 to a request missing the `tt_chain_token` its own page just set.
+    let cookieHeader: String?
+}
+
 @MainActor
 final class WebViewMediaResolver {
     private let logger = Logger(subsystem: "com.matthewpark.quokka", category: "webview")
@@ -33,7 +44,7 @@ final class WebViewMediaResolver {
     /// `didFinish` reliably returns null on a page that works.
     private let pollInterval: Duration = .milliseconds(400)
 
-    func mediaURL(for page: URL, rule: ResolverRule) async throws -> URL {
+    func resolve(_ page: URL, rule: ResolverRule) async throws -> ResolvedMedia {
         guard let script = rule.script, !script.isEmpty else {
             throw TranscriptFailure.noResolverRule
         }
@@ -75,7 +86,10 @@ final class WebViewMediaResolver {
                let url = URL(string: string),
                url.scheme?.hasPrefix("http") == true {
                 logger.info("resolved media for \(rule.platform.rawValue, privacy: .public) via webView")
-                return url
+                // Read before the defer tears the view down: the store is non-persistent, so
+                // these cookies exist nowhere else and vanish with it.
+                let cookies = await webView.configuration.websiteDataStore.httpCookieStore.allCookies()
+                return ResolvedMedia(url: url, referer: page, cookieHeader: Self.cookieHeader(cookies, for: url))
             }
         }
 
@@ -83,5 +97,17 @@ final class WebViewMediaResolver {
         // a private account or a region-locked post is the correct and permanent answer -- and
         // the one the UI turns into "open it in the app, tap Download, share the file here".
         throw TranscriptFailure.mediaUnreachable("page produced no media")
+    }
+
+    /// The `Cookie` header a browser would send to the media host: only cookies whose domain
+    /// covers that host, so nothing the page set for another domain travels with the request.
+    static func cookieHeader(_ cookies: [HTTPCookie], for url: URL) -> String? {
+        guard let host = url.host?.lowercased() else { return nil }
+        let matching = cookies.filter { cookie in
+            let domain = cookie.domain.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            return host == domain || host.hasSuffix("." + domain)
+        }
+        guard !matching.isEmpty else { return nil }
+        return HTTPCookie.requestHeaderFields(with: matching)["Cookie"]
     }
 }
