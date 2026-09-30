@@ -134,10 +134,11 @@ extension QuokkaStore {
 
     /// Video saves with no transcript and no job that has given up -- the ones worth asking for.
     ///
-    /// Video platforms only: a Pinterest pin or an X post has no audio to read, and offering
-    /// to transcribe one would be a button that can only fail.
+    /// Video platforms only: a Pinterest pin, an Are.na block or an X post has no audio to
+    /// read, and offering to transcribe one would be a button that can only fail. A plain web
+    /// page counts only when it is a video file shared straight into the app.
     func untranscribedVideos(limit: Int = 20) throws -> [Item] {
-        let platforms = [Platform.youtube, .tiktok, .instagram, .vimeo, .web].map(\.rawValue)
+        let platforms = [Platform.youtube, .tiktok, .instagram, .vimeo].map(\.rawValue)
         let marks = platforms.map { _ in "?" }.joined(separator: ", ")
         var arguments: [(any DatabaseValueConvertible)?] = platforms.map { $0 }
         arguments.append(Self.transcriptAttemptLimit)
@@ -150,7 +151,7 @@ extension QuokkaStore {
                     LEFT JOIN item_transcript t ON t.itemID = i.id
                     LEFT JOIN transcript_job j ON j.itemID = i.id
                     WHERE t.itemID IS NULL
-                      AND i.platform IN (\(marks))
+                      AND (i.platform IN (\(marks)) OR i.url LIKE 'quokka://movie/%')
                       AND (j.itemID IS NULL OR j.attempts < ?)
                     ORDER BY i.savedAt DESC, i.id DESC
                     LIMIT ?
