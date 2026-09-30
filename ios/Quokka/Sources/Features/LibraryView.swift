@@ -12,6 +12,7 @@ struct LibraryView: View {
     @Environment(AppState.self) private var state
     @Binding var path: NavigationPath
     var scrollToTop = 0
+    var onImport: () -> Void = {}
 
     @State private var query = ""
     @State private var color: Int?
@@ -20,6 +21,7 @@ struct LibraryView: View {
     @State private var showsColors = false
     @State private var platform: Platform?
     @State private var picked: Color = .gray
+    @State private var addingLink = false
     @FocusState private var focused: Bool
 
     private var isSearching: Bool {
@@ -47,6 +49,7 @@ struct LibraryView: View {
                         VStack(alignment: .leading, spacing: Space.roomy) {
                             ScreenTitle(title: "Library", subtitle: subtitle)
                                 .id(Self.top)
+                            addRow.padding(.horizontal, Space.gutter)
                             searchField.padding(.horizontal, Space.gutter)
                             if showsColors { swatchRow }
                             chips
@@ -66,6 +69,7 @@ struct LibraryView: View {
             .toolbar(.hidden, for: .navigationBar)
             .quokkaRoutes()
         }
+        .sheet(isPresented: $addingLink) { AddLinkSheet(onImport: onImport) }
         .task { swatches = state.swatches() }
         // task(id:) cancels the previous run, which is the debounce: a search starts once
         // typing has paused for a moment.
@@ -84,6 +88,22 @@ struct LibraryView: View {
     private var subtitle: String {
         if isSearching { return results.count == 1 ? "1 result" : "\(results.count) results" }
         return state.total == 1 ? "1 saved" : "\(state.total) saved"
+    }
+
+    // MARK: - Adding
+
+    /// The two ways in, where the library is: a link, or a whole export.
+    private var addRow: some View {
+        HStack(spacing: Space.snug) {
+            Button { addingLink = true } label: {
+                FilledPill(title: "Add a link", icon: "link")
+            }
+            .buttonStyle(PressStyle())
+            Button(action: onImport) {
+                FilledPill(title: "Import", icon: "square.and.arrow.down", tone: .ink)
+            }
+            .buttonStyle(PressStyle())
+        }
     }
 
     // MARK: - Search

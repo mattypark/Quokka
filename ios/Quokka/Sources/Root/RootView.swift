@@ -89,7 +89,9 @@ struct RootView: View {
                         onLibrary: { tab = .library })
                 }
                 page(.library) {
-                    LibraryView(path: $libraryPath, scrollToTop: scrollToTop[.library, default: 0])
+                    LibraryView(path: $libraryPath, scrollToTop: scrollToTop[.library, default: 0]) {
+                        importing = true
+                    }
                 }
                 page(.studio) {
                     StudioView(path: $studioPath, scrollToTop: scrollToTop[.studio, default: 0])
