@@ -359,7 +359,7 @@ extension ScreenTitle where Trailing == EmptyView {
     }
 }
 
-/// A quiet empty state: the mark, a line, and what fills it in.
+/// A quiet empty state: the mark, a line in its hand, and what fills it in.
 struct EmptyNote: View {
     let title: String
     var detail: String?
@@ -368,7 +368,7 @@ struct EmptyNote: View {
         VStack(spacing: Space.base) {
             QuokkaMark(size: 44, blinks: true)
             Text(title)
-                .font(Type.bodyEmphasis)
+                .font(Type.hand(24))
                 .foregroundStyle(Label.primary)
                 .multilineTextAlignment(.center)
             if let detail {
