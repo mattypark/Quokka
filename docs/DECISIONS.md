@@ -136,7 +136,28 @@ this workload: a `UIImage` from a file, then a second resized one. Everything go
 
 So the extension writes a deliberately dumb record and gets out. The app does the thinking.
 
+## Black, white and sky, and the breakdown is the product
+
+**Decided 2026-09-30, superseding the Cosmos pass below.** Matthew: the app exists to take other
+people's videos and show *what went well* -- vidIQ-style, on the phone -- and the look is about a
+third Nudgy's sky with the rest Quokka's own, under his logo. See `docs/DESIGN.md`.
+
+**The breakdown is rules, not a model** (`QuokkaEngine/Breakdown.swift`). Every finding points at
+the words -- "the opening line ends at 1.8s", "172 words a minute", "asks for a follow" -- so a
+passed check is evidence, the same transcript always breaks down the same way, and it runs on the
+phone with no key and nothing sent. A hosted model can narrate on top later; the checks must never
+rest on one, because then two people looking at the same video would see different verdicts and
+neither could check why.
+
+**No invented metrics.** Views and likes are shown only where a platform actually gives them to an
+unauthenticated client (see `backend/ANALYTICS.md`); a breakdown never makes up a score that is not
+a count of checks passed.
+
 ## One face, and the interface copies Cosmos
+
+*Superseded 2026-09-30 by the entry above; kept because the structure it set -- pushed pages,
+masonry at native ratio, search by colour, SF Pro -- is still in the app.*
+
 
 **Decided 2026-09-28.** The app was redesigned to copy [Cosmos](https://www.cosmos.so)'s layout
 and interaction one for one -- measured, in `docs/DESIGN-REFS.md` -- and the mascot was removed.

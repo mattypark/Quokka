@@ -55,7 +55,7 @@ export function showToast(model) {
       font-size: 18px;
       font-weight: 600;
     }
-    .thumb.check { background: #0a0a0a; color: #ffffff; }
+    .thumb.check { background: #1a66d1; color: #ffffff; }
     .thumb.fail { background: #f2f2f2; color: #6b6b6b; }
     .text { min-width: 0; flex: 1; }
     .title { font-size: 14px; font-weight: 500; letter-spacing: -0.2px; line-height: 19px; }

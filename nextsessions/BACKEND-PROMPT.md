@@ -18,11 +18,12 @@ saved work. It replaces the habit of DMing reels to a second Instagram account.
 
 ## Current state
 
-**Redesigned 2026-09-28 to copy Cosmos** (branch `cosmos-redesign`, not merged, not pushed).
-The mascot and every custom font are gone; everything is SF Pro. Three tabs -- Home (Saved /
-Creators), Search (words and colour), Profile (Saves / Playlists / Ideas, where the planner
-and script editor now live) -- and item, playlist and creator pages you push into. Each was
-verified by screenshot in the simulator. The app icon is a black lowercase q on white.
+**Redesigned 2026-09-30 around the breakdown** (branch `quokka-sky`, off `cosmos-redesign`;
+neither merged, neither pushed). Black, white and sky under Matthew's mark -- see
+`docs/DESIGN.md`. Three tabs: Home (sky header, rings, ready / waiting / recent), Library
+(search by word or colour, platform chips) and Studio (playlists, ideas, creators). A video's
+page is its breakdown, read by `QuokkaEngine/Breakdown.swift` from the transcript. Each
+screen was verified by screenshot in the simulator. A custom display face is still to come.
 
 `extension/` is a Chrome extension, Save to Quokka, that queues right-click saves in the
 browser. **It has no route to the phone yet** -- the two candidates are in

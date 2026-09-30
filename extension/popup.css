@@ -1,16 +1,18 @@
-/* Tokens match the app's -- docs/DESIGN-REFS.md. */
+/* Tokens match the app's -- docs/DESIGN.md. */
 :root {
-  --canvas: #ffffff;
-  --field: #fbfaf8;
-  --control: #f2f2f2;
+  --canvas: #f3f5f8;
+  --raised: #ffffff;
+  --field: #edf0f4;
+  --control: #e4e8ee;
   --ink: #0a0a0a;
-  --secondary: #6b6b6b;
+  --sky: #1a66d1;
+  --secondary: #5e6573;
   --hairline: rgba(0, 0, 0, 0.1);
   --hairline-strong: rgba(0, 0, 0, 0.12);
   --gutter: 8px;
   --margin: 14px;
-  --radius-tile: 2px;
-  --radius-card: 12px;
+  --radius-tile: 10px;
+  --radius-card: 16px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -42,9 +44,17 @@ body {
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.wordmark img {
+  width: 22px;
+  height: 22px;
 }
 
 .count {
@@ -58,11 +68,11 @@ body {
   height: 40px;
   border: 0;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--sky);
   color: #ffffff;
   font: inherit;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.2px;
   cursor: pointer;
   transition: transform 120ms var(--ease), opacity 120ms ease-out;
@@ -142,7 +152,7 @@ main {
   display: block;
   padding: 10px;
   min-height: 72px;
-  background: var(--field);
+  background: var(--raised);
   border: 0.5px solid var(--hairline);
   border-radius: var(--radius-tile);
 }

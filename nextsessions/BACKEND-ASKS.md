@@ -144,6 +144,9 @@ be reviewed, moved or rewritten rather than discovered:
 | same | `search(color:)` -- nearest `averageColor`, weighted RGB 2:4:3 | A full pass over one integer column |
 | same | `recentColors()` -- for the swatch row | |
 | same | `playlists(containing:)` -- both routes, direct and through an idea | |
+| same | `transcribedCount()`, `transcribedItems()`, `untranscribedVideos()` -- Home's rings and lists | `untranscribedVideos` treats `.web` as a video platform, which a shared movie file is |
+| same | `isTranscriptQueued(itemID:)` -- the query section 7 was waiting on | |
+| `Root/AppState+Breakdown.swift` | `requestTranscript` (enqueue + run the queue), `saveLink` (paste a link, `origin: .manual`), sample-transcript planting for screenshots | Samples are DEBUG-only and flagged on screen |
 | `Root/AppState+Browse.swift` | Pass-throughs for the above, plus `playlistItems`, `addToPlaylist`, `removeFromPlaylist`, `playlistDigest`, `page(author:)` | `playlistCards()` reuses `playlistsForMirror()` for its item counts |
 
 ## 6. A route from the Chrome extension to the phone
@@ -158,6 +161,12 @@ choice is Matthew's. Whichever lands, `InboxDrain` needs one new rule: an image 
 
 `QuokkaStore` now has `transcript(forItem:)`, `enqueueTranscript` and
 `exhaustedTranscriptFailure`, and the new item page reads the first of them directly. But
-`IdeaDetailView` still receives `UnbuiltTranscripts()`, because `TranscriptReading` also wants
-`isTranscribing(itemID:)` and nothing answers that yet. One query on `transcript_job` and an
-adapter conforming `QuokkaStore` to the protocol, and the Transcript tab turns on.
+`IdeaDetailView` still receives `UnbuiltTranscripts()`. `isTranscriptQueued(itemID:)` now exists
+(section 5), so what is left is the adapter conforming `QuokkaStore` to `TranscriptReading`. The
+new breakdown page does not wait on it -- it reads the store directly.
+
+## 8. A narrative on top of the breakdown, eventually
+
+`Breakdown` is rules and must stay the thing the checks rest on. A short written read -- "why this
+worked", in a sentence or two -- could come from `/extract` on the worker, which already takes a
+transcript. It should be labelled as a model's opinion and never change a check.

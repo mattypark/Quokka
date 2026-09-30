@@ -23,16 +23,15 @@ simulator, so it can be proved rather than eyeballed.
 
 ## Rules
 
-- **The interface copies Cosmos.** Measure against `docs/DESIGN-REFS.md` before changing a
-  screen's structure; the screenshots it was measured from are in
-  `~/Documents/Reference images/cosmos/` and stay out of this public repo.
-- **SF Pro only, regular and medium.** No display faces, no mascot. See `docs/DECISIONS.md`.
-- **White ground, black text, no accent colour, ever.** The only colour on screen belongs to
-  the saved work.
-- Three tabs -- Home, Search, Profile -- and everything else is pushed onto a tab's stack
-  through `Route`, with a grey back circle rather than the system bar.
-- Build screens from `Components/Chrome.swift` (circles, pills, text tabs, underline tabs,
-  count badge, top bar). A new size or fill belongs there or in the tokens, not in a view.
+- **Black, white and sky.** `docs/DESIGN.md` is the system: the mark, the tokens with their
+  contrast ratios, every screen. Blue means *this part analyses*; black is the brand.
+- **SF Pro, with one seam.** A custom display face goes in `Face.display` and nowhere else.
+- **The breakdown is evidence.** Never show a finding the engine did not produce, and never a
+  score that is not a count of checks passed.
+- Three tabs -- Home, Library, Studio -- and everything else is pushed onto a tab's stack
+  through `Route`, with a white back circle rather than the system bar.
+- Build screens from `Components/Chrome.swift` (circles, pills, cards, section labels, chips,
+  tabs, badges). A new size or fill belongs there or in the tokens, not in a view.
 - Tokens before components. Nothing reaches for a hex value or a ramp step directly.
 - Animate `transform` and `opacity` only. Every animated call site goes through
   `Motion.respecting(_:)` so Reduce Motion is the default rather than something each view
@@ -62,8 +61,9 @@ scripts/run.sh                    # build, screenshot, shut the simulator down
 scripts/run.sh --seed             # plant sample saves
 scripts/run.sh --export           # plant a synthetic Instagram export and import it
 scripts/run.sh --relaunch         # relaunch, to prove data actually persisted
-scripts/run.sh --seed --ideas --tab home|search|profile
+scripts/run.sh --seed --ideas --tab home|library|studio
 scripts/run.sh --seed --ideas --screen item|playlist|idea
+# add -quokkaSampleTranscripts YES to the launch args to plant sample breakdowns
 ```
 
 **Never pass `--keep`.** A booted simulator's `mediaanalysisd` has been measured at 691% CPU
