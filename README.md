@@ -15,6 +15,8 @@ Saving is table stakes. The product is what happens after.
 |---|---|
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why the architecture is what it is. Read before changing anything structural. |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Black, white and sky: the mark, the tokens, every screen. |
+| [`docs/TESTING.md`](docs/TESTING.md) | How to test everything: automated, simulator, and the phone checklist. |
+| [`docs/INGEST.md`](docs/INGEST.md) | Every way in, and every way from a video to its words. |
 | [`docs/RESEARCH-TRANSCRIPTS.md`](docs/RESEARCH-TRANSCRIPTS.md) | What is actually possible for transcripts, with 33 sources. The finding the product turns on. |
 | [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) | Getting it onto a phone that is not yours. **Read the blockers at the top.** |
 | [`docs/TIMELINE.md`](docs/TIMELINE.md) | Phases and what ships when. |
