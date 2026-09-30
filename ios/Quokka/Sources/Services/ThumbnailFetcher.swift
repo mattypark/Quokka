@@ -54,6 +54,12 @@ actor ThumbnailFetcher {
         }
 
         _ = url
+        // Before the picture, and whatever happens to it: a title is worth having even for a
+        // post whose thumbnail never arrives.
+        if item.title == nil || item.author == nil {
+            await fillMetadata(link, id: id)
+        }
+
         let plan = ThumbnailResolver.plan(for: link)
 
         guard let imageData = await bytes(for: plan, platform: item.platform) else {
@@ -82,6 +88,18 @@ actor ThumbnailFetcher {
         } catch {
             logger.error("Could not store the thumbnail: \(error.localizedDescription)")
             return false
+        }
+    }
+
+    private func fillMetadata(_ link: CanonicalLink, id: Int64) async {
+        guard let endpoint = ThumbnailResolver.metadataEndpoint(for: link),
+              let data = await download(endpoint, expectingImage: false),
+              let metadata = OEmbedMetadata.parse(data)
+        else { return }
+        do {
+            try store.fillMetadata(itemID: id, title: metadata.title, author: metadata.author)
+        } catch {
+            logger.error("Could not store metadata: \(error.localizedDescription)")
         }
     }
 

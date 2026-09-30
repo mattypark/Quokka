@@ -289,6 +289,18 @@ final class QuokkaStore: Sendable {
     /// Stored as a JSON array in a text column rather than a join table. Tags are only ever
     /// read alongside their item and written as a complete set, so a second table would add a
     /// join to every read to support a normalisation nothing here benefits from.
+    /// Fills in a title and creator from oEmbed, never overwriting one that is already there.
+    ///
+    /// COALESCE rather than a plain SET: a title typed into the share sheet or carried in an
+    /// Instagram export is better information than a platform's generic one, and must win.
+    func fillMetadata(itemID: Int64, title: String?, author: String?) throws {
+        try dbPool.write { db in
+            try db.execute(
+                sql: "UPDATE item SET title = COALESCE(title, ?), author = COALESCE(author, ?) WHERE id = ?",
+                arguments: [title, author, itemID])
+        }
+    }
+
     func setTags(itemID: Int64, _ tags: [String]) throws {
         let encoded = String(decoding: (try? JSONEncoder().encode(tags)) ?? Data("[]".utf8), as: UTF8.self)
         try dbPool.write { db in
