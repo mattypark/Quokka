@@ -1,4 +1,12 @@
 /* Tokens match the app's -- docs/DESIGN.md. */
+
+/* The app's hand, bundled with the extension (Apache 2.0, licence alongside). */
+@font-face {
+  font-family: "Schoolbell";
+  src: url("fonts/Schoolbell-Regular.ttf") format("truetype");
+  font-display: block;
+}
+
 :root {
   --canvas: #f3f5f8;
   --raised: #ffffff;
@@ -47,9 +55,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
+  font-family: "Schoolbell", -apple-system, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
 }
 
 .wordmark img {
@@ -102,7 +110,8 @@ main {
 
 .empty {
   margin: 28px 8px;
-  font-size: 13px;
+  font-family: "Schoolbell", -apple-system, sans-serif;
+  font-size: 17px;
   line-height: 19px;
   color: var(--secondary);
   text-align: center;
