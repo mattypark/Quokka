@@ -23,6 +23,24 @@ extension AppState {
         transcript(forItem: id).flatMap(Breakdown.analyze)
     }
 
+    /// What this person's saves say about their taste. Read from the whole library and every
+    /// breakdown, on the phone -- the recent five thousand saves and five hundred breakdowns,
+    /// which is plenty for a pattern and bounded so a huge library stays quick.
+    func tasteProfile() -> TasteProfile {
+        guard let store else { return TasteProfile.build(items: [], breakdowns: []) }
+        var all: [Item] = []
+        var cursor: ItemCursor?
+        repeat {
+            guard let page = try? store.page(after: cursor, limit: 500) else { break }
+            all.append(contentsOf: page.items)
+            cursor = page.cursor
+        } while cursor != nil && all.count < 5_000
+        let breakdowns = transcribedItems(limit: 500).compactMap { item in
+            item.id.flatMap(breakdown(forItem:))
+        }
+        return TasteProfile.build(items: all, breakdowns: breakdowns)
+    }
+
     func isTranscriptQueued(_ id: Int64) -> Bool {
         guard let store else { return false }
         return (try? store.isTranscriptQueued(itemID: id)) ?? false
