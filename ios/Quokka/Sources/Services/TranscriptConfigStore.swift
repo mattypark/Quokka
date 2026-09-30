@@ -5,8 +5,8 @@ import QuokkaEngine
 /// Holds the current `ResolverConfig`, fetches a new one when it is stale, and refuses to
 /// widen what the app is allowed to do when it cannot.
 ///
-/// The refusal is the feature. Every failure path here lands on `ResolverConfig.failClosed`,
-/// which enables rung 0 and nothing else. A device that cannot reach the worker -- offline, or
+/// The refusal is the feature. Every failure path with no config younger than `maximumAge`
+/// lands on `ResolverConfig.failClosed`, which enables rung 0 and nothing else. A device that cannot reach the worker -- offline, or
 /// behind something hostile, or running after the worker has been taken down deliberately --
 /// is exactly the device whose behaviour nobody can observe or stop. It gets the least
 /// latitude, not the most.
@@ -28,7 +28,7 @@ actor TranscriptConfigStore {
     private let logger = Logger(subsystem: "com.matthewpark.quokka", category: "config")
 
     private var cached: ResolverConfig?
-    private var inFlight: Task<ResolverConfig, Never>?
+    private var inFlight: Task<ResolverConfig?, Never>?
 
     private static let storageKey = "quokka.resolverConfig"
 
@@ -58,41 +58,57 @@ actor TranscriptConfigStore {
         return await refresh()
     }
 
-    /// Forces a fetch. Returns fail-closed on any failure, never a stale permissive config.
+    /// Forces a fetch. On failure, falls back to the last good config while it is inside
+    /// `maximumAge`, and to fail-closed once it is not -- never to a config past its age.
     @discardableResult
     func refresh() async -> ResolverConfig {
-        if let inFlight { return await inFlight.value }
+        let fetched: ResolverConfig?
+        if let inFlight {
+            fetched = await inFlight.value
+        } else {
+            let task = Task { () -> ResolverConfig? in
+                guard let endpoint else { return nil }
+                var request = URLRequest(url: endpoint.appendingPathComponent("config"))
+                request.timeoutInterval = 15
+                request.cachePolicy = .reloadIgnoringLocalCacheData
 
-        let task = Task { () -> ResolverConfig in
-            guard let endpoint else { return .failClosed }
-            var request = URLRequest(url: endpoint.appendingPathComponent("config"))
-            request.timeoutInterval = 15
-            request.cachePolicy = .reloadIgnoringLocalCacheData
+                do {
+                    let (data, response) = try await session.data(for: request)
+                    guard let http = response as? HTTPURLResponse,
+                          (200..<300).contains(http.statusCode)
+                    else { return nil }
 
-            do {
-                let (data, response) = try await session.data(for: request)
-                guard let http = response as? HTTPURLResponse,
-                      (200..<300).contains(http.statusCode)
-                else { return .failClosed }
-
-                var decoded = try JSONDecoder().decode(ResolverConfig.self, from: data)
-                decoded.fetchedAt = Date()
-                persist(decoded)
-                logger.info("resolver config v\(decoded.version, privacy: .public), rungs: \(decoded.enabledRungs.map(\.rawValue).sorted().joined(separator: ","), privacy: .public)")
-                return decoded
-            } catch {
-                // Includes a malformed payload, which is the dangerous case: a partial decode
-                // must never leave a rung on by accident, so anything that does not decode
-                // whole is treated as no config at all.
-                logger.error("config fetch failed: \(error.localizedDescription, privacy: .public)")
-                return .failClosed
+                    var decoded = try JSONDecoder().decode(ResolverConfig.self, from: data)
+                    decoded.fetchedAt = Date()
+                    persist(decoded)
+                    logger.info("resolver config v\(decoded.version, privacy: .public), rungs: \(decoded.enabledRungs.map(\.rawValue).sorted().joined(separator: ","), privacy: .public)")
+                    return decoded
+                } catch {
+                    // Includes a malformed payload, which is the dangerous case: a partial decode
+                    // must never leave a rung on by accident, so anything that does not decode
+                    // whole is treated as no config at all.
+                    logger.error("config fetch failed: \(error.localizedDescription, privacy: .public)")
+                    return nil
+                }
             }
+            inFlight = task
+            fetched = await task.value
+            inFlight = nil
         }
-        inFlight = task
-        let result = await task.value
-        inFlight = nil
-        cached = result
-        return result
+
+        if let fetched {
+            cached = fetched
+            return fetched
+        }
+        // A failed fetch is not a new config. Replacing a good one with fail-closed would let
+        // one dropped request -- a tunnel, captive Wi-Fi -- switch rung 2 off for the rest of
+        // the session and make every later transcription wait on a 15-second fetch. The age
+        // limit is what makes the kill switch hold.
+        if let known = cached ?? loadFromDisk(), age(of: known) < Self.maximumAge {
+            cached = known
+            return known
+        }
+        return .failClosed
     }
 
     // MARK: - Cache
