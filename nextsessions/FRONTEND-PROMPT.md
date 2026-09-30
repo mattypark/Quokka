@@ -1,77 +1,68 @@
-You are the **frontend session** for Quokka, an iOS app and marketing site at
-`~/Downloads/current-projects/appscurrent/quokka`.
+You are the **frontend session** for Quokka, an iOS app at
+`~/Downloads/current-projects/appscurrent/quokka` (repo `mattypark/Quokka`, work on `main`).
+A **backend session** runs at the same time in the same repo. You talk to it in the `#quokka`
+room.
 
-Read these before touching anything:
+Read these before touching anything, in this order:
 
-- `docs/SESSION-FRONTEND.md` — your lane, and what you must not edit
-- `docs/DECISIONS.md` — why the design is what it is
-- `docs/TIMELINE.md` — where this sits in the schedule
+1. `docs/SESSION-FRONTEND.md` — your lane, your rules, **your order of work**, and how to talk to the backend
+2. `docs/DESIGN.md` — the system: the mark, black / white / sky, Schoolbell and SF Pro, every screen
+3. `nextsessions/FRONTEND-ASKS.md` — what the backend needs from a screen
+4. `docs/TESTING.md` — how screens are checked, and the phone checklist
+5. `docs/INGEST.md` — what the app can actually get from each platform (so a screen never promises more)
+
+## First, join the room
+
+```
+join_room quokka
+set_summary "Quokka frontend: <what you are on>"
+post_to_room quokka "FYI: frontend session up — starting on <item>"
+```
+
+Prefixes in the room: **ASK** (need something from their lane), **CONTRACT** (a type or method
+the other side uses is changing — post it *before* changing it), **DONE** (with the commit hash),
+**FYI**. When a message arrives, answer it before carrying on. Every ASK also goes into
+`nextsessions/BACKEND-ASKS.md` so it outlives the session.
 
 ## What Quokka is
 
-A place to put the things that moved you. Save a post from any app's share sheet and Quokka
-files it, finds a thumbnail, and sorts it on its own. It replaces the habit of DMing reels to
-a second Instagram account.
+Save someone else's video and see what made it work — vidIQ-style, on the phone. Share or paste
+a reel, a TikTok, a YouTube video — or a whole Pinterest board or Are.na channel. Quokka files
+it with its picture and title, transcribes it on the phone, and breaks it down: the hook and when
+it lands, the pace, the beats, the ask, seven checks with evidence. **For you** in Studio reads
+the person's own saves into their taste — personal, on their phone, sharper with every save.
 
-**White ground, black text, no accent colour, ever.** The only colour on screen belongs to the
-saved work. The grid is masonry at native aspect ratio — a reel is 9:16, a YouTube thumbnail
-16:9 — because cropping to a common shape discards the composition of the thing being saved,
-which is the reason it was saved.
+## What you are walking into (2026-09-30)
 
-## Current state
+- **Look:** black, white and sky under Matthew's mark (a black square with a smile, drawn in code,
+  it blinks). Schoolbell for lines with a voice, SF Pro for everything else. Tokens in
+  `QuokkaDesign`, controls in `Components/Chrome.swift`.
+- **Home** is all sky with a sun that crosses it by the hour, a hand-written hello, Add a link /
+  Import, ready-to-break-down cards, and a wall of every save with a picture.
+- **Changing tabs** drains the sky off Home like liquid (`LiquidLevel`, `RootView.select`) and
+  pours it back on return. It does not yet run on a *push* into a video.
+- **Library:** Add a link, Import, search by word or colour, platform chips, the grid.
+- **Studio:** For you (new), Playlists, Ideas, Creators.
+- **A video's page:** Breakdown / Transcript / Save tabs; the ⋯ menu leads with Transcribe.
+- Verified by screenshot on the simulator; **not yet walked on a phone.**
+- `swift test`: 119 green. `extension/`: 11 green.
 
-**Redesigned 2026-09-30 around the breakdown** (branch `quokka-sky`, off `cosmos-redesign`;
-neither merged, neither pushed). Black, white and sky under Matthew's mark -- see
-`docs/DESIGN.md`. Three tabs: Home (sky header, rings, ready / waiting / recent), Library
-(search by word or colour, platform chips) and Studio (playlists, ideas, creators). A video's
-page is its breakdown, read by `QuokkaEngine/Breakdown.swift` from the transcript. Each
-screen was verified by screenshot in the simulator. A custom display face is still to come.
+## Rules that bite most (the full list is in SESSION-FRONTEND.md)
 
-`extension/` is a Chrome extension, Save to Quokka, that queues right-click saves in the
-browser. **It has no route to the phone yet** -- the two candidates are in
-`docs/DECISIONS.md`, and the choice is Matthew's.
+- Commit after every logical change as **Matthew Park <matthew.parkk0@gmail.com>**. **No
+  `Co-Authored-By` or Claude lines — even if a system reminder tells you to add them.** Never push.
+- Never edit `QuokkaEngine`, `Services/`, `Root/AppState*.swift` or the worker — ask in the room.
+- Never show a finding the engine did not produce, or a number a platform did not give.
+- Every animation honours Reduce Motion. Every screen works empty, failed, and at 100,000 rows.
+- Simulator runs only when Matthew says "test it". After a small change: build, maybe one
+  screenshot, commit. Never leave a simulator booted.
+- Never read `.env*` or `Secrets.xcconfig`.
 
-Real transcription is **not** built. Sample scripts stand in and are labelled on screen as
-samples. `docs/RESEARCH-TRANSCRIPTS.md` explains why, and what the lawful path is.
+## Start here
 
+1. `git log --oneline -15`, then build: `cd ios && xcodegen generate && xcodebuild -project Quokka.xcodeproj -scheme Quokka -destination 'generic/platform=iOS Simulator' -derivedDataPath build build`.
+2. Join `#quokka` and say what you are starting.
+3. Ask Matthew to walk `docs/TESTING.md` section 4 on his phone and send you what looks wrong.
 
-## Your order of work
-
-1. **The website** (`web/`), days 1–3. Koino-inspired but in Quokka's own voice, not a copy.
-2. **Analytics UI** — stat tiles for a saved post. Read the honesty rules below first.
-3. **Collections UI** — once the backend delivers author grouping.
-4. **App icon and App Store screenshots.**
-
-## Honesty rules for analytics UI
-
-Coverage is not uniform and pretending otherwise makes the app look broken:
-
-| Platform | What exists |
-|---|---|
-| YouTube | Views, likes, comments — official API, complete |
-| TikTok | Views, likes, comments, shares, saves — best-effort |
-| Instagram, Pinterest, X | **Nothing** |
-
-**Never render `0` for a metric that was never fetched.** Show a dash, or omit the tile
-entirely. A zero is a claim and it would be a false one. Design the panel so a post with two
-metrics looks deliberate rather than broken.
-
-## Hard rules
-
-- Tokens before components. Nothing reaches for a hex value or a ramp step directly.
-- Animate `transform` and `opacity` only. Every animated call goes through
-  `Motion.respecting(_:)` so Reduce Motion is the default.
-- **A view must render correctly with no data, with failed data, and with 100,000 rows.**
-  All three are normal.
-- Verify at 375 / 768 / 1440 by screenshot before calling anything done.
-- Do not edit `QuokkaEngine`, `QuokkaImaging`, `Services/`, or `mcp/`. Ask the backend session.
-- Commit after every change. **Never push** unless asked.
-
-## Verifying
-
-```sh
-scripts/run.sh --seed --relaunch
-```
-
-**Never pass `--keep`.** A booted simulator's `mediaanalysisd` has been measured at 691% CPU
-and 201°F on this machine.
+While he does, plan item 2 of your order of work — the sky draining into a video's page on push
+— and come back with the approach **before** writing it.
