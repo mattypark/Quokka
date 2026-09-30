@@ -4,4 +4,9 @@
 // so a fresh checkout builds and runs on local data with nothing configured. Quokka needs no
 // keys today -- every thumbnail endpoint it uses is public -- and this exists so that stays
 // true by default if one is ever added.
+// The worker that serves the transcript ladder's config. Not a secret -- it is a public host,
+// compiled into the app either way -- so it lives here, and Secrets.xcconfig (included below)
+// can still point a build somewhere else. Host only: `//` starts a comment in an xcconfig.
+QUOKKA_WORKER_HOST = quokka.matthew-parkk0.workers.dev
+
 #include? "Secrets.xcconfig"
