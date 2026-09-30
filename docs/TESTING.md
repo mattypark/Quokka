@@ -74,7 +74,27 @@ Settings → Privacy & Security → **Developer Mode** and restart. (Or ship a T
 
 Write down anything that looks wrong with a screenshot -- that is the whole bug report.
 
-## 5. The Chrome extension
+## 5. Instagram, specifically
+
+Instagram is the most closed of the platforms, so it has its own section. Logged out, it serves
+**no picture, no title and no open oEmbed** -- its official embed API needs a Facebook developer app
+and Meta's review, and is built for embedding posts on websites, not for reading them. So there are
+four ways Instagram content gets into Quokka, and each is tested differently:
+
+| Way in | What you get | How to test | Status |
+|---|---|---|---|
+| **Share a reel's link** from Instagram | A text card (handle only) that can be transcribed | On the phone: Instagram → reel → Share → Quokka, then Transcribe. On the Mac: copy the reel's link and run `scripts/transcribe-e2e.sh <reel-link>` | **Unproven.** The web view is written for Instagram, but no public reel has been run through it yet. The script will say which step it stops at |
+| **Download the reel, share the file** | The words, read on the phone, nothing sent anywhere | Instagram → reel → Share → Download (only when the creator allows it) → Photos → Share → Quokka | **Works** -- the same path as any shared video |
+| **Instagram's data export** (Settings → Accounts Center → Your information → Download your information → JSON) | Every saved, liked and sent-to-yourself post at once, deduped | Library → Import → pick the `.zip`. On the simulator: `scripts/run.sh --export-zip` imports a synthetic export | **Works** (6 items from the synthetic export) |
+| **The Chrome extension**, right-click on instagram.com | The picture itself | Right-click any image on instagram.com → Save to Quokka | Works in the browser; **no route to the phone yet** |
+
+**The one to run first:** copy a public reel's link on your phone (Share → Copy link), send it to
+yourself, and run `scripts/transcribe-e2e.sh <that-link>`. If it gets to "No speech model", Instagram
+works end to end and only needs a phone. If it stops at "page produced no media", Instagram is
+showing a logged-out visitor a login wall instead of the video, and the answer for Instagram is the
+Download button or the export.
+
+## 6. The Chrome extension
 
 1. `comet://extensions` (or `chrome://extensions`) → **Developer mode** on → **Load unpacked** → pick `extension/`.
 2. Pin Quokka from the puzzle-piece menu.
@@ -85,7 +105,7 @@ Write down anything that looks wrong with a screenshot -- that is the whole bug 
 Saves stay in the browser for now -- the extension has no route to the phone yet
 (`DECISIONS.md`).
 
-## What cannot be tested on the simulator
+## 7. What cannot be tested on the simulator
 
 | Thing | Why | Where to test |
 |---|---|---|
