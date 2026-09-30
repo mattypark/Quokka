@@ -74,6 +74,7 @@ struct RootView: View {
             await state.addLinksIfRequested()
             state.transcribeIfRequested()
             await demoTransitionIfRequested()
+            await demoPassageIfRequested()
         }
     }
 
@@ -285,6 +286,20 @@ struct RootView: View {
         select(.library)
         try? await Task.sleep(for: .seconds(2.5))
         select(.home)
+        #endif
+    }
+
+    /// Opens a video from Home and comes back on its own, so the sky draining into a page can be
+    /// recorded without a hand on the simulator. DEBUG-only; `-quokkaDemoPush YES`.
+    private func demoPassageIfRequested() async {
+        #if DEBUG
+        guard UserDefaults.standard.bool(forKey: "quokkaDemoPush") else { return }
+        try? await Task.sleep(for: .seconds(3))
+        let target = state.transcribedItems(limit: 1).first ?? state.items.first
+        guard let id = target?.id else { return }
+        openFromHome(.item(id))
+        try? await Task.sleep(for: .seconds(3))
+        backToHome()
         #endif
     }
 
