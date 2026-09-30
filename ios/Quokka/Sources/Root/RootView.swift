@@ -17,6 +17,13 @@ struct RootView: View {
     /// How much of the screen the liquid sky covers during a change to or from Home.
     @State private var skyLevel: CGFloat = 0
     @State private var pouring = false
+    /// Whether the liquid sky is drawn above Home's stack -- a page opening from Home or coming
+    /// back to it -- rather than beneath Home, for a change of tab.
+    @State private var skyAbove = false
+    @State private var skyOpacity: Double = 1
+    /// Whether the sky swallows touches. It does while it covers a page that is about to be
+    /// swapped, so a tap cannot push something the swap would then pop.
+    @State private var holdsTouches = false
 
     /// Whether onboarding should be skipped for this launch.
     ///
@@ -73,7 +80,10 @@ struct RootView: View {
     /// The bar steps aside on a pushed screen. An item page ends in its own Save pill and a
     /// playlist in its own action pill -- Cosmos shows one floating control at a time.
     private var showsTabBar: Bool {
-        switch tab {
+        // Gone for the whole of a page opening from Home or coming back to it; it returns
+        // with Home's words.
+        if pouring && skyAbove { return false }
+        return switch tab {
         case .home: homePath.isEmpty
         case .library: libraryPath.isEmpty
         case .studio: studioPath.isEmpty
@@ -87,7 +97,8 @@ struct RootView: View {
             // Home is on top, and the liquid sky sits between it and the other two -- so when
             // Home's words fade, what is left on screen is its own sky, which then drains off
             // the top to show the page underneath. Coming back, the sky pours down over the page
-            // first and Home's words arrive on it.
+            // first and Home's words arrive on it. Opening a page from Home uses the same sky
+            // drawn above Home's stack instead, so it can drain off the page pushed beneath it.
             ZStack {
                 page(.library) {
                     LibraryView(path: $libraryPath, scrollToTop: scrollToTop[.library, default: 0]) {
@@ -97,13 +108,7 @@ struct RootView: View {
                 page(.studio) {
                     StudioView(path: $studioPath, scrollToTop: scrollToTop[.studio, default: 0])
                 }
-                if pouring {
-                    SkyBackground(showsSun: true)
-                        .ignoresSafeArea()
-                        .mask(LiquidLevel(level: skyLevel).ignoresSafeArea())
-                        .allowsHitTesting(false)
-                        .accessibilityHidden(true)
-                }
+                if pouring, !skyAbove { liquidSky }
                 page(.home) {
                     HomeView(
                         path: $homePath,
@@ -113,6 +118,7 @@ struct RootView: View {
                         onLibrary: { select(.library) })
                     .environment(\.skyPassage, SkyPassage(open: openFromHome, back: backToHome))
                 }
+                if pouring, skyAbove { liquidSky }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -125,6 +131,16 @@ struct RootView: View {
         .animation(Motion.respecting(.easeOut(duration: 0.2)), value: showsTabBar)
         .sheet(isPresented: $importing) { ImportView() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
+    }
+
+    /// Home's sky as a liquid, filled to `skyLevel`.
+    private var liquidSky: some View {
+        SkyBackground(showsSun: true)
+            .ignoresSafeArea()
+            .mask(LiquidLevel(level: skyLevel).ignoresSafeArea())
+            .opacity(skyOpacity)
+            .allowsHitTesting(holdsTouches)
+            .accessibilityHidden(true)
     }
 
     private func page(_ which: TabBar.Tab, @ViewBuilder _ view: () -> some View) -> some View {
@@ -146,7 +162,7 @@ struct RootView: View {
             tab = next
             return
         }
-        let liquid = Animation.timingCurve(0.6, 0.02, 0.3, 1, duration: 0.78)
+        let liquid = Self.liquid(duration: 0.78)
 
         if tab == .home {
             skyLevel = 1
@@ -172,15 +188,92 @@ struct RootView: View {
         }
     }
 
-    /// Pushes onto Home's stack.
-    private func openFromHome(_ route: Route) {
-        homePath.append(route)
+    /// The sky's curve: slow to gather, then quick, then settling -- liquid rather than a
+    /// sliding curtain.
+    private static func liquid(duration: Double) -> Animation {
+        .timingCurve(0.6, 0.02, 0.3, 1, duration: duration)
     }
 
-    /// Pops one page off Home's stack.
+    /// Opening a page is quicker than changing tab: it is something you asked to see.
+    private static let passage = 0.62
+
+    /// Opens a page from Home, draining the sky into it.
+    ///
+    /// Home's words fade off their own sky, the page is pushed beneath it with no slide of its
+    /// own, and the sky drains upward off the page. Touches reach the page while it drains, so
+    /// it can be scrolled as it appears. Deeper in the stack it is an ordinary push; under
+    /// Reduce Motion, a cut.
+    private func openFromHome(_ route: Route) {
+        guard !pouring else { return }
+        guard homePath.isEmpty else {
+            homePath.append(route)
+            return
+        }
+        guard !Motion.reduced else {
+            withTransaction(\.disablesAnimations, true) { homePath.append(route) }
+            return
+        }
+        skyAbove = true
+        skyLevel = 1
+        skyOpacity = 0
+        holdsTouches = true
+        pouring = true
+        Task { @MainActor in
+            // One frame for the sky layer to exist before it fades in, as in `select`.
+            try? await Task.sleep(for: .milliseconds(16))
+            await animate(.easeOut(duration: 0.16)) { skyOpacity = 1 }
+            withTransaction(\.disablesAnimations, true) { homePath.append(route) }
+            holdsTouches = false
+            // Two frames for the page to lay out and read its row, so the drain uncovers a
+            // finished page rather than one filling in.
+            try? await Task.sleep(for: .milliseconds(32))
+            await animate(Self.liquid(duration: Self.passage)) { skyLevel = 0 }
+            endPassage()
+        }
+    }
+
+    /// Goes back one page on Home's stack, pouring the sky over it when that lands on Home.
+    ///
+    /// The sky pours down over the page, Home is swapped in beneath it, and Home's words arrive
+    /// on it -- the tab change's return, over a page instead of a tab. The edge swipe stays the
+    /// system's, because a gesture has to follow the finger.
     private func backToHome() {
-        guard !homePath.isEmpty else { return }
-        homePath.removeLast()
+        guard !pouring, !homePath.isEmpty else { return }
+        guard homePath.count == 1 else {
+            homePath.removeLast()
+            return
+        }
+        guard !Motion.reduced else {
+            withTransaction(\.disablesAnimations, true) { homePath.removeLast() }
+            return
+        }
+        skyAbove = true
+        skyLevel = 0
+        skyOpacity = 1
+        holdsTouches = true
+        pouring = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(16))
+            await animate(Self.liquid(duration: Self.passage)) { skyLevel = 1 }
+            withTransaction(\.disablesAnimations, true) { homePath.removeLast() }
+            try? await Task.sleep(for: .milliseconds(32))
+            await animate(.easeOut(duration: 0.22)) { skyOpacity = 0 }
+            endPassage()
+        }
+    }
+
+    private func endPassage() {
+        pouring = false
+        skyAbove = false
+        skyOpacity = 1
+        holdsTouches = false
+    }
+
+    /// Runs an animation and returns once it has finished.
+    private func animate(_ animation: Animation, _ change: () -> Void) async {
+        await withCheckedContinuation { finished in
+            withAnimation(animation, change) { finished.resume() }
+        }
     }
 
     /// Drains to the Library and pours back to Home on its own, so the transition can be
