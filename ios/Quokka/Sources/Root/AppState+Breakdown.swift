@@ -90,6 +90,20 @@ extension AppState {
         }
     }
 
+    /// Transcribes the newest video of a platform at launch, to prove the ladder end to end
+    /// without a hand on the simulator. DEBUG-only; `-quokkaTranscribe tiktok`.
+    func transcribeIfRequested() {
+        #if DEBUG
+        guard let name = UserDefaults.standard.string(forKey: "quokkaTranscribe"),
+              let platform = Platform(rawValue: name),
+              let target = untranscribedVideos(limit: 50).first(where: { $0.platform == platform }),
+              let id = target.id
+        else { return }
+        logger.info("Transcribing \(target.url, privacy: .public) on request")
+        requestTranscript(id)
+        #endif
+    }
+
     /// Adds links given at launch, for screenshot runs. DEBUG-only; `-quokkaAddLinks a,b,c`.
     func addLinksIfRequested() async {
         #if DEBUG

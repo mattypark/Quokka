@@ -62,6 +62,7 @@ struct RootView: View {
             state.seedIdeasIfRequested()
             state.seedSampleTranscriptsIfRequested()
             await state.addLinksIfRequested()
+            state.transcribeIfRequested()
         }
     }
 
