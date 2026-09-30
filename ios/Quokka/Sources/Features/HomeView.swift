@@ -76,7 +76,7 @@ struct HomeView: View {
                 QuokkaMark(size: 32, blinks: true)
                 Spacer()
                 Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(Type.hand(21))
                     .foregroundStyle(Label.onSky)
                 Spacer()
                 CircleButton(icon: "gearshape.fill", label: "Settings", onSky: true, action: onSettings)
