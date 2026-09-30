@@ -1,65 +1,65 @@
 import SwiftUI
 
-/// Quokka has no accent colour. The only colour on screen belongs to the saved work itself.
+/// Black, white and sky.
 ///
-/// The ramp is nine steps of even OKLab lightness (L = 0, 0.125 ... 1.0) converted to sRGB.
-/// The dark end bunches because lightness is cubed on the way to linear RGB, so equal
-/// perceptual steps are tiny numeric ones near black.
+/// Matthew's call (2026-09-30): the black-square mark, white paper, and one sky blue -- about
+/// a third Nudgy's, which puts a live sky behind its header, and the rest Quokka's own. Black
+/// is the brand (the mark, the tab bar, primary type), white is the page, and blue means
+/// "this is the part that analyses" -- the sky header, the breakdown checks, the one button
+/// that does something to a video.
 ///
-/// **The interface is white.** Paper, not screen. A saved library is something you look
-/// through rather than at, and a white ground reads as a contact sheet or a scrapbook page,
-/// where a black one reads as a player. It also means the app is legible outdoors, which is
-/// where scrolling actually happens.
+/// Every text pairing is measured, not assumed; the ratios are beside each value.
 public enum Ink {
-    public static let ink0 = Color(hex: 0x000000)
-    public static let ink1 = Color(hex: 0x060606)
-    public static let ink2 = Color(hex: 0x222222)
-    public static let ink3 = Color(hex: 0x414141)
-    public static let ink4 = Color(hex: 0x636363)
-    public static let ink5 = Color(hex: 0x878787)
-    public static let ink6 = Color(hex: 0xAEAEAE)
-    public static let ink7 = Color(hex: 0xE8E8E8)
-    public static let ink8 = Color(hex: 0xFFFFFF)
-
-    public static let all: [Color] = [ink0, ink1, ink2, ink3, ink4, ink5, ink6, ink7, ink8]
+    public static let black = Color(hex: 0x0A0A0A)
+    public static let white = Color(hex: 0xFFFFFF)
 }
 
-/// Semantic names, so a view never reaches for a ramp step directly and the contrast
-/// guarantees stay attached to a role rather than to a number.
-///
-/// Values follow Cosmos, measured from its computed styles -- see `docs/DESIGN-REFS.md`.
+public enum Sky {
+    /// The header gradient, top to bottom. White text is only ever set over the upper two
+    /// stops, or over the bottom stop with `shade` laid on it.
+    public static let top = Color(hex: 0x1560D4)    // white 5.6:1
+    public static let mid = Color(hex: 0x2A7FE3)    // white 3.7:1 -- large text only
+    public static let bottom = Color(hex: 0x4E9DEB)
+    /// Laid over the lower half of the sky so white text clears 4.5:1 at any height.
+    public static let shade = Color.black.opacity(0.18)
+
+    /// Blue as an ink: links, the active tab dot, a passed check, the primary button.
+    public static let accent = Color(hex: 0x1A66D1) // white 5.4:1, paper 5.0:1
+    /// A wash behind blue text -- chips and the analysed state.
+    public static let tint = Color(hex: 0xE7F1FD)   // accent on it 4.8:1
+    /// Glass pills on the sky.
+    public static let glass = Color.white.opacity(0.18)
+    public static let glassStroke = Color.white.opacity(0.28)
+}
+
+/// Semantic surfaces, so a view never reaches for a hex value.
 public enum Surface {
-    public static let canvas = Ink.ink8
-    /// Typographic tiles and grouped rows. Barely off-white: on paper the separation comes
-    /// from the edge of the thing, not from a grey wash.
-    public static let raised = Color(hex: 0xFAFAFA)
-    /// The search pill and other text fields. Warm rather than neutral, which is the whole
-    /// difference between a field that looks designed and one that looks disabled.
-    public static let field = Color(hex: 0xFBFAF8)
-    /// Grey-filled circle controls -- back, search, more.
-    public static let control = Color(hex: 0xF2F2F2)
-    public static let elevated = Ink.ink7
-    /// Hairlines are black at low opacity rather than a solid grey, so they sit correctly on
-    /// the field fill and on photographs as well as on white.
-    public static let hairline = Color.black.opacity(0.10)
-    /// The search pill's outline, a shade firmer than a button's.
+    /// The page. A cool paper -- white with the faintest blue in it, so white cards read as
+    /// cards without needing a shadow.
+    public static let canvas = Color(hex: 0xF3F5F8)
+    /// Cards, sheets, the search field.
+    public static let raised = Ink.white
+    /// The search pill and text fields that sit on a card.
+    public static let field = Color(hex: 0xEDF0F4)
+    /// Circle controls on paper.
+    public static let control = Ink.white
+    public static let elevated = Color(hex: 0xE4E8EE)
+    public static let hairline = Color.black.opacity(0.08)
     public static let hairlineStrong = Color.black.opacity(0.12)
-    public static let border = Ink.ink6
-    /// Filled buttons -- black on white.
-    public static let inverse = Color(hex: 0x0A0A0A)
+    /// Filled black controls: the tab bar, secondary pills.
+    public static let inverse = Ink.black
 }
 
 public enum Label {
-    /// Not pure black: Cosmos sets its text at #0A0A0A, and the difference is what keeps a
-    /// white screen of type from buzzing.
-    public static let primary = Color(hex: 0x0A0A0A)  // 19.8:1
-    /// Inactive tabs, handles, counts.
-    public static let secondary = Color(hex: 0x6B6B6B) //  5.3:1
-    public static let tertiary = Color(hex: 0x767676)  //  4.5:1 -- the AA floor, at any size
-    /// Only for text at 17pt+ or semibold 14pt+, and for glyphs.
-    public static let dim = Ink.ink5                    //  3.5:1
-    /// Text on a filled black control.
-    public static let onInverse = Ink.ink8
+    public static let primary = Color(hex: 0x0A0A0A)   // paper 18.4:1
+    public static let secondary = Color(hex: 0x5E6573) // paper 5.4:1
+    public static let tertiary = Color(hex: 0x646B78)  // paper 4.9:1 -- AA at any size
+    /// Glyphs and 17pt+ text only.
+    public static let dim = Color(hex: 0x8E95A2)       // paper 2.8:1
+    /// Text on black or on the sky.
+    public static let onInverse = Ink.white
+    public static let onSky = Ink.white
+    public static let onSkySecondary = Color.white.opacity(0.82)
 }
 
 extension Color {

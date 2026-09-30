@@ -3,7 +3,7 @@ import QuokkaDesign
 import QuokkaEngine
 import QuokkaImaging
 
-/// Creators, as covers rather than as a list.
+/// Creators, as covers rather than as a list. A pane inside Studio, so it draws no scroll view.
 ///
 /// Each author gets a mosaic built from their own saves: you recognise a creator by what is
 /// in the cover long before you read the name. The grouping is by author because that is what
@@ -22,22 +22,18 @@ struct CreatorsPane: View {
                 title: "Nothing to group yet",
                 detail: "Creators appear here on their own, from whoever made the things you save.")
         } else {
-            ScrollView(showsIndicators: false) {
-                LazyVGrid(columns: columns, alignment: .leading, spacing: Space.loose) {
-                    ForEach(state.authors) { author in
-                        NavigationLink(value: Route.creator(author.name)) {
-                            CreatorCard(
-                                author: author,
-                                items: state.coverItems(for: author.name),
-                                loader: state.loader)
-                        }
-                        .buttonStyle(PressStyle())
+            LazyVGrid(columns: columns, alignment: .leading, spacing: Space.loose) {
+                ForEach(state.authors) { author in
+                    NavigationLink(value: Route.creator(author.name)) {
+                        CreatorCard(
+                            author: author,
+                            items: state.coverItems(for: author.name),
+                            loader: state.loader)
                     }
+                    .buttonStyle(PressStyle())
                 }
-                .padding(.horizontal, Grid.margin)
-                .padding(.top, Space.tight)
-                .padding(.bottom, Grid.bottomInset)
             }
+            .padding(.horizontal, Space.gutter)
         }
     }
 }

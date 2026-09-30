@@ -1,63 +1,79 @@
 import SwiftUI
 
-/// One face: SF Pro.
+/// SF Pro for now, with one seam for the custom face Matthew is choosing.
 ///
-/// Cosmos sets everything in a single neutral grotesk (ABC Oracle, a paid Dinamo licence)
-/// and lets the saved images be the only expressive thing on screen. SF Pro is the closest
-/// neutral grotesk that ships with the OS, so it costs no licence, no bundle bytes and no
-/// fallback path -- and a library that is all pictures does not need a second voice.
+/// `Face.display` is the only place that face will go: screen titles, the hero numbers on the
+/// sky, the onboarding headline. Everything a person reads for information -- a transcript, a
+/// check's evidence, a caption -- stays SF Pro whatever lands there, because a display face
+/// set at 15pt over a paragraph is decoration getting in the way.
 ///
-/// Weights stay at regular and medium. Cosmos never goes bolder than 500, which is most of
-/// why its chrome recedes behind the grid.
+/// Titles are bold and large, the way Nudgy sets them; everything under a title stays at
+/// regular and medium so the hierarchy is carried by size and weight, not by colour.
+public enum Face {
+    /// PostScript name of the display face, or nil for SF Pro. Set it and the titles change.
+    public static let display: String? = nil
+}
+
 public enum Type {
+
+    private static func display(_ size: CGFloat, weight: Font.Weight) -> Font {
+        if let face = Face.display {
+            return .custom(face, size: size, relativeTo: .largeTitle).weight(weight)
+        }
+        return .system(size: size, weight: weight)
+    }
+
+    // MARK: Display
+
+    /// Screen titles -- "Library", "Studio" -- and a video's title on its breakdown.
+    public static func screen(_ size: CGFloat = 32) -> Font { display(size, weight: .bold) }
+
+    /// Big numbers: the counts on the sky, a pace, a score.
+    public static func numeral(_ size: CGFloat) -> Font {
+        display(size, weight: .semibold).monospacedDigit()
+    }
+
+    /// The onboarding headline. Large and tight, never more than two lines.
+    public static let headline = display(36, weight: .bold)
+    public static let headlineTracking: CGFloat = -0.8
+
+    /// Section titles and card titles.
+    public static func title(_ size: CGFloat = 20) -> Font { display(size, weight: .bold) }
 
     // MARK: Navigation and controls
 
-    /// Top-bar tabs and the profile tab row. 15 medium with Cosmos's tightened tracking.
     public static let nav = Font.system(size: 15, weight: .medium)
-    public static let navTracking: CGFloat = -0.28
-
-    /// Buttons and pills.
-    public static let control = Font.system(size: 15, weight: .medium)
-
-    /// Placeholder and typed text in the search pill.
-    public static let field = Font.system(size: 15, weight: .regular)
+    public static let navTracking: CGFloat = -0.2
+    public static let control = Font.system(size: 16, weight: .semibold)
+    public static let field = Font.system(size: 16, weight: .regular)
 
     // MARK: Reading
 
     public static let body = Font.system(size: 16, weight: .regular)
-    public static let bodyEmphasis = Font.system(size: 16, weight: .medium)
+    public static let bodyEmphasis = Font.system(size: 16, weight: .semibold)
     public static let caption = Font.system(size: 13, weight: .regular)
+    public static let captionEmphasis = Font.system(size: 13, weight: .semibold)
+
+    /// Uppercase tracked labels over a group of cards: "READY TO BREAK DOWN".
+    public static let section = Font.system(size: 12, weight: .semibold)
+    public static let sectionTracking: CGFloat = 1.1
 
     /// Count badges -- the outlined "2.1K" beside a tab title.
-    public static let badge = Font.system(size: 11, weight: .medium).monospacedDigit()
+    public static let badge = Font.system(size: 11, weight: .semibold).monospacedDigit()
 
-    // MARK: Titles
+    /// A person's name, a playlist's name.
+    public static let name = Font.system(size: 20, weight: .semibold)
 
-    /// The onboarding headline. Large and tight, never more than two lines.
-    public static let headline = Font.system(size: 34, weight: .medium)
-    public static let headlineTracking: CGFloat = -0.8
+    /// The centered title over a playlist or a creator.
+    public static let screenTitle = display(24, weight: .bold)
 
-    /// A person's name on their profile.
-    public static let name = Font.system(size: 20, weight: .medium)
-
-    /// The centered title over a playlist or an item.
-    public static let screenTitle = Font.system(size: 22, weight: .medium)
-
-    /// Section titles and sheet titles. Sized per call site, always medium.
-    public static func title(_ size: CGFloat = 22) -> Font {
-        .system(size: size, weight: .medium)
-    }
-
-    /// The typographic tile, for the platforms that never yield a thumbnail. With no image,
-    /// the author's name at size is the tile.
+    /// The typographic tile, for the platforms that never yield a thumbnail.
     public static func tileTitle(_ size: CGFloat = 17) -> Font {
-        .system(size: size, weight: .medium)
+        .system(size: size, weight: .semibold)
     }
 
-    /// Counts, dates, hosts. Tabular figures so a column of counts does not shimmer as it
-    /// changes, which was the only thing the monospace face was ever doing.
+    /// Timestamps, counts, hosts. Tabular figures so a column of them does not shimmer.
     public static func meta(_ size: CGFloat = 12) -> Font {
-        .system(size: size, weight: .regular).monospacedDigit()
+        .system(size: size, weight: .medium).monospacedDigit()
     }
 }

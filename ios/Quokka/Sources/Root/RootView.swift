@@ -10,8 +10,9 @@ struct RootView: View {
     // One stack per tab, held here so the tab bar can pop one to its root when its tab is
     // tapped again, and so switching tabs never loses where a person was.
     @State private var homePath = NavigationPath()
-    @State private var searchPath = NavigationPath()
-    @State private var profilePath = NavigationPath()
+    @State private var libraryPath = NavigationPath()
+    @State private var studioPath = NavigationPath()
+    @State private var showingSettings = false
     @State private var scrollToTop: [TabBar.Tab: Int] = [:]
 
     /// Whether onboarding should be skipped for this launch.
@@ -52,10 +53,14 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        // Light everywhere -- the interface is paper -- except the all-sky first screen, where
+        // the status bar needs white text to read.
+        .preferredColorScheme(needsOnboarding ? .dark : .light)
         .task {
             state.drainInbox()
             state.importFixtureIfRequested()
             state.seedIdeasIfRequested()
+            state.seedSampleTranscriptsIfRequested()
         }
     }
 
@@ -64,8 +69,8 @@ struct RootView: View {
     private var showsTabBar: Bool {
         switch tab {
         case .home: homePath.isEmpty
-        case .search: searchPath.isEmpty
-        case .profile: profilePath.isEmpty
+        case .library: libraryPath.isEmpty
+        case .studio: studioPath.isEmpty
         }
     }
 
@@ -75,29 +80,31 @@ struct RootView: View {
             // position, pushed screen and all.
             ZStack {
                 page(.home) {
-                    LibraryView(path: $homePath, scrollToTop: scrollToTop[.home, default: 0]) {
-                        importing = true
-                    }
+                    HomeView(
+                        path: $homePath,
+                        scrollToTop: scrollToTop[.home, default: 0],
+                        onImport: { importing = true },
+                        onSettings: { showingSettings = true },
+                        onLibrary: { tab = .library })
                 }
-                page(.search) {
-                    SearchView(path: $searchPath)
+                page(.library) {
+                    LibraryView(path: $libraryPath, scrollToTop: scrollToTop[.library, default: 0])
                 }
-                page(.profile) {
-                    ProfileView(path: $profilePath, scrollToTop: scrollToTop[.profile, default: 0]) {
-                        importing = true
-                    }
+                page(.studio) {
+                    StudioView(path: $studioPath, scrollToTop: scrollToTop[.studio, default: 0])
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if showsTabBar {
                 TabBar(selection: $tab, onReselect: reselect)
-                    .padding(.bottom, Space.tight)
+                    .padding(.bottom, Space.snug)
                     .transition(.opacity.combined(with: .offset(y: 12)))
             }
         }
         .animation(Motion.respecting(.easeOut(duration: 0.2)), value: showsTabBar)
         .sheet(isPresented: $importing) { ImportView() }
+        .sheet(isPresented: $showingSettings) { SettingsView() }
     }
 
     private func page(_ which: TabBar.Tab, @ViewBuilder _ view: () -> some View) -> some View {
@@ -112,8 +119,8 @@ struct RootView: View {
     private func reselect(_ which: TabBar.Tab) {
         switch which {
         case .home where !homePath.isEmpty: homePath = NavigationPath()
-        case .search where !searchPath.isEmpty: searchPath = NavigationPath()
-        case .profile where !profilePath.isEmpty: profilePath = NavigationPath()
+        case .library where !libraryPath.isEmpty: libraryPath = NavigationPath()
+        case .studio where !studioPath.isEmpty: studioPath = NavigationPath()
         default: scrollToTop[which, default: 0] += 1
         }
     }

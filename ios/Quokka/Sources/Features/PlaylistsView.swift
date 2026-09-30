@@ -2,29 +2,33 @@ import SwiftUI
 import QuokkaDesign
 import QuokkaEngine
 
-/// The playlists a person made, as Cosmos clusters: a square cover, the name, the count.
+/// The playlists a person made: a square cover, the name, the count.
 ///
-/// A pane inside the profile rather than a screen of its own, so it draws no scroll view and
-/// no header -- the profile owns both.
+/// A pane inside Studio rather than a screen of its own, so it draws no scroll view and no
+/// header -- Studio owns both, and its + makes a new one.
 struct PlaylistsPane: View {
     @Environment(AppState.self) private var state
     @Binding var path: NavigationPath
 
     @State private var cards: [PlaylistCard.Model] = []
-    @State private var creating = false
-    @State private var draftName = ""
 
     private var columns: [GridItem] {
         [GridItem(.flexible(), spacing: Grid.gutter), GridItem(.flexible(), spacing: Grid.gutter)]
     }
 
-    var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: Space.loose) {
-            Button { draftName = ""; creating = true } label: {
-                NewPlaylistCard()
-            }
-            .buttonStyle(PressStyle())
+    @ViewBuilder
+    private var content: some View {
+        if cards.isEmpty {
+            EmptyNote(
+                title: "No playlists yet",
+                detail: "Tap + to start one, then drop saved videos into it from their breakdown.")
+        } else {
+            grid
+        }
+    }
 
+    private var grid: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: Space.loose) {
             ForEach(cards) { card in
                 NavigationLink(value: Route.playlist(card.id)) {
                     PlaylistCard(
@@ -35,18 +39,17 @@ struct PlaylistsPane: View {
                 .buttonStyle(PressStyle())
             }
         }
-        .padding(.horizontal, Grid.margin)
-        .alert("New playlist", isPresented: $creating) {
-            TextField("Name", text: $draftName)
-            Button("Create") { create() }
-            Button("Cancel", role: .cancel) {}
-        }
-        .task {
-            reload()
-            openForScreenshot()
-        }
-        // Returning from a playlist that was renamed, filled or deleted.
-        .onChange(of: path.count) { _, depth in if depth == 0 { reload() } }
+        .padding(.horizontal, Space.gutter)
+    }
+
+    var body: some View {
+        content
+            .task {
+                reload()
+                openForScreenshot()
+            }
+            // Returning from a playlist that was renamed, filled or deleted.
+            .onChange(of: path.count) { _, depth in if depth == 0 { reload() } }
     }
 
     private func reload() { cards = state.playlistCards() }
@@ -63,15 +66,6 @@ struct PlaylistsPane: View {
         else { return }
         path.append(Route.playlist(target.id))
         #endif
-    }
-
-    private func create() {
-        let trimmed = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        if let made = state.createPlaylist(name: trimmed), let id = made.id {
-            reload()
-            path.append(Route.playlist(id))
-        }
     }
 }
 
@@ -104,31 +98,5 @@ struct PlaylistCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(model.name), \(model.count) saved")
-    }
-}
-
-/// The first card in the grid is the way to make another -- where Cosmos puts "New cluster".
-private struct NewPlaylistCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.snug) {
-            ZStack {
-                Surface.field
-                Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(Label.secondary)
-            }
-            .aspectRatio(1, contentMode: .fit)
-            .tileShape(.cover, stroked: true)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("New playlist")
-                    .font(Type.bodyEmphasis)
-                    .foregroundStyle(Label.primary)
-                Text(" ")
-                    .font(Type.caption)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("New playlist")
     }
 }

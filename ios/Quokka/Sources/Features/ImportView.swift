@@ -277,7 +277,7 @@ private struct ThreadRow: View {
             .background(selected ? Surface.elevated : Surface.raised, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
-                    .stroke(selected ? Surface.border : Surface.hairline, lineWidth: Stroke.thin)
+                    .stroke(selected ? Surface.hairlineStrong : Surface.hairline, lineWidth: Stroke.thin)
             )
         }
         .buttonStyle(.plain)

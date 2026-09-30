@@ -30,6 +30,7 @@ struct ShareConfirmation: View {
             Surface.canvas.ignoresSafeArea()
 
             VStack(spacing: Space.roomy) {
+                QuokkaMark(size: 56, blinks: true)
                 PulsingDots()
                 Text(carriesVideo ? "Reading the video" : "Saving")
                     .font(Type.nav)
@@ -48,13 +49,15 @@ struct ShareConfirmation: View {
             Spacer()
             VStack(alignment: .leading, spacing: Space.roomy) {
                 HStack(spacing: Space.base) {
-                    ZStack {
-                        Circle().fill(state == .saved ? Surface.inverse : Surface.control)
-                        Image(systemName: state == .saved ? "checkmark" : "xmark")
+                    if state == .saved {
+                        QuokkaMark(size: 40, blinks: true)
+                    } else {
+                        Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(state == .saved ? Label.onInverse : Label.secondary)
+                            .foregroundStyle(Label.secondary)
+                            .frame(width: 40, height: 40)
+                            .background(Surface.field, in: Circle())
                     }
-                    .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(state == .saved ? "Saved to Quokka" : "Nothing to save")
@@ -82,7 +85,7 @@ struct ShareConfirmation: View {
                         .foregroundStyle(Label.onInverse)
                         .frame(maxWidth: .infinity)
                         .frame(height: Control.pillHeight)
-                        .background(Surface.inverse, in: Capsule())
+                        .background(Sky.accent, in: Capsule())
                     }
                 }
             }
@@ -90,7 +93,7 @@ struct ShareConfirmation: View {
             .padding(.bottom, Space.snug)
             .background(
                 UnevenRoundedRectangle(topLeadingRadius: Radius.sheet, topTrailingRadius: Radius.sheet)
-                    .fill(Surface.canvas)
+                    .fill(Surface.raised)
                     .ignoresSafeArea(edges: .bottom)
             )
         }
@@ -118,7 +121,7 @@ private struct PulsingDots: View {
         HStack(spacing: 10) {
             ForEach(0..<3, id: \.self) { index in
                 Circle()
-                    .fill(Label.primary)
+                    .fill(Sky.accent)
                     .frame(width: 9, height: 9)
                     .scaleEffect(0.7 + 0.3 * pulse(index))
                     .opacity(0.35 + 0.65 * pulse(index))

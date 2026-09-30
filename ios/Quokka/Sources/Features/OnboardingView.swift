@@ -1,51 +1,40 @@
 import SwiftUI
 import QuokkaDesign
 
-/// The first screen.
+/// The first screen: the whole page is sky.
 ///
-/// Type and nothing else. On a first launch the library is empty, so a gallery here would be a
-/// gallery of grey squares -- and a Cosmos-style opener works because it is quiet: one large
-/// line, three short promises, one black pill.
+/// The mark blinks at you, one large line says what the app does, three short promises say
+/// how, and one white pill starts it. On a first launch the library is empty, so there is
+/// nothing to show but the idea -- which is the point of a first screen anyway.
 struct OnboardingView: View {
     let onStart: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Wordmark()
-                .padding(.top, Space.base)
+        VStack(alignment: .leading, spacing: 0) {
+            QuokkaMark(size: 76, blinks: true)
+                .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
+                .padding(.top, Space.section)
 
             Spacer(minLength: Space.loose)
 
-            VStack(spacing: Space.roomy) {
-                Text("Save what stops\nyour thumb.")
+            VStack(alignment: .leading, spacing: Space.base) {
+                Text("Break down\nany video.")
                     .font(Type.headline)
                     .tracking(Type.headlineTracking)
-                    .foregroundStyle(Label.primary)
-                    .multilineTextAlignment(.center)
-                Text("Everything you save, in one place — and something to make from it.")
+                    .foregroundStyle(Label.onSky)
+                Text("Save a reel, a TikTok or a YouTube video. Quokka reads what was said and shows you what made it work.")
                     .font(Type.body)
-                    .foregroundStyle(Label.secondary)
-                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Label.onSkySecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, Space.section)
 
             Spacer(minLength: Space.loose)
 
-            VStack(alignment: .leading, spacing: Space.loose) {
-                Promise(
-                    icon: "square.and.arrow.up",
-                    title: "Save from any app",
-                    detail: "Share a post from Instagram, TikTok, YouTube or anywhere else.")
-                Promise(
-                    icon: "magnifyingglass",
-                    title: "Find it again",
-                    detail: "Search by word, by creator, or by colour.")
-                Promise(
-                    icon: "text.quote",
-                    title: "Make something from it",
-                    detail: "Playlists, and scripts built from what you saved.")
+            VStack(spacing: Space.snug) {
+                Promise(icon: "square.and.arrow.up", title: "Save from any app", detail: "Share it to Quokka, or paste the link.")
+                Promise(icon: "waveform", title: "Get the words", detail: "Transcribed on your phone. Nothing uploaded.")
+                Promise(icon: "checkmark.circle", title: "See what worked", detail: "The hook, the pace, the beats, the ask.")
             }
-            .padding(.horizontal, Space.section)
 
             Spacer(minLength: Space.loose)
 
@@ -54,7 +43,7 @@ struct OnboardingView: View {
                     Haptics.shared.saved()
                     onStart()
                 } label: {
-                    FilledPill(title: "Get started")
+                    FilledPill(title: "Get started", tone: .white)
                 }
                 .buttonStyle(PressStyle())
 
@@ -62,36 +51,45 @@ struct OnboardingView: View {
                 // from the sentence that cites them.
                 Text("By continuing you agree to the [Terms](\(Legal.terms)) and [Privacy Policy](\(Legal.privacy)).")
                     .font(Type.caption)
-                    .foregroundStyle(Label.secondary)
-                    .tint(Label.primary)
+                    .foregroundStyle(Label.onSkySecondary)
+                    .tint(Label.onSky)
                     .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, Space.loose)
             .padding(.bottom, Space.base)
         }
-        .background(Surface.canvas)
+        .padding(.horizontal, Space.gutter)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(SkyBackground().ignoresSafeArea())
     }
 }
 
-/// One line of what the app does: a glyph in a grey circle, a title, one sentence.
+/// One line of what the app does, in a glass row on the sky.
 private struct Promise: View {
     let icon: String
     let title: String
     let detail: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: Space.base) {
-            CircleGlyph(icon: icon)
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Space.base) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Label.onSky)
+                .frame(width: 40, height: 40)
+                .background(Sky.glass, in: Circle())
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(Type.bodyEmphasis)
-                    .foregroundStyle(Label.primary)
+                    .foregroundStyle(Label.onSky)
                 Text(detail)
                     .font(Type.caption)
-                    .foregroundStyle(Label.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(Label.onSkySecondary)
             }
+            Spacer(minLength: 0)
         }
+        .padding(Space.base)
+        .background(Sky.glass, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(Sky.glassStroke, lineWidth: Stroke.thin))
         .accessibilityElement(children: .combine)
     }
 }

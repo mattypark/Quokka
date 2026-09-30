@@ -107,6 +107,75 @@ extension QuokkaStore {
         }
     }
 
+    // MARK: - Breakdowns
+
+    /// How many items have usable words, for the counts on the sky.
+    func transcribedCount() throws -> Int {
+        try dbPool.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM item_transcript WHERE TRIM(text) <> ''") ?? 0
+        }
+    }
+
+    /// Items that have a transcript, newest save first -- the ones a breakdown can be read from.
+    func transcribedItems(limit: Int = 20) throws -> [Item] {
+        try dbPool.read { db in
+            try Item.fetchAll(
+                db,
+                sql: """
+                    SELECT i.* FROM item i
+                    JOIN item_transcript t ON t.itemID = i.id
+                    WHERE TRIM(t.text) <> ''
+                    ORDER BY i.savedAt DESC, i.id DESC
+                    LIMIT ?
+                    """,
+                arguments: [limit])
+        }
+    }
+
+    /// Video saves with no transcript and no job that has given up -- the ones worth asking for.
+    ///
+    /// Video platforms only: a Pinterest pin or an X post has no audio to read, and offering
+    /// to transcribe one would be a button that can only fail.
+    func untranscribedVideos(limit: Int = 20) throws -> [Item] {
+        let platforms = [Platform.youtube, .tiktok, .instagram, .vimeo, .web].map(\.rawValue)
+        let marks = platforms.map { _ in "?" }.joined(separator: ", ")
+        var arguments: [(any DatabaseValueConvertible)?] = platforms.map { $0 }
+        arguments.append(Self.transcriptAttemptLimit)
+        arguments.append(limit)
+        return try dbPool.read { db in
+            try Item.fetchAll(
+                db,
+                sql: """
+                    SELECT i.* FROM item i
+                    LEFT JOIN item_transcript t ON t.itemID = i.id
+                    LEFT JOIN transcript_job j ON j.itemID = i.id
+                    WHERE t.itemID IS NULL
+                      AND i.platform IN (\(marks))
+                      AND (j.itemID IS NULL OR j.attempts < ?)
+                    ORDER BY i.savedAt DESC, i.id DESC
+                    LIMIT ?
+                    """,
+                arguments: StatementArguments(arguments))
+        }
+    }
+
+    /// Whether a transcript is queued and still has attempts left. Answers the one question
+    /// `TranscriptReading.isTranscribing` needs -- see BACKEND-ASKS section 7.
+    func isTranscriptQueued(itemID: Int64) throws -> Bool {
+        try dbPool.read { db in
+            try Bool.fetchOne(
+                db,
+                sql: """
+                    SELECT EXISTS(
+                        SELECT 1 FROM transcript_job j
+                        LEFT JOIN item_transcript t ON t.itemID = j.itemID
+                        WHERE j.itemID = ? AND t.itemID IS NULL AND j.attempts < ?
+                    )
+                    """,
+                arguments: [itemID, Self.transcriptAttemptLimit]) ?? false
+        }
+    }
+
     /// `%` and `_` in what someone typed are text, not wildcards.
     private static func escapeLike(_ term: String) -> String {
         term

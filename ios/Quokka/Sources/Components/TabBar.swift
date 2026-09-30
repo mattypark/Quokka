@@ -1,77 +1,65 @@
 import SwiftUI
 import QuokkaDesign
 
-/// Where the app's navigation lives.
+/// Where the app's navigation lives: a black capsule floating on the page.
 ///
-/// A small white pill resting on the grid, not a bar across it -- Cosmos's is about 155pt
-/// wide with three glyphs, and at that size it reads as an object rather than as chrome. The
-/// grid runs to every edge of the screen and scrolls underneath.
-///
-/// Deliberately not `TabView`, which would push the content up and draw a full-width bar.
+/// Black because the mark is black -- the bar is the one piece of the brand you see on every
+/// screen -- and floating so the grid runs underneath it to the bottom edge. The open tab is
+/// white with a sky dot under it; the others sit back at half strength.
 struct TabBar: View {
     enum Tab: String, CaseIterable {
-        case home, search, profile
+        case home, library, studio
 
         var title: String {
             switch self {
             case .home: "Home"
-            case .search: "Search"
-            case .profile: "Profile"
+            case .library: "Library"
+            case .studio: "Studio"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .home: "house.fill"
+            case .library: "square.grid.2x2.fill"
+            case .studio: "pencil.and.scribble"
             }
         }
     }
 
     @Binding var selection: Tab
-    /// Tapping the tab you are already on scrolls it back to the top, as every feed app does.
+    /// Tapping the open tab again scrolls it back to the top.
     var onReselect: (Tab) -> Void = { _ in }
 
-    @Environment(ProfileIdentity.self) private var profile
-
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: Space.tight) {
             ForEach(Tab.allCases, id: \.self) { tab in
+                let active = selection == tab
                 Button {
                     Haptics.shared.tick()
-                    if selection == tab {
-                        onReselect(tab)
-                    } else {
-                        selection = tab
-                    }
+                    if active { onReselect(tab) } else { selection = tab }
                 } label: {
-                    glyph(tab)
-                        .frame(width: 52, height: 48)
-                        .contentShape(Rectangle())
+                    VStack(spacing: 5) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(active ? Label.onInverse : Label.onInverse.opacity(0.5))
+                        Circle()
+                            .fill(active ? Sky.bottom : .clear)
+                            .frame(width: 4, height: 4)
+                    }
+                    .frame(width: 64, height: 54)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tab.title)
-                .accessibilityAddTraits(selection == tab ? [.isButton, .isSelected] : .isButton)
+                .accessibilityAddTraits(active ? [.isButton, .isSelected] : .isButton)
             }
         }
-        .padding(.horizontal, Space.tight)
+        .padding(.horizontal, Space.snug)
         .background(
             Capsule()
-                .fill(Surface.canvas)
-                .overlay(Capsule().stroke(Surface.hairline, lineWidth: Stroke.thin))
-                .shadow(color: .black.opacity(0.08), radius: 16, y: 4)
+                .fill(Surface.inverse)
+                .shadow(color: .black.opacity(0.22), radius: 18, y: 8)
         )
-    }
-
-    @ViewBuilder
-    private func glyph(_ tab: Tab) -> some View {
-        let active = selection == tab
-        switch tab {
-        case .home:
-            Image(systemName: active ? "house.fill" : "house")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(active ? Label.primary : Label.dim)
-        case .search:
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: active ? .semibold : .medium))
-                .foregroundStyle(active ? Label.primary : Label.dim)
-        case .profile:
-            Avatar(image: profile.avatar, name: profile.name, size: 24)
-                .padding(2)
-                .overlay(Circle().stroke(active ? Label.primary : .clear, lineWidth: 1.5))
-        }
     }
 }
