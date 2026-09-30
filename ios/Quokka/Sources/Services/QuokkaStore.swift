@@ -227,6 +227,16 @@ final class QuokkaStore: Sendable {
             }
         }
 
+        migrator.registerMigration("v10-pinterest-thumbnails") { db in
+            // Pins saved before Pinterest's oEmbed was found were stored terminal, because
+            // the platform was then believed to serve nothing. Putting them back in the queue
+            // is what turns a library's worth of pin text cards into pictures on next launch.
+            try db.execute(sql: """
+                UPDATE item SET thumbnailState = 'pending', enrichAttempts = 0
+                WHERE platform = 'pinterest' AND thumbnailState = 'unavailable'
+                """)
+        }
+
         return migrator
     }
 
