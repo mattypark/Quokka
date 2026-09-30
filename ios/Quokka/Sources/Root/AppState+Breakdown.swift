@@ -1,33 +1,13 @@
 import Foundation
 import QuokkaEngine
 
-/// What the breakdown screens read: counts for the sky, the videos ready to break down and
-/// the ones still waiting for words, and a way to ask for a transcript.
+/// What the breakdown screens read: the videos ready to break down and the ones still waiting
+/// for words, a way to ask for a transcript, and a way to add by link.
 ///
 /// Same shape as the other AppState extensions -- pass-throughs with errors reported in one
 /// place, so no view holds a `try`.
 @MainActor
 extension AppState {
-
-    struct Pulse: Equatable {
-        var saved = 0
-        var transcribed = 0
-        var waiting = 0
-    }
-
-    /// The three numbers on the Home sky.
-    func pulse() -> Pulse {
-        guard let store else { return Pulse() }
-        do {
-            return Pulse(
-                saved: total,
-                transcribed: try store.transcribedCount(),
-                waiting: try store.untranscribedVideos(limit: 500).count)
-        } catch {
-            report(error)
-            return Pulse(saved: total)
-        }
-    }
 
     func transcribedItems(limit: Int = 20) -> [Item] {
         guard let store else { return [] }
