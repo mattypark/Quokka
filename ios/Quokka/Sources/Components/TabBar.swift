@@ -27,7 +27,9 @@ struct TabBar: View {
         }
     }
 
-    @Binding var selection: Tab
+    let selection: Tab
+    /// Asked rather than assigned, so the root can run the sky's transition on the way.
+    var onSelect: (Tab) -> Void = { _ in }
     /// Tapping the open tab again scrolls it back to the top.
     var onReselect: (Tab) -> Void = { _ in }
 
@@ -37,7 +39,7 @@ struct TabBar: View {
                 let active = selection == tab
                 Button {
                     Haptics.shared.tick()
-                    if active { onReselect(tab) } else { selection = tab }
+                    if active { onReselect(tab) } else { onSelect(tab) }
                 } label: {
                     VStack(spacing: 5) {
                         Image(systemName: tab.icon)

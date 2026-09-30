@@ -14,6 +14,9 @@ struct RootView: View {
     @State private var studioPath = NavigationPath()
     @State private var showingSettings = false
     @State private var scrollToTop: [TabBar.Tab: Int] = [:]
+    /// How much of the screen the liquid sky covers during a change to or from Home.
+    @State private var skyLevel: CGFloat = 0
+    @State private var pouring = false
 
     /// Whether onboarding should be skipped for this launch.
     ///
@@ -63,6 +66,7 @@ struct RootView: View {
             state.seedSampleTranscriptsIfRequested()
             await state.addLinksIfRequested()
             state.transcribeIfRequested()
+            await demoTransitionIfRequested()
         }
     }
 
@@ -80,15 +84,11 @@ struct RootView: View {
         ZStack(alignment: .bottom) {
             // All three stay alive, so a tab comes back exactly as it was left -- scroll
             // position, pushed screen and all.
+            // Home is on top, and the liquid sky sits between it and the other two -- so when
+            // Home's words fade, what is left on screen is its own sky, which then drains off
+            // the top to show the page underneath. Coming back, the sky pours down over the page
+            // first and Home's words arrive on it.
             ZStack {
-                page(.home) {
-                    HomeView(
-                        path: $homePath,
-                        scrollToTop: scrollToTop[.home, default: 0],
-                        onImport: { importing = true },
-                        onSettings: { showingSettings = true },
-                        onLibrary: { tab = .library })
-                }
                 page(.library) {
                     LibraryView(path: $libraryPath, scrollToTop: scrollToTop[.library, default: 0]) {
                         importing = true
@@ -97,11 +97,26 @@ struct RootView: View {
                 page(.studio) {
                     StudioView(path: $studioPath, scrollToTop: scrollToTop[.studio, default: 0])
                 }
+                if pouring {
+                    SkyBackground(showsSun: true)
+                        .ignoresSafeArea()
+                        .mask(LiquidLevel(level: skyLevel).ignoresSafeArea())
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+                page(.home) {
+                    HomeView(
+                        path: $homePath,
+                        scrollToTop: scrollToTop[.home, default: 0],
+                        onImport: { importing = true },
+                        onSettings: { showingSettings = true },
+                        onLibrary: { select(.library) })
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if showsTabBar {
-                TabBar(selection: $tab, onReselect: reselect)
+                TabBar(selection: tab, onSelect: select, onReselect: reselect)
                     .padding(.bottom, Space.snug)
                     .transition(.opacity.combined(with: .offset(y: 12)))
             }
@@ -116,6 +131,56 @@ struct RootView: View {
             .opacity(tab == which ? 1 : 0)
             .allowsHitTesting(tab == which)
             .accessibilityHidden(tab != which)
+    }
+
+    /// Changes tab, draining or pouring the sky when Home is one end of the change.
+    ///
+    /// Leaving Home: its words fade, its sky stays as the liquid layer and drains upward off the
+    /// screen. Arriving at Home: the sky pours down over the page, then Home's words arrive on
+    /// it. Between Library and Studio there is no sky, so it is a short crossfade. Under Reduce
+    /// Motion every change is a plain cut.
+    private func select(_ next: TabBar.Tab) {
+        guard next != tab, !pouring else { return }
+        guard !Motion.reduced else {
+            tab = next
+            return
+        }
+        let liquid = Animation.timingCurve(0.6, 0.02, 0.3, 1, duration: 0.78)
+
+        if tab == .home {
+            skyLevel = 1
+            pouring = true
+            withAnimation(.easeOut(duration: 0.18)) { tab = next }
+            Task { @MainActor in
+                // One frame for the sky layer to exist at full height before it starts to
+                // move; animated in the same update, it would have nothing to animate from.
+                try? await Task.sleep(for: .milliseconds(16))
+                withAnimation(liquid) { skyLevel = 0 } completion: { pouring = false }
+            }
+        } else if next == .home {
+            skyLevel = 0
+            pouring = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(16))
+                withAnimation(liquid) { skyLevel = 1 } completion: {
+                    withAnimation(.easeOut(duration: 0.22)) { tab = .home } completion: { pouring = false }
+                }
+            }
+        } else {
+            withAnimation(.easeOut(duration: 0.2)) { tab = next }
+        }
+    }
+
+    /// Drains to the Library and pours back to Home on its own, so the transition can be
+    /// recorded without a hand on the simulator. DEBUG-only; `-quokkaDemoTransition YES`.
+    private func demoTransitionIfRequested() async {
+        #if DEBUG
+        guard UserDefaults.standard.bool(forKey: "quokkaDemoTransition") else { return }
+        try? await Task.sleep(for: .seconds(3))
+        select(.library)
+        try? await Task.sleep(for: .seconds(2.5))
+        select(.home)
+        #endif
     }
 
     /// A second tap on the open tab goes back to its root, and a tap at the root scrolls to
